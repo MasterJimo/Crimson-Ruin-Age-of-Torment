@@ -1,4 +1,4 @@
-# ✦ Noob Survivors — Blood Moon Build (Alpha 0.3)
+# ✦ Noob Survivors — Alpha 0.4
 
 A dark fantasy browser survivor with a cleaner pixel-HD look, heavier crimson/black mood, stylized blood effects, corpse remains, and English UI.
 
@@ -16,16 +16,14 @@ A dark fantasy browser survivor with a cleaner pixel-HD look, heavier crimson/bl
 - **1 / 2 / 3:** pick an upgrade
 - **Mobile:** virtual joystick on the left side
 
-## What changed in this build
+## Alpha 0.4 — HUD and brightness pass
 
-- Full interface translated to **English**.
-- Removed **"The Hollow Night"** label from the HUD center.
-- Timer made **larger and more readable**.
-- Reworked palette and UI toward a **crimson / black** dark-fantasy style.
-- Added **stylized blood bursts**, **blood stains**, flattened **enemy corpses**, and type-specific scattered remains (bones, wings, cloth, spectral essence).
-- Added **impact rings**, subtle camera shake on kills, cracked stone tiles and ritual sigils.
-- Upgraded the overall rendering feel toward **cleaner pixel-HD presentation** by drawing smooth effects at twice the backing resolution while keeping the sprite artwork crisp.
-- Added a **music selector** in the top bar.
+- Removed the "Blood Moon Build" and top-bar 18+ gore badge. The tone and art stay dark fantasy; content positioning remains described in the README.
+- Moved the XP gauge into a slim strip **above the playfield**, so it no longer overlays enemies or the HUD.
+- Enlarged readability: lighter gray-purple graveyard tiles, clearer tombstones, lighter cracks, gentler vignette; rich crimson blood remains.
+- Replaced the old sound on/off glyph with **MUTE ON / MUTE OFF** (an actual global mute).
+- Added **MUSIC** and **SFX** volume sliders, 0–100, with independent levels and remembered settings.
+- Music selection still supports three CC0 tracks streamed from OpenGameArt; playback depends on that server allowing playback.
 
 ## Tech
 
@@ -78,6 +76,6 @@ After GitHub Pages finishes building, the site address should be:
 
 ## Notes on audio and content rating
 
-- Music is currently **streamed from OpenGameArt URLs**, not packaged offline. Playback may fail if the source blocks hotlinking or the browser is offline. Choose a track and enable ♫ in the top bar.
-- The **18+ indicator is a voluntary audience/content label** for fantasy gore, not a GitHub-enforced age gate or an official rating.
+- Music is currently **streamed from OpenGameArt URLs**, not packaged offline. Playback may fail if the source blocks hotlinking or the browser is offline. Choose a track, ensure MUTE is OFF, and adjust the music slider. Audio starts after a user interaction.
+- The **18+ audience description is a voluntary content label** for fantasy gore, not a GitHub-enforced age gate or an official rating.
 - All artwork is hand-drawn in code. The CC0 music files are third-party works; keep the source credits above when distributing.

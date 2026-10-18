@@ -15,7 +15,9 @@
     intro:$('intro'), upgrade:$('upgrade'), upgradeCards:$('upgradeCards'), end:$('endScreen'), pause:$('pauseOverlay'),
     start:$('startBtn'), restart:$('restartBtn'), resume:$('resumeBtn'), pauseBtn:$('pauseBtn'), hud:$('hud'),
     hp:$('hpFill'), hpText:$('hpText'), xp:$('xpFill'), level:$('levelText'), kills:$('killText'), time:$('timeText'),
-    sound:$('soundBtn'), music:$('musicSelect'), msg:$('message'), status:$('statusText'), portrait:$('portrait'),
+    sound:$('soundBtn'), music:$('musicSelect'), musicVolume:$('musicVolume'), sfxVolume:$('sfxVolume'),
+    musicVolumeValue:$('musicVolumeValue'), sfxVolumeValue:$('sfxVolumeValue'), xpStrip:$('xpStrip'),
+    msg:$('message'), status:$('statusText'), portrait:$('portrait'),
     stick:$('stick'), pad:$('mobilePad')
   };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -56,7 +58,7 @@
   portrait.drawImage(sprite('hero'), 5, 1, 54, 62);
 
   const keys = new Set();
-  let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, sound = false, sfx = null;
+  let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 45, sfxVolume = 55, sfx = null;
   let touchVec = {x:0,y:0}, activePointer = null;
   let musicPlayer = null, currentTrack = el.music.value;
 
@@ -65,14 +67,15 @@
     musicPlayer = new Audio();
     musicPlayer.loop = true;
     musicPlayer.preload = 'auto';
-    musicPlayer.volume = 0.48;
+    musicPlayer.volume = muted ? 0 : musicVolume / 100;
     return musicPlayer;
   }
   function syncMusic(){
     const track = MUSIC_TRACKS[currentTrack];
     const player = ensureMusicPlayer();
-    if (player.src !== track.src) player.src = track.src;
-    if (!sound) { player.pause(); return; }
+    if (player.getAttribute('src') !== track.src) player.setAttribute('src',track.src);
+    player.volume = muted ? 0 : musicVolume / 100;
+    if(muted || musicVolume === 0){ player.pause(); return; }
     player.play().catch(()=>{});
   }
   function changeTrack(id){ currentTrack = id in MUSIC_TRACKS ? id : 'creepy'; syncMusic(); flashMessage(`♫ ${MUSIC_TRACKS[currentTrack].label}`, 1400); }
@@ -85,7 +88,7 @@
     };
     state='playing';
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.upgrade.classList.add('hidden'); el.pause.classList.add('hidden');
-    el.hud.hidden = false; el.pauseBtn.hidden = false; el.msg.textContent = ''; el.status.textContent = 'HUNT IN PROGRESS';
+    el.hud.hidden = false; el.xpStrip.hidden = false; el.pauseBtn.hidden = false; el.msg.textContent = ''; el.status.textContent = 'HUNT IN PROGRESS';
     updateHUD();
     for(let i=0;i<5;i++) spawnEnemy('skeleton',rand(180,320),rand(0,TAU));
     for(let i=0;i<2;i++) spawnEnemy('bat',rand(200,270),rand(0,TAU));
@@ -125,7 +128,7 @@
   function floatText(x,y,text,color='#ffd8df',size=10){ game.texts.push({x,y,text,color,size,life:.75,max:.75}); }
 
   function playSound(kind){
-    if(!sound) return;
+    if(muted || sfxVolume === 0) return;
     try {
       sfx ||= new (window.AudioContext||window.webkitAudioContext)();
       if(sfx.state==='suspended') sfx.resume();
@@ -133,7 +136,7 @@
       const tone={shot:[470,260,.08,.03],hit:[96,45,.15,.065],pickup:[740,1100,.11,.045],level:[520,980,.45,.08],start:[180,390,.24,.05],hurt:[170,70,.2,.09],death:[300,55,.7,.065]}[kind]||[280,180,.1,.03];
       o.type = kind==='hit'||kind==='hurt' ? 'sawtooth' : 'triangle';
       o.frequency.setValueAtTime(tone[0],now); o.frequency.exponentialRampToValueAtTime(tone[1],now+tone[2]);
-      g.gain.setValueAtTime(tone[3],now); g.gain.exponentialRampToValueAtTime(.0001,now+tone[2]);
+      g.gain.setValueAtTime(tone[3] * sfxVolume / 100,now); g.gain.exponentialRampToValueAtTime(.0001,now+tone[2]);
       o.connect(g); g.connect(sfx.destination); o.start(now); o.stop(now+tone[2]);
     } catch(_){}
   }
@@ -302,27 +305,29 @@
     if(!game) return;
     const p=game.player;
     el.hp.style.width=`${100*p.hp/p.maxHp}%`; el.hpText.textContent=`${Math.ceil(p.hp)} / ${p.maxHp}`;
-    el.xp.style.width=`${100*p.xp/p.next}%`; el.level.textContent=p.level; el.kills.textContent=game.kills; el.time.textContent=timeText(game.time);
+    const xpPct=clamp(100*p.xp/p.next,0,100);
+    el.xp.style.width=`${xpPct}%`; el.xpStrip.setAttribute('aria-valuenow',String(Math.round(xpPct)));
+    el.level.textContent=p.level; el.kills.textContent=game.kills; el.time.textContent=timeText(game.time);
   }
 
   function drawFloor(cameraX,cameraY,t){
-    ctx.fillStyle='#10070a'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#241b23'; ctx.fillRect(0,0,W,H);
     const size=32, left=Math.floor(cameraX/size)-1, top=Math.floor(cameraY/size)-1;
     for(let gy=top; gy<top+15; gy++) for(let gx=left; gx<left+23; gx++){
       const x=Math.floor(gx*size-cameraX), y=Math.floor(gy*size-cameraY), h=hash(gx,gy), h2=hash(gx+52,gy-21);
-      ctx.fillStyle = h<.2?'#13080b':h<.52?'#160b0f':h<.82?'#1a0d11':'#11070a'; ctx.fillRect(x,y,size+1,size+1);
-      if(h2<.3){ ctx.fillStyle='#221015'; ctx.fillRect(x+6,y+12,17,8); ctx.fillStyle='#180b0f'; ctx.fillRect(x+10,y+15,9,6); }
-      else if(h2>.87){ ctx.fillStyle='#302126'; ctx.fillRect(x+10,y+18,10,5); ctx.fillStyle='#5c3941'; ctx.fillRect(x+11,y+18,6,2); }
+      ctx.fillStyle = h<.2?'#292029':h<.52?'#30242b':h<.82?'#35272e':'#261c23'; ctx.fillRect(x,y,size+1,size+1);
+      if(h2<.3){ ctx.fillStyle='#392832'; ctx.fillRect(x+6,y+12,17,8); ctx.fillStyle='#251a22'; ctx.fillRect(x+10,y+15,9,6); }
+      else if(h2>.87){ ctx.fillStyle='#53414a'; ctx.fillRect(x+10,y+18,10,5); ctx.fillStyle='#785a65'; ctx.fillRect(x+11,y+18,6,2); }
       for(let j=0;j<3;j++){
         const a=hash(gx*7+j,gy*13-j), b=hash(gx*11-j,gy*5+j); const xx=x+Math.floor(a*29), yy=y+Math.floor(b*28);
-        ctx.fillStyle=a>.55?'#3f151f':'#271016'; ctx.fillRect(xx,yy,2,4); ctx.fillRect(xx-2,yy+2,1,2);
-        if(a>.89){ ctx.fillStyle='#75555d'; ctx.fillRect(xx+1,yy+2,2,2); }
+        ctx.fillStyle=a>.55?'#51313d':'#3d2530'; ctx.fillRect(xx,yy,2,4); ctx.fillRect(xx-2,yy+2,1,2);
+        if(a>.89){ ctx.fillStyle='#95717f'; ctx.fillRect(xx+1,yy+2,2,2); }
       }
       // Broken slate, hairline cracks, and ritual carvings. World-space seeded, no visual jitter.
       if(h2>.40&&h2<.63){
-        ctx.strokeStyle='#3d2028';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+3,y+7);
+        ctx.strokeStyle='#5d414c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+3,y+7);
         ctx.lineTo(x+14,y+15);ctx.lineTo(x+11,y+25);ctx.lineTo(x+23,y+29);ctx.stroke();
-        ctx.strokeStyle='#11070b';ctx.beginPath();ctx.moveTo(x+5,y+8);ctx.lineTo(x+16,y+16);ctx.stroke();
+        ctx.strokeStyle='#20131b';ctx.beginPath();ctx.moveTo(x+5,y+8);ctx.lineTo(x+16,y+16);ctx.stroke();
       }
       if(h>.987&&h2>.7) drawRitualMark(x+16,y+16,t,gx+gy);
       if(h>.966&&h2<.62) drawGrave(x+8,y+5);
@@ -335,8 +340,8 @@
       }
     }
   }
-  function drawGrave(x,y){ ctx.fillStyle='#090507'; ctx.fillRect(x+2,y+12,17,10); ctx.fillStyle='#43373a'; ctx.fillRect(x+4,y+4,13,17); ctx.fillStyle='#7b666b'; ctx.fillRect(x+6,y+2,9,3); ctx.fillRect(x+4,y+6,2,12); ctx.fillStyle='#24191d'; ctx.fillRect(x+7,y+10,7,9); ctx.fillStyle='#b9989d'; ctx.fillRect(x+9,y+8,2,7); ctx.fillRect(x+7,y+11,6,2); ctx.fillStyle='#171012'; ctx.fillRect(x+1,y+20,20,3); }
-  function drawTwigs(x,y){ ctx.fillStyle='#48252d'; ctx.fillRect(x+8,y+3,2,16); ctx.fillRect(x+3,y+10,6,2); ctx.fillRect(x+9,y+8,7,2); ctx.fillStyle='#8b5562'; ctx.fillRect(x+8,y+3,1,9); }
+  function drawGrave(x,y){ ctx.fillStyle='#090507'; ctx.fillRect(x+2,y+12,17,10); ctx.fillStyle='#64565c'; ctx.fillRect(x+4,y+4,13,17); ctx.fillStyle='#a18a93'; ctx.fillRect(x+6,y+2,9,3); ctx.fillRect(x+4,y+6,2,12); ctx.fillStyle='#3d3036'; ctx.fillRect(x+7,y+10,7,9); ctx.fillStyle='#d0adb4'; ctx.fillRect(x+9,y+8,2,7); ctx.fillRect(x+7,y+11,6,2); ctx.fillStyle='#2d2229'; ctx.fillRect(x+1,y+20,20,3); }
+  function drawTwigs(x,y){ ctx.fillStyle='#62444e'; ctx.fillRect(x+8,y+3,2,16); ctx.fillRect(x+3,y+10,6,2); ctx.fillRect(x+9,y+8,7,2); ctx.fillStyle='#ae7484'; ctx.fillRect(x+8,y+3,1,9); }
   function drawCandles(x,y,t){ ctx.fillStyle='#e7ceb1'; ctx.fillRect(x+4,y+5,2,5); ctx.fillRect(x+8,y+3,2,7); ctx.fillStyle='#f36580'; ctx.fillRect(x+4,y+3,2,2); ctx.fillRect(x+8,y+1,2,2); ctx.fillStyle=`rgba(255,128,150,${0.18+Math.sin(t*6+x)*0.08})`; ctx.beginPath(); ctx.arc(x+5,y+4,8,0,TAU); ctx.arc(x+9,y+2,8,0,TAU); ctx.fill(); }
   function drawRitualMark(x,y,t,seed){
     ctx.save();ctx.strokeStyle=`rgba(151,43,75,${.15+Math.sin(t*.7+seed)*.03})`;ctx.lineWidth=.8;
@@ -449,8 +454,8 @@
       shadowAt(W/2,H/2+55,22,.5); ctx.drawImage(sprite('hero'),W/2-29,H/2-22,58,70);
     }
     const vignette=ctx.createRadialGradient(W/2,H/2,80,W/2,H/2,405);
-    vignette.addColorStop(0,'#0000'); vignette.addColorStop(.75,'#12070d2f'); vignette.addColorStop(1,'#020102d8'); ctx.fillStyle=vignette; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='rgba(123,10,38,0.045)'; ctx.fillRect(0,0,W,H);
+    vignette.addColorStop(0,'#0000'); vignette.addColorStop(.75,'#170f1a20'); vignette.addColorStop(1,'#050307a0'); ctx.fillStyle=vignette; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(123,20,52,0.025)'; ctx.fillRect(0,0,W,H);
     if(flash>0){ ctx.fillStyle=`rgba(170,16,42,${flash*.55})`; ctx.fillRect(0,0,W,H); }
   }
 
@@ -469,8 +474,41 @@
   document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
   el.start.addEventListener('click',startGame); el.restart.addEventListener('click',startGame); el.pauseBtn.addEventListener('click',togglePause); el.resume.addEventListener('click',togglePause);
-  el.sound.addEventListener('click',()=>{ sound=!sound; el.sound.textContent=sound?'♫ ON':'♫ OFF'; if(sound) { playSound('pickup'); syncMusic(); } else { ensureMusicPlayer().pause(); } });
-  el.music.addEventListener('change',e=>changeTrack(e.target.value));
+  function updateAudioUI(){
+    el.sound.textContent=muted?'MUTE ON':'MUTE OFF';
+    el.sound.setAttribute('aria-pressed',String(muted));
+    el.sound.classList.toggle('is-muted',muted);
+    el.musicVolume.value=String(musicVolume);
+    el.sfxVolume.value=String(sfxVolume);
+    el.musicVolumeValue.textContent=`${musicVolume}%`;
+    el.sfxVolumeValue.textContent=`${sfxVolume}%`;
+  }
+  function rememberAudio(){
+    try { localStorage.setItem('noob-survivors-audio-v04',JSON.stringify({muted,musicVolume,sfxVolume,currentTrack})); } catch(_){}
+  }
+  try {
+    const saved=JSON.parse(localStorage.getItem('noob-survivors-audio-v04') || 'null');
+    if(saved && typeof saved==='object'){
+      muted=Boolean(saved.muted);
+      if(Number.isFinite(saved.musicVolume)) musicVolume=clamp(Math.round(saved.musicVolume),0,100);
+      if(Number.isFinite(saved.sfxVolume)) sfxVolume=clamp(Math.round(saved.sfxVolume),0,100);
+      if(saved.currentTrack in MUSIC_TRACKS){ currentTrack=saved.currentTrack; el.music.value=currentTrack; }
+    }
+  }catch(_){}
+  updateAudioUI();
+  el.sound.addEventListener('click',()=>{
+    muted=!muted; updateAudioUI(); rememberAudio();
+    if(muted) ensureMusicPlayer().pause();
+    else {playSound('pickup'); syncMusic();}
+  });
+  el.musicVolume.addEventListener('input',()=>{
+    musicVolume=clamp(Number(el.musicVolume.value),0,100); updateAudioUI(); rememberAudio();
+    if(musicPlayer) syncMusic();
+  });
+  el.sfxVolume.addEventListener('input',()=>{
+    sfxVolume=clamp(Number(el.sfxVolume.value),0,100); updateAudioUI(); rememberAudio();
+  });
+  el.music.addEventListener('change',e=>{changeTrack(e.target.value); rememberAudio();});
 
   const frame=$('frame'); let origin=null;
   frame.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'||state!=='playing'||e.target.closest('button')||e.target.closest('select')||e.target.closest('label')) return; if(e.clientX>frame.getBoundingClientRect().left+frame.clientWidth*.66) return; activePointer=e.pointerId; origin={x:e.clientX,y:e.clientY}; try{ frame.setPointerCapture(e.pointerId); }catch(_){} moveStick(e); });
