@@ -4,3 +4,30 @@
 @media(max-width:650px){.footer-help{display:none}.topbar-right{gap:8px}.sound-control{font-size:12px;padding:5px}.version{display:none}.brand{font-size:9px}.game-frame{aspect-ratio:16/10}.intro h1{font-size:clamp(18px,5vw,28px)}.intro-foot{font-size:8px;line-height:1.5}.intro p:not(.description){letter-spacing:1px}.intro .eyebrow{font-size:9px}.description{font-size:11px}.main-button{font-size:12px;padding:8px 10px}.eyebrow{font-size:9px}.screen-overlay h2{font-size:20px}.upgrade-cards{gap:5px;width:100%}.upgrade-card{min-height:115px}.upgrade-card .glyph{font-size:24px}.upgrade-card strong{font-size:8px;min-height:24px}.upgrade-card .detail{font-size:10px}.overlay-sub{font-size:13px;margin-bottom:10px}.card-hint{font-size:10px}.end-stats{gap:15px}.end-stats strong{font-size:13px}.hud-sub,.hp-num{display:none}.hud-center strong{font-size:12px}.hp-track{width:75px}}
 @media(pointer:coarse){.mobile-pad.playing{display:block}}
 @media(max-height:530px) and (min-width:651px){.site-shell{width:min(930px,calc(100vw - 20px));margin:5px auto}.topbar{height:28px}.footer{height:26px}.crest{display:none}.intro-rule{margin:6px}.description{margin:5px!important}.intro-foot{margin-top:8px}}
+/* Portrait phones: keep the important menu and choices inside the game viewport.
+   The game itself is best enjoyed in landscape orientation. */
+@media (max-width:650px) and (orientation:portrait){
+ .intro{padding:4px 7px}
+ .intro .crest,.intro .eyebrow,.intro-rule,.intro-foot{display:none}
+ .intro h1{font-size:21px;line-height:1.12;letter-spacing:0;margin:2px 0 4px}
+ .intro>p:not(.description){font-size:11px;letter-spacing:1px}
+ .intro .description{font-size:10px;line-height:1.2;margin:4px 0 8px!important}
+ .intro .main-button{font-size:12px;padding:8px 10px}
+ #upgrade{justify-content:center;padding:3px}
+ #upgrade .eyebrow{display:none}
+ #upgrade h2{font-size:17px;margin:4px 0}
+ #upgrade .overlay-sub{font-size:11px;margin:2px 0 7px}
+ #upgrade .card-hint{display:none}
+ #upgrade .upgrade-cards{gap:4px}
+ #upgrade .upgrade-card{min-height:91px;padding:5px 3px}
+ #upgrade .upgrade-card .glyph{font-size:19px;line-height:1.1}
+ #upgrade .upgrade-card strong{font-size:7px;min-height:18px}
+ #upgrade .upgrade-card .detail{font-size:9px;line-height:1.2}
+ #upgrade .upgrade-card .hotkey{padding-top:4px;font-size:9px}
+ #endScreen .eyebrow{display:none}
+ #endScreen h2{font-size:17px;margin:4px}
+ #endScreen .overlay-sub{font-size:11px;margin:2px}
+ #endScreen .end-stats{margin:7px 0 13px;gap:10px}
+ #endScreen .end-stats span{font-size:10px}
+ #endScreen .end-stats strong{font-size:11px}
+}
