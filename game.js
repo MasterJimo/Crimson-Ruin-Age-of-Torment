@@ -14,6 +14,9 @@
   const courtyard = new Image();
   courtyard.decoding = 'async';
   courtyard.src = 'assets/gothic-courtyard.png';
+  const fountainArt = new Image();
+  fountainArt.decoding = 'async';
+  fountainArt.src = 'assets/blood-fountain-v014.png';
 
   const $ = id => document.getElementById(id);
   const el = {
@@ -117,9 +120,11 @@
   function startGame(){
     game = {
       time:0,
-      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,leechChance:0,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
-      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
+      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
+      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], nextFountainAt:rand(44,60), kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
+    spawnFountain(true);
+    spawnFountain(true);
     state='upgrade';
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.pause.classList.add('hidden');
     el.hud.hidden = false; el.xpStrip.hidden = false; el.bossBar.hidden = true; el.pauseBtn.hidden = true; el.msg.textContent = ''; el.status.textContent = 'CHOOSE YOUR STARTING ELEMENT';
@@ -127,6 +132,43 @@
     openUpgrade();
     // Audio begins after the player chooses a school (browser gesture).
 
+  }
+
+  // Blood fountains are stationary one-use healing pickups. Keep them separated
+  // in world coordinates and prefer positions beyond the current camera view.
+  function spawnFountain(initial=false){
+    if(!game || game.fountains.length>=4) return false;
+    const p=game.player;
+    for(let attempt=0;attempt<48;attempt++){
+      const a=rand(0,TAU), d=rand(initial?570:480,initial?1000:1120);
+      const x=p.x+Math.cos(a)*d, y=p.y+Math.sin(a)*d;
+      if(game.fountains.some(f=>dist2(x,y,f.x,f.y)<720*720))continue;
+      game.fountains.push({x,y,heal:40});
+      return true;
+    }
+    return false;
+  }
+
+  function updateFountains(dt){
+    const g=game, p=g.player;
+    if(g.time>=g.nextFountainAt){
+      // Retire distant unseen fountains to keep new spawns relevant to exploration.
+      g.fountains=g.fountains.filter(f=>dist2(p.x,p.y,f.x,f.y)<2400*2400);
+      spawnFountain();
+      g.nextFountainAt=g.time+rand(42,64);
+    }
+    for(let i=g.fountains.length-1;i>=0;i--){
+      const f=g.fountains[i];
+      if(p.hp>=p.maxHp || dist2(p.x,p.y,f.x,f.y)>34*34)continue;
+      const healed=Math.min(f.heal,p.maxHp-p.hp);
+      p.hp+=healed;
+      g.fountains.splice(i,1);
+      floatText(p.x,p.y-36,`+${Math.round(healed)} HP`,'#ffb0c3',13);
+      addParticles(f.x,f.y,'#ff4769',25,100,2,4);
+      addImpact(f.x,f.y,35,'#ff5c82');
+      playSound('level');
+      flashMessage(`♥ BLOOD FOUNTAIN · +${Math.round(healed)} HP`,1900);
+    }
   }
 
   function spawnEnemy(type=null,distance=null,angle=null){
@@ -209,7 +251,19 @@
 
   function gainXP(value){
     const p=game.player; p.xp += value*p.xpBonus;
-    if(p.xp>=p.next){p.xp-=p.next;p.level++;p.next=Math.floor(12+p.level*8+p.level*p.level*1.5);state='upgrade';openUpgrade();playSound('level');}
+    if(p.xp>=p.next){
+      p.xp-=p.next;
+      p.level++;
+      p.next=Math.floor(12+p.level*8+p.level*p.level*1.5);
+      // Only a completed EXP bar restores health; the starting element choice doesn't.
+      const healed=Math.min(20,p.maxHp-p.hp);
+      if(healed>0){
+        p.hp+=healed;
+        floatText(p.x,p.y-33,`+${Math.round(healed)} HP`,'#98ffba',12);
+        addParticles(p.x,p.y,'#74ffc2',12,52,2,3);
+      }
+      state='upgrade';openUpgrade();playSound('level');
+    }
   }
   function eligiblePowers(){return POWERS.filter(opt=>!game.banned.has(opt.id) && (!opt.can||opt.can(game.player)));}
   function rollChoices(previous=[]){
@@ -346,9 +400,9 @@
     const def=ENEMIES[e.type];
     if(e.type==='warden'){
       for(let i=0;i<14;i++)game.drops.push({x:e.x+rand(-39,39),y:e.y+rand(-32,32),value:4,life:75,phase:rand(0,TAU)});
-      game.player.hp=Math.min(game.player.maxHp,game.player.hp+22);
+      // The Warden drops XP only. It no longer gives unexplained healing.
       el.bossBar.hidden=true;
-      flashMessage('✦ WARDEN SLAIN · +22 HP',2400);
+      flashMessage('✦ WARDEN SLAIN · BONUS XP',2400);
       addBloodBurst(e.x,e.y,52,'#b7103a');
       for(let i=0;i<4;i++)addImpact(e.x,e.y,42+i*10,'#f391a6');
     }else game.drops.push({x:e.x,y:e.y,value:def.xp,life:75,phase:rand(0,TAU)});
@@ -430,7 +484,9 @@
     let my=Number(keys.has('s')||keys.has('arrowdown')) - Number(keys.has('w')||keys.has('arrowup')) + touchVec.y;
     const mag=Math.hypot(mx,my); p.moving=mag>.02; if(mag>0){ mx/=mag; my/=mag; p.x+=mx*p.speed*dt; p.y+=my*p.speed*dt; p.walk+=dt*11; p.face=mx<-.05?-1:mx>.05?1:p.face; }
 
-    p.hp=Math.min(p.maxHp,p.hp+p.regen*dt);
+    updateFountains(dt);
+    // Intentional sustain only: Regeneration must be picked during level-up.
+    if(p.regen>0)p.hp=Math.min(p.maxHp,p.hp+p.regen*dt);
     p.orbitCd=Math.max(0,p.orbitCd-dt);
     if(p.orbits>0 && p.orbitCd<=0){
       p.orbitCd=.4;
@@ -509,7 +565,6 @@
           if(b.frost)e.slowTime=2.5;
           // Poison has no stack limit or expiry; every hit permanently increases DPS.
           if(b.poison)applyPoisonStack(e,p.poisonMultiplier);
-          if(Math.random()<p.leechChance)p.hp=Math.min(p.maxHp,p.hp+2);
           if(Math.random()<Math.min(.95,p.chainChance+(b.lightning?.36+p.stormBonus:0)))chainLightning(e,dmg*.55,b.hit);
           if(b.orb){explodeAt(e.x,e.y,dmg*.7,e,b.hit);addMagicFx(e.x,e.y,'blood_orb_v11',70,.26);}
           else if(p.element==='blood'&&Math.random()<p.bloodSplashChance)explodeAt(e.x,e.y,dmg*.38,e,b.hit);
@@ -577,6 +632,51 @@
     const boss=game.enemies.find(e=>e.type==='warden');
     el.bossBar.hidden=!boss;
     if(boss)el.bossFill.style.width=`${clamp(boss.hp/boss.maxHp*100,0,100)}%`;
+  }
+
+  function drawFountains(camX,camY,t){
+    for(const f of game.fountains){
+      const x=f.x-camX,y=f.y-camY;
+      if(x<-85||x>W+85||y<-100||y>H+100)continue;
+      const pulse=.5+.5*Math.sin(t*2.8+f.x*.02);
+      ctx.save();
+      ctx.fillStyle=`rgba(238,40,77,${.065+pulse*.045})`;
+      ctx.beginPath();ctx.ellipse(x,y+8,43,22,0,0,TAU);ctx.fill();
+      shadowAt(x,y+15,29,.38);
+      if(fountainArt.complete&&fountainArt.naturalWidth){
+        ctx.imageSmoothingEnabled=true;
+        ctx.drawImage(fountainArt,x-42,y-65,84,80);
+      }else{
+        ctx.fillStyle='#402b35';ctx.fillRect(x-20,y-4,40,20);
+        ctx.fillStyle='#f23559';ctx.beginPath();ctx.ellipse(x,y,20,11,0,0,TAU);ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  // Off-screen compass arrows only within roughly three screen widths.
+  function drawFountainArrows(camX,camY){
+    if(!game || state!=='playing')return;
+    const p=game.player;
+    let closest=null, nearest=Infinity;
+    for(const f of game.fountains){
+      const d2=dist2(f.x,f.y,p.x,p.y), x=f.x-camX,y=f.y-camY;
+      if(d2>1760*1760 || (x>=34&&x<=W-34&&y>=54&&y<=H-30))continue;
+      if(d2<nearest){closest=f;nearest=d2;}
+    }
+    if(!closest)return;
+    const dx=closest.x-p.x,dy=closest.y-p.y,a=Math.atan2(dy,dx);
+    const nx=Math.cos(a),ny=Math.sin(a);
+    const roomX=nx>=0?W/2-25:W/2-25;
+    const roomY=ny>=0?H/2-27:H/2-75;
+    const edge=Math.min(roomX/Math.max(.001,Math.abs(nx)),roomY/Math.max(.001,Math.abs(ny)));
+    const x=W/2+nx*edge,y=H/2+ny*edge;
+    ctx.save();ctx.translate(x,y);ctx.rotate(a);
+    ctx.shadowColor='#ff7597';ctx.shadowBlur=9;
+    ctx.fillStyle='#210b18';ctx.strokeStyle='#d8567a';ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.arc(0,0,14,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#ffe2e8';ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-4,-7);ctx.lineTo(-2,0);ctx.lineTo(-4,7);ctx.closePath();ctx.fill();
+    ctx.restore();
   }
 
   function drawFloor(cameraX,cameraY,t){
@@ -832,6 +932,7 @@
       drawStains(camX,camY);
       drawCorpses(camX,camY);
       drawFragments(camX,camY);
+      drawFountains(camX,camY,t);
       drawDrops(camX,camY,t);
       const objects=[...game.enemies.map(e=>({y:e.y,e})),{y:p.y,p}]; objects.sort((a,b)=>a.y-b.y);
       for(const item of objects){ if(item.e) drawEnemy(item.e,camX,camY,t); else drawPlayer(p,camX,camY,t); }
@@ -842,6 +943,7 @@
     const vignette=ctx.createRadialGradient(W/2,H/2,80,W/2,H/2,405);
     vignette.addColorStop(0,'#0000'); vignette.addColorStop(.75,'#170f1a20'); vignette.addColorStop(1,'#050307a0'); ctx.fillStyle=vignette; ctx.fillRect(0,0,W,H);
     ctx.fillStyle='rgba(123,20,52,0.025)'; ctx.fillRect(0,0,W,H);
+    drawFountainArrows(camX,camY);
     if(flash>0){ ctx.fillStyle=`rgba(170,16,42,${flash*.55})`; ctx.fillRect(0,0,W,H); }
   }
 

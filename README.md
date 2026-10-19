@@ -83,9 +83,21 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - Single gold frame with uniform frameless icons.
 - Status overlays: crimson Bleed, orange Burn, blue Shock, green Poison.
 - See [16 perk descriptions](PERKS_V013.md).
+
 ## v0.13.1 — Infinite Poison stacks / single Fire burn
 - Every Poison projectile hit adds **one permanent stack**: +12.5 DPS per stack at base power (100 damage per 8 seconds). No expiration or stack cap; 200 base stacks = 2,500 DPS.
 - Poison Power strengthens stacks applied **after** that upgrade. Existing stacks keep their potency.
 - A green `×N` counter above poisoned enemies shows accumulated stacks.
 - Fire remains single-stack: each hit refreshes the two-second burn and retains the strongest current DPS.
 - Other status rules remain unchanged.
+
+
+## v0.14 — Blood Fountains & predictable healing
+- Every genuine experience **level-up instantly heals up to 20 HP** (never above max HP).
+- The first starting-element selection is **not** a level-up and grants no healing.
+- The hidden **+22 HP on Crimson Warden death** has been removed; the boss still drops bonus XP.
+- Unused hidden on-hit lifesteal code is removed. HP may still recover through explicitly chosen **Vitality** or **Regeneration** perks.
+- Two Blood Fountains spawn around the starting area at separated locations. Further fountains appear during exploration every **42–64 seconds** (first after ~44–60 seconds), with up to four active at once and a minimum spacing of **720 world units**.
+- Walk within **34 world units** to consume one for up to **40 HP**, but a full-health player will not consume it.
+- A small ruby pointer near the edge of the screen leads to the nearest off-screen fountain when within **1,760 world units** (around two to three screen widths).
+- The visual uses the supplied *HP Pool* PNG, resampled to a compact transparent PNG in `assets/blood-fountain-v014.png`.
