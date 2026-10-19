@@ -171,10 +171,10 @@
 
   function startGame(){
     game = {
-      time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,
+      time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:false,spawnCounter:0,
       perkRanks:Object.create(null),perkOrder:[],
       player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,fountainRegenTime:0,fountainRegenTick:0},
-      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], nextFountainAt:rand(44,60), kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
+      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], nextFountainAt:rand(44,60), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
     spawnFountain(true);
@@ -226,22 +226,47 @@
     }
   }
 
+  // Starts at ~2× original encounter pressure; grows every minute.
+  // Controlled active-enemy and spawn caps protect the frame rate.
+  function difficultyAt(seconds,easy=false){
+    const minute=Math.min(29,Math.floor(Math.max(0,seconds)/60));
+    const factor=easy?.5:1;
+    return {
+      minute,spawn:Math.min(10,2*Math.pow(1.18,minute))*(easy?.5:1),
+      hp:Math.pow(1.15,minute)*factor,
+      damage:Math.pow(1.12,minute)*factor,
+      speed:Math.pow(1.06,minute)*factor,
+      aggression:easy?.5:1
+    };
+  }
+  function enemyTarget(enemy,player){
+    const mode=enemy.aiRole||0,pressure=enemy.aggression||1;
+    if(!mode)return {x:player.x,y:player.y};
+    const vx=player.moveX||0,vy=player.moveY||0;
+    const ahead=(mode>=3?74:25)*pressure;
+    const flank=(mode%2?1:-1)*42*pressure;
+    return {x:player.x+vx*ahead-vy*flank,y:player.y+vy*ahead+vx*flank};
+  }
   function spawnEnemy(type=null,distance=null,angle=null){
     const p = game.player, t = game.time; let pool = ['skeleton'];
     if(t>14) pool.push('bat'); if(t>32) pool.push('slime'); if(t>53) pool.push('ghoul'); if(t>83) pool.push('cultist'); if(t>115) pool.push('wraith'); if(t>96) pool.push('spider');
     if(!type){ const weights=pool.map(k=>ENEMIES[k].weight); let q=Math.random()*weights.reduce((a,b)=>a+b,0); type = pool.find(k=>(q-=ENEMIES[k].weight)<=0) || pool[0]; }
-    const def = ENEMIES[type], a = angle ?? rand(0,TAU), d = distance ?? rand(275,370), mult = 1 + Math.max(0, t - 30) / 180;
-    game.enemies.push({type,x:p.x+Math.cos(a)*d,y:p.y+Math.sin(a)*d,hp:def.hp*mult,maxHp:def.hp*mult,speed:def.speed*(1+t/850),damage:def.damage,r:def.r,phase:rand(0,TAU),shot:rand(.8,2.3),hit:0,knockX:0,knockY:0});
+    const def=ENEMIES[type],a=angle??rand(0,TAU),d=distance??rand(225,345);
+    const diff=difficultyAt(t,game.easyMode),hp=def.hp*diff.hp;
+    game.enemies.push({type,x:p.x+Math.cos(a)*d,y:p.y+Math.sin(a)*d,
+      hp,maxHp:hp,speed:def.speed*diff.speed,damage:def.damage*diff.damage,r:def.r,
+      phase:rand(0,TAU),shot:rand(.8,2.3),hit:0,knockX:0,knockY:0,
+      aiRole:game.spawnCounter++%5,aggression:diff.aggression});
   }
 
   // Mid-run miniboss: two appearances, clear tells, readable health bar.
   function spawnWarden(){
     const a=rand(0,TAU), p=game.player;
     const distance=245;
-    const hp=480+game.bossWaves*240;
+    const diff=difficultyAt(game.time,game.easyMode),hp=(480+game.bossWaves*240)*diff.hp;
     game.enemies.push({type:'warden',x:p.x+Math.cos(a)*distance,y:p.y+Math.sin(a)*distance,hp,maxHp:hp,
-      speed:31+game.bossWaves*3,damage:17,r:21,phase:0,shot:3.2,hit:0,
-      knockX:0,knockY:0,windup:0,slamRadius:77,pulse:0,attacks:0});
+      speed:(31+game.bossWaves*3)*diff.speed,damage:17*diff.damage,r:21,phase:0,shot:3.2,
+      hit:0,knockX:0,knockY:0,windup:0,slamRadius:77,pulse:0,attacks:0,aiRole:0,aggression:diff.aggression});
     game.bossWaves++;
     game.bossNext=game.bossWaves===1?119:Infinity;
     el.bossBar.hidden=false; el.bossName.textContent=game.bossWaves===1?'CRIMSON WARDEN':'CRIMSON WARDEN · ENRAGED';
@@ -799,6 +824,7 @@
     let mx=Number(keys.has('d')||keys.has('arrowright')) - Number(keys.has('a')||keys.has('arrowleft'));
     let my=Number(keys.has('s')||keys.has('arrowdown')) - Number(keys.has('w')||keys.has('arrowup'));
     const mag=Math.hypot(mx,my); p.moving=mag>.02; if(mag>0){ mx/=mag; my/=mag; p.x+=mx*p.speed*dt; p.y+=my*p.speed*dt; p.walk+=dt*11; p.face=mx<-.05?-1:mx>.05?1:p.face; }
+    p.moveX=mag?mx:0;p.moveY=mag?my:0;
 
     updateFountains(dt);
     // Continuous perk regeneration plus nonstacking 10s Fountain Regen.
@@ -822,15 +848,19 @@
     p.shotCd -= dt; p.hitCd = Math.max(0,p.hitCd-dt); p.attackAnim=Math.max(0,p.attackAnim-dt);
     if(p.shotCd<=0){shoot(); p.shotCd=1/p.attackRate;}
 
-    g.spawn -= dt;
+    g.spawn-=dt;
     if(g.spawn<=0){
-      const intensity=clamp(g.time/DURATION,0,1), count = 1 + (Math.random() < intensity*.85 ? 1 : 0) + (Math.random() < intensity*.28 ? 1 : 0);
-      if(g.enemies.length<165)for(let i=0;i<count;i++) spawnEnemy();
-      g.spawn = Math.max(.13, .60 - intensity*.38 - Math.random()*.08);
+      const diff=difficultyAt(g.time,g.easyMode);
+      const count=Math.min(12,Math.max(1,Math.round(diff.spawn*(1+Math.random()*.25))));
+      const room=Math.max(0,230-g.enemies.length);
+      for(let i=0;i<Math.min(count,room);i++)spawnEnemy();
+      // First minute: ~2x the old spawn rate; stronger each following minute.
+      g.spawn=Math.max(.095,.50/Math.sqrt(Math.max(1,diff.spawn)));
     }
 
     for(const e of [...g.enemies]){
-      const a=Math.atan2(p.y-e.y,p.x-e.x), d=Math.hypot(p.x-e.x,p.y-e.y); e.phase+=dt*6; e.hit=Math.max(0,e.hit-dt);
+      const aim=enemyTarget(e,p);
+      const a=Math.atan2(aim.y-e.y,aim.x-e.x), d=Math.hypot(p.x-e.x,p.y-e.y); e.phase+=dt*6; e.hit=Math.max(0,e.hit-dt);
       tickBleedStacks(e,dt);
       if(e.burnTime>0){const elapsed=Math.min(dt,e.burnTime),dealt=(e.burnDps||0)*elapsed;e.hp-=dealt;g.totalDamage+=dealt;e.burnTime-=elapsed;}
       if(e.poisonDps>0){const dealt=e.poisonDps*dt;e.hp-=dealt;g.totalDamage+=dealt;}
@@ -845,7 +875,7 @@
           if(e.windup<=0){
             e.windup=0;e.pulse=.34;e.attacks++;
             addImpact(e.x,e.y,e.slamRadius,'#ed4262');
-            if(dist2(p.x,p.y,e.x,e.y)<(e.slamRadius+7)**2)damagePlayer(19+Math.min(8,e.attacks));
+            if(dist2(p.x,p.y,e.x,e.y)<(e.slamRadius+7)**2)damagePlayer(e.damage*(1+Math.min(8,e.attacks)/17));
             addBloodBurst(e.x,e.y,15,'#9e143d');shake=Math.max(shake,3.6);
           }
         }else{
@@ -858,7 +888,7 @@
       if(e.type==='bat'){ e.x+=Math.cos(g.worldTime*8+e.phase)*18*dt; e.y+=Math.sin(g.worldTime*6+e.phase)*12*dt; }
       if(e.type==='slime'){ e.x+=Math.sin(g.worldTime*2+e.phase)*7*dt; }
       if(e.type==='wraith'){ e.x+=Math.cos(g.worldTime*3+e.phase)*10*dt; e.y+=Math.sin(g.worldTime*2.8+e.phase)*10*dt; }
-      if(e.type==='cultist'){ e.shot-=dt; if(e.shot<=0 && d<270){ e.shot=1.5+Math.random()*.6; g.shots.push({hostile:true,x:e.x,y:e.y-8,vx:Math.cos(a)*128,vy:Math.sin(a)*128,life:2.2,damage:10,hit:new Set(),angle:a}); } }
+      if(e.type==='cultist'){ e.shot-=dt; if(e.shot<=0 && d<270){ e.shot=(1.5+Math.random()*.6)/(e.aggression||1); g.shots.push({hostile:true,x:e.x,y:e.y-8,vx:Math.cos(a)*128,vy:Math.sin(a)*128,life:2.2,damage:e.damage,hit:new Set(),angle:a}); } }
       if(d<e.r+9 && p.hitCd<=0){damagePlayer(e.damage); if(state==='end')return;}
     }
 
