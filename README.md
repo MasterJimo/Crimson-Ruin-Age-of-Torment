@@ -6,7 +6,7 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.17
+## Current gameplay — v0.19
 
 Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
@@ -42,7 +42,7 @@ Open `index.html` in a browser or serve the repository root from `main` using Gi
 
 ## Credits
 
-Art includes the supplied Veilwarden, arena, fountain and RPG icons. Music: [Ancient Caverns — congusbongus (CC0)](https://opengameart.org/content/ancient-caverns-horror-ambient-loop), loaded from OpenGameArt over the network.
+Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss artwork and magenta Easy Mode ribbon. Music: [Ancient Caverns — congusbongus (CC0)](https://opengameart.org/content/ancient-caverns-horror-ambient-loop), loaded from OpenGameArt over the network.
 
 ---
 
