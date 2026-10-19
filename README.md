@@ -35,3 +35,8 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - Playable hero uses user-provided reference sheet (idle, two walking frames, casting and attack).
 - New files: `assets/crimson-heir-v092.png`, `assets/crimson-heir-portrait-v092.png`.
 - Existing enemy art and mechanics unchanged.
+
+## v0.10.0 — The Veilwarden
+- Playable character replaced with The Veilwarden (idle, walking, casting and arcane slash frames).
+- New hero sprites and menu portrait: `assets/veilwarden-v101.png` and `assets/veilwarden-portrait-v101.png`.
+- No changes to enemy models, combat balance or arena.
