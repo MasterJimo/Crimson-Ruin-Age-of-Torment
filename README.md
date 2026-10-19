@@ -90,4 +90,4 @@ These are **total tier multipliers**, not multipliers compounded across earlier 
 | Shrine | Spawn timing | Mechanic |
 |---|---|---|
 | **Life Shrine** | **2** at run start, further spawn attempts every **42–64s**, max **4** active | Restores **1 HP/s for 30s**, capped at max HP; **no instant heal**. Collecting another refreshes duration rather than stacking. |
-| **Magnet Shrine** | First possible at **4–6 min**, subsequent attempts every **5–8 min**, max **1** active | Instantly collects **all unclaimed map XP** and grants **15s of global XP collection** for new drops. |
+| **Magnet Shrine** | **Guaranteed at 00:45**. After each collection, the next spawns randomly **90–150s later**; max **1** active. | Instantly collects **all unclaimed map XP** and grants **15s of global XP collection** for new drops. |

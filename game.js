@@ -230,7 +230,7 @@
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
       player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
-      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:rand(240,360), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
+      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:45, magnetSpawned:false, kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
     spawnFountain(true);
@@ -261,20 +261,30 @@
     return false;
   }
 
-  // A magnetic shrine is much rarer than a healing shrine: the first can
-  // spawn after four to six minutes; subsequent attempts every 5–8 minutes.
-  // At most one exists at a time, far from active life shrines.
-  function spawnMagnetShrine(){
+  // First Magnet Shrine is guaranteed at 00:45 of gameplay, closer to the
+  // hunter. Further shrines arrive 90–150s after the previous pickup.
+  // The deterministic fallback prevents unlucky placement rolls from
+  // cancelling the guaranteed first shrine.
+  function spawnMagnetShrine(first=false){
     const g=game;if(!g||g.magnetShrines.length)return false;
     const p=g.player;
+    const place=(x,y)=>{
+      if(g.fountains.some(f=>dist2(x,y,f.x,f.y)<300*300))return false;
+      g.magnetShrines.push({x,y});return true;
+    };
     for(let i=0;i<45;i++){
-      const angle=rand(0,TAU),radius=rand(540,1030);
-      const x=p.x+Math.cos(angle)*radius,y=p.y+Math.sin(angle)*radius;
-      if(g.fountains.some(f=>dist2(x,y,f.x,f.y)<300*300))continue;
-      g.magnetShrines.push({x,y});
-      return true;
+      const angle=rand(0,TAU),radius=rand(first?260:330,first?440:680);
+      if(place(p.x+Math.cos(angle)*radius,p.y+Math.sin(angle)*radius))return true;
     }
-    return false;
+    // Check many nearby fixed positions when RNG misses all safe spots.
+    for(const radius of [320,440,560,680,820]){
+      for(let i=0;i<24;i++){
+        const a=TAU*i/24;
+        if(place(p.x+Math.cos(a)*radius,p.y+Math.sin(a)*radius))return true;
+      }
+    }
+    // Absolute fallback: never miss a scheduled shrine.
+    g.magnetShrines.push({x:p.x+320,y:p.y});return true;
   }
   // Transfer all live XP from the entire world in one pickup, not only
   // the viewport or the usual player magnet radius.
@@ -297,15 +307,23 @@
       spawnFountain();
       g.nextFountainAt=g.time+rand(42,64);
     }
-    if(g.time>=g.nextMagnetAt){
+    // Retire unreachable shrines and offer a replacement soon if one is lost.
+    if(g.magnetShrines.length){
       g.magnetShrines=g.magnetShrines.filter(s=>dist2(p.x,p.y,s.x,s.y)<2500*2500);
-      spawnMagnetShrine();
-      g.nextMagnetAt=g.time+rand(300,480);
+      if(!g.magnetShrines.length&&g.nextMagnetAt===Infinity)
+        g.nextMagnetAt=g.time+rand(30,60);
+    }
+    if(g.time>=g.nextMagnetAt){
+      if(spawnMagnetShrine(!g.magnetSpawned)){
+        g.magnetSpawned=true;
+        g.nextMagnetAt=Infinity; // Await pickup before scheduling the next one.
+      }else g.nextMagnetAt=g.time+10;
     }
     for(let i=g.magnetShrines.length-1;i>=0;i--){
       const shrine=g.magnetShrines[i];
       if(dist2(p.x,p.y,shrine.x,shrine.y)>40*40)continue;
       g.magnetShrines.splice(i,1);
+      g.nextMagnetAt=g.time+rand(90,150);
       p.magnetBuffTime=15; // Refresh, never stack.
       addParticles(shrine.x,shrine.y,'#8deaff',35,130,2,4);
       addImpact(shrine.x,shrine.y,60,'#62cfff');
