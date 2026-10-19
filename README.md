@@ -6,7 +6,7 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.22
+## Current gameplay — v0.22.1
 
 Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
@@ -48,6 +48,16 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 ---
 
 ## Patch notes — newest first
+
+### v0.22.1 — Prominent Easy Mode results, revised perk limits
+- Enlarged the pink **EASY MODE USED** badge and ribbon and placed them immediately beside **YOU DIED** on the final results screen. Hardcore still shows its mode unobtrusively.
+- Removed all technical hard-cap and maximum-value notices from perk descriptions on level-up cards. Limits still work behind the scenes.
+- **Iron Will** now stops at **80% total damage reduction**.
+- **Spread Shot** can grow up to **8 spread ranks** (16 angled extra projectiles, plus the forward projectile), instead of only two; Legendary/Mythic variants can grant two ranks at once.
+- **Deadly Precision** critical-hit chance now stops at **85%** instead of 75%.
+- Introduced repeatable offensive perk **CRITICAL DAMAGE** with the existing critical icon. It increases the critical-damage multiplier by +10% / +20% / +40% / +80% / +160% of base per Common / Magic / Rare / Legendary / Mythic draw, **without any cap**.
+- Added the current crit-damage multiplier to the Power-Up Grimoire and final hunter statistics.
+
 
 ### v0.22 — Five rarity variants, shared pause/Grimoire, speed cap
 - Moved the inventory chest from the game arena's bottom-left to the **upper-left toolbar**, opposite audio controls.

@@ -74,16 +74,17 @@
     switch(id){
       case 'brutality':return '+'+(5*u)+' flat direct damage (Blood / Fire / Lightning).';
       case 'rapid_fire':return '+'+(6*u)+'% attack speed.';
-      case 'movement':return '+'+(5*u)+'% BASE movement speed · hard cap 200.';
+      case 'movement':return '+'+(5*u)+'% base movement speed.';
       case 'vitality':return '+'+(10*u)+' maximum HP and heal '+(10*u)+' HP.';
       case 'regen':return '+'+(0.1*u).toFixed(2)+' HP each second.';
-      case 'armor':return 'Reduce incoming damage by '+Math.min(75,3*u)+'% (max 75% total armor).';
+      case 'armor':return 'Reduce incoming damage by '+(3*u)+'%.';
       case 'knowledge':return '+'+(8*u)+'% XP from crystals.';
       case 'magnet':return '+'+(10*u)+'% crystal pickup radius.';
-      case 'forward':return '+'+shotBonus(u)+' parallel projectile(s) (max 3 extra).';
-      case 'spread':return '+'+(2*spreadBonus(u))+' angled projectile(s) (max 4 extra).';
-      case 'pierce':return '+'+shotBonus(u)+' extra pierce (max 4).';
-      case 'crit':return '+'+(3*u)+'% critical chance (max 75%).';
+      case 'forward':return '+'+shotBonus(u)+' parallel projectile(s).';
+      case 'spread':return '+'+(2*spreadBonus(u))+' angled projectile(s).';
+      case 'pierce':return '+'+shotBonus(u)+' extra pierce.';
+      case 'crit':return '+'+(3*u)+'% critical chance.';
+      case 'crit_damage':return '+'+(10*u)+'% critical damage multiplier.';
       case 'blood_power':return '+'+(10*u)+'% Blood hit and Bleed damage. Unlocks at element ranks 2–4.';
       case 'hemorrhagic_burst':return '8-stack Blood detonation on every hit · +'+(10*(u-1))+'% burst potency.';
       case 'fire_power':return '+'+(10*u)+'% Fire hit, +'+(6*u)+'% Burn strength.';
@@ -98,13 +99,14 @@
     {id:'movement',icon:'movement',name:'SHADOW STRIDE',can:p=>p.speed<200,apply:(p,g,u)=>{p.speed=Math.min(200,p.speed+100*.05*u);}},
     {id:'vitality',icon:'vitality',name:'VITALITY',apply:(p,g,u)=>{const amount=10*u;p.maxHp+=amount;const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+amount);g.totalHealing+=p.hp-before;}},
     {id:'regen',icon:'regen',name:'REGENERATION',can:p=>p.regen<2,apply:(p,g,u)=>{p.regen=Math.min(2,p.regen+.1*u);}},
-    {id:'armor',icon:'armor',name:'IRON WILL',can:p=>p.armor<.75,apply:(p,g,u)=>{const reduction=Math.min(.75,.03*u);p.armor=Math.min(.75,1-(1-p.armor)*(1-reduction));}},
+    {id:'armor',icon:'armor',name:'IRON WILL',can:p=>p.armor<.80,apply:(p,g,u)=>{const reduction=Math.min(.80,.03*u);p.armor=Math.min(.80,1-(1-p.armor)*(1-reduction));}},
     {id:'knowledge',icon:'knowledge',name:'FORBIDDEN KNOWLEDGE',apply:(p,g,u)=>p.xpBonus*=1+.08*u},
     {id:'magnet',icon:'magnet',name:'SOUL MAGNET',apply:(p,g,u)=>p.magnet*=1+.1*u},
     {id:'forward',icon:'forward',name:'FORWARD SHOT',can:p=>p.forwardShots<3,apply:(p,g,u)=>p.forwardShots=Math.min(3,p.forwardShots+shotBonus(u))},
-    {id:'spread',icon:'spread',name:'SPREAD SHOT',can:p=>p.spreadShots<2,apply:(p,g,u)=>p.spreadShots=Math.min(2,p.spreadShots+spreadBonus(u))},
+    {id:'spread',icon:'spread',name:'SPREAD SHOT',can:p=>p.spreadShots<8,apply:(p,g,u)=>p.spreadShots=Math.min(8,p.spreadShots+spreadBonus(u))},
     {id:'pierce',icon:'pierce',name:'PIERCING FANGS',can:p=>p.pierce<4,apply:(p,g,u)=>p.pierce=Math.min(4,p.pierce+shotBonus(u))},
-    {id:'crit',icon:'crit',name:'DEADLY PRECISION',can:p=>p.critChance<.75,apply:(p,g,u)=>p.critChance=Math.min(.75,p.critChance+.03*u)},
+    {id:'crit',icon:'crit',name:'DEADLY PRECISION',can:p=>p.critChance<.85,apply:(p,g,u)=>p.critChance=Math.min(.85,p.critChance+.03*u)},
+    {id:'crit_damage',icon:'crit',name:'CRITICAL DAMAGE',apply:(p,g,u)=>{p.critDamage+=.10*u;}},
     {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',can:p=>p.element==='blood'&&p.elementRank<5,apply:(p,g,u)=>{p.elementRank++;p.damage*=1+.10*u;if(p.elementRank===2)p.bloodLance++;if(p.elementRank===3)p.bloodOrbChance+=.20;if(p.elementRank===4)p.bloodSplashChance+=.20;}},
     {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC BURST',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:(p,g,u)=>{p.hemorrhagicBurst=true;p.hemorrhagicBurstBoost=1+.1*(u-1);}},
     {id:'fire_power',icon:'fire_power',name:'FIRE POWER',can:p=>p.element==='fire'&&p.elementRank<5,apply:(p,g,u)=>{p.elementRank++;p.damage*=1+.10*u;p.burnMultiplier*=1+.06*u;}},
@@ -508,7 +510,7 @@
     }
   }
   function eligiblePowers(){return POWERS.filter(opt=>!game.banned.has(opt.id) && (!opt.can||opt.can(game.player)));}
-  const DAMAGE_POWER_IDS=new Set(["brutality","rapid_fire","forward","spread","pierce","crit","blood_power","fire_power","lightning_power","poison_power","hemorrhagic_burst"]);
+  const DAMAGE_POWER_IDS=new Set(["brutality","rapid_fire","forward","spread","pierce","crit","crit_damage","blood_power","fire_power","lightning_power","poison_power","hemorrhagic_burst"]);
   const DEFENSE_POWER_IDS=new Set(["movement","vitality","regen","armor"]);
   // Four unique cards: guaranteed offensive, guaranteed defensive, 2 RNG.
   // Legendary Blood is rolled separately at 5% per entire offering.
@@ -643,6 +645,7 @@
       ['ATTACK RATE',p.attackRate.toFixed(2)+'/s'],
       ['MOVE SPEED',Math.round(p.speed)],
       ['CRIT CHANCE',Math.round(p.critChance*100)+'%'],
+      ['CRIT DAMAGE','×'+p.critDamage.toFixed(2)],
       ['ARMOR',Math.round(p.armor*100)+'%'],
       ['XP MULTIPLIER','×'+p.xpBonus.toFixed(2)],
       ['PROJECTILES',(1+p.forwardShots)*(1+2*p.spreadShots)],
@@ -670,6 +673,7 @@
     el.end.classList.remove('hidden');
     el.xpStrip.hidden=true;
     $('runRibbon').hidden=!game.easyMode;
+    $('endModeBadge').classList.toggle('is-easy',Boolean(game.easyMode));
     el.inventory.classList.add('hidden');
     el.inventoryBtn.hidden=true;
     el.bossBar.hidden=true;
@@ -695,7 +699,7 @@
     }catch(_){}
     $('bestKills').textContent=`BEST: ${best.kills} KILLS`;
     renderRunBoard(survived,best);
-    $('runMode').textContent=game.easyMode?'EASY MODE USED · PINK RIBBON':'HARDCORE MODE';
+    $('runMode').textContent=game.easyMode?'EASY MODE USED':'HARDCORE MODE';
     // Offer Easy Mode immediately on the results screen of ANY loss below 5m.
     // Yes and No both start the next run, with no lasting preference.
     el.easyRetryOffer.classList.toggle('hidden',Boolean(game.endingAt30||game.time>=300));
@@ -744,6 +748,7 @@
       ['PROJECTILES',String(shots)],
       ['PIERCE',String(p.pierce+(p.element==='blood'?p.bloodLance:0))],
       ['CRITICAL',Math.round(p.critChance*100)+'%'],
+      ['CRIT DAMAGE','×'+p.critDamage.toFixed(2)],
       ['ARMOR',Math.round(p.armor*100)+'%'],
       ['XP BONUS','×'+fmt(p.xpBonus,2)],
       ['PICKUP RANGE',fmt(84*p.magnet,0)],

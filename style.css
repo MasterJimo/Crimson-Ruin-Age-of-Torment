@@ -480,3 +480,14 @@ body{padding:10px}
 .inventory-perk.perk-magic{border-color:#77ddff}
 .inventory-perk.perk-common{border-color:#dddbe5}
 @media(prefers-reduced-motion:reduce){#upgrade .upgrade-card.perk-mythic,#upgrade .upgrade-card.perk-mythic::before{animation:none}}
+
+/* v0.22.1: larger, unmistakable Easy Mode ribbon next to YOU DIED. */
+#endScreen .end-title-group{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:4px}
+#endScreen .end-title-main{display:flex;align-items:center;justify-content:flex-start;gap:22px;min-width:0}
+#endScreen .end-title-main h2{flex:0 1 auto;white-space:nowrap;margin:0;font:900 clamp(27px,3.2vw,46px)/1 Georgia,serif;text-shadow:0 4px 24px #c45b8577}
+#endScreen .end-mode{display:flex;gap:12px;align-items:center;justify-content:center;min-width:0;max-width:350px}
+#endScreen .end-mode .run-mode{font:900 11px/1.2 system-ui,sans-serif;letter-spacing:.09em;color:#e8c8d2}
+#endScreen .end-mode.is-easy{flex:0 1 310px;min-height:76px;padding:6px 12px;border:2px solid #eb8bd3;border-radius:14px;background:linear-gradient(120deg,#542042ee,#2b1238e8);box-shadow:0 0 0 1px #9b4b9b55,0 0 24px #d751bf83,inset 0 0 15px #b740a44d}
+#endScreen .end-mode.is-easy img{display:block;width:68px;height:68px;object-fit:contain;flex:0 0 68px;filter:drop-shadow(0 0 9px #fe71cb)}
+#endScreen .end-mode.is-easy .run-mode{font:1000 clamp(14px,1.35vw,20px)/1.2 system-ui,sans-serif;letter-spacing:.06em;color:#ffe5f8;text-shadow:0 0 15px #ff6dd3,0 1px 2px #000}
+#endScreen .end-mode img[hidden]{display:none!important}

@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.22.0">
+  <meta name="game-version" content="0.22.1">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.22.0">
+  <link rel="stylesheet" href="style.css?v=0.22.1">
 </head>
 <body>
   <div class="site-shell">
@@ -77,13 +77,18 @@
         <header class="end-header">
           <div class="end-title-group">
             <span class="eyebrow" id="endEyebrow">THE NIGHT CLAIMS ANOTHER SOUL</span>
-            <h2 id="endTitle">YOU DIED</h2>
+            <div class="end-title-main">
+              <h2 id="endTitle">YOU DIED</h2>
+              <div class="end-mode" id="endModeBadge">
+                <img id="runRibbon" src="assets/easy-ribbon-v019.webp" alt="Pink ribbon: Easy Mode used" hidden>
+                <span class="run-mode" id="runMode">HARDCORE MODE</span>
+              </div>
+            </div>
             <p class="overlay-sub" id="endSub">The horde still hungers...</p>
           </div>
           <div class="end-highlights">
             <div class="end-stats"><div><span>TIME</span><strong id="finalTime">00:00</strong></div><div><span>KILLS</span><strong id="finalKills">0</strong></div><div><span>LEVEL</span><strong id="finalLevel">1</strong></div></div>
             <div class="hunt-record"><span id="huntRank">NOVICE HUNTER</span><span id="bestKills">BEST: 0 KILLS</span></div>
-            <div class="end-mode"><img id="runRibbon" src="assets/easy-ribbon-v019.webp" alt="Pink ribbon: Easy Mode used" hidden><span class="run-mode" id="runMode">HARDCORE MODE</span></div>
           </div>
         </header>
         <nav class="end-actions" aria-label="Next run">
@@ -149,7 +154,7 @@
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="assets.js?v=0.22.0" defer></script>
-  <script src="game.js?v=0.22.0" defer></script>
+  <script src="assets.js?v=0.22.1" defer></script>
+  <script src="game.js?v=0.22.1" defer></script>
 </body>
 </html>
