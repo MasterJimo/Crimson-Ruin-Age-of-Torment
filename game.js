@@ -56,7 +56,7 @@
   // element-specific; only the power corresponding to the chosen element rolls.
   // Descriptions match the exact mechanic rather than promising an unrelated stat.
   const POWERS = [
-    {id:'brutality',icon:'brutality',name:'BRUTALITY',desc:'+5 flat damage to direct hits (no Poison impact).',tier:'common',apply:p=>p.flatDamage+=5},
+    {id:'brutality',icon:'brutality',name:'BRUTALITY',desc:'+5 flat direct damage (Blood / Fire / Lightning only).',tier:'common',can:p=>p.element!=='poison',apply:p=>p.flatDamage+=5},
     {id:'rapid_fire',icon:'rapid_fire',name:'RAPID FIRE',desc:'+18% attack speed.',tier:'common',apply:p=>p.attackRate*=1.18},
     {id:'movement',icon:'movement',name:'SHADOW STRIDE',desc:'+16% movement speed.',tier:'common',apply:p=>p.speed*=1.16},
     {id:'vitality',icon:'vitality',name:'VITALITY',desc:'+25 maximum HP. Heal 25 HP.',tier:'common',apply:p=>{p.maxHp+=25;const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+25);game.totalHealing+=p.hp-before}},
@@ -72,7 +72,10 @@
     {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC BURST',desc:'Every Blood hit immediately detonates 8 Bleed stacks. Only 5% chance to appear!',tier:'legendary',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:p=>{p.hemorrhagicBurst=true;}},
     {id:'fire_power',icon:'fire_power',name:'FIRE POWER',desc:'+25% Fire direct damage and +20% Burn potency.',tier:'rare',can:p=>p.element==='fire'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.burnMultiplier*=1.2;}},
     {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',desc:'+25% Lightning hit range and +10% chain chance.',tier:'rare',can:p=>p.element==='lightning'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.stormBonus+=.10;}},
-    {id:'poison_power',icon:'poison_power',name:'POISON POWER',desc:'+35% DPS per newly applied Poison stack.',tier:'rare',can:p=>p.element==='poison'&&p.elementRank<5,apply:p=>{p.elementRank++;p.poisonMultiplier*=1.35;}}
+    {id:'poison_power',icon:'poison_power',name:'POISON POWER',desc:'+20% base Poison DPS per rank. Improves all Poison stacks.',tier:'rare',can:p=>p.element==='poison'&&p.elementRank<5,apply:p=>{
+      p.elementRank++;p.poisonMultiplier=1+.20*p.elementRank;
+      for(const e of game.enemies)if(e.poisonStacks>0)e.poisonDps=e.poisonStacks*13*p.poisonMultiplier;
+    }}
   ];
 
   // Initial choice occurs before any enemies spawn / game clock starts.
@@ -170,7 +173,7 @@
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,
       perkRanks:Object.create(null),perkOrder:[],
-      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,fountainRegenTime:0,fountainRegenTick:0},
+      player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,fountainRegenTime:0,fountainRegenTick:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], nextFountainAt:rand(44,60), kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
@@ -760,7 +763,7 @@
   // hundreds or thousands of stacks stay cheap to simulate.
   function applyPoisonStack(enemy, potency){
     enemy.poisonStacks=(enemy.poisonStacks||0)+1;
-    enemy.poisonDps=(enemy.poisonDps||0)+13*potency;
+    enemy.poisonDps=enemy.poisonStacks*13*potency;
   }
   // Burn: one stack, 20 total base damage across 2s. Refreshes on hit.
   function refreshBurn(enemy,_hitDamage,potency){
