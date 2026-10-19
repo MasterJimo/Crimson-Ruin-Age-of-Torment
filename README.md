@@ -6,19 +6,21 @@
 
 - A run lasts up to **30:00**; at 30:00 an invulnerable **Reaper** kills the hunter.
 - Select one of four elements before combat; attacks automatically target nearby enemies.
-- Starting stats: **100 HP**, movement speed **100**, **1.55 attacks/s**, **6% critical chance**, **×1.6 critical damage**.
+- Starting stats: **100 HP**, movement speed **100**, **6% critical chance**, **×1.6 critical damage**. Base attack speed is determined by the selected element.
 - Blue XP crystals grant levels. A level-up grants a power-up **without healing HP**. XP required for the next level after reaching level `L`: `floor(12 + 8L + 1.5L²)`.
 
 ## Elements
 
-| Element | Base hit | Damage and status rules |
-|---|---:|---|
-| **Blood** | **20** | Every hit applies Bleed equal to **100% of actual hit damage over 8s per stack** (base **20 damage per stack / 2.5 DPS**). Up to **8 independent stacks** (base **160 total DoT** if all run their full duration); further hits replace the oldest stack. |
-| **Fire** | **40** | Applies one refreshing Burn dealing **100% of the basic hit each second for 2s** (base: **40 DPS × 2s = 80 total Burn damage**, plus the initial **40 direct hit**). Burn cannot stack. |
-| **Lightning** | **Random 1–200** | Each hit has **50% Shock chance** for **4s**. Shocked enemies take **×2 direct-hit damage**; DoT is unaffected. |
-| **Poison** | **0** | Every hit applies a **permanent 15 DPS stack**, equivalent to **120 damage over 8s**. Stacks have no count or duration limit. |
+| Element | Base hit | Base attacks/s | Damage and status rules |
+|---|---:|---:|---|
+| **Blood** | **20** | **1** | Every hit applies Bleed equal to **100% of actual hit damage over 8s per stack** (base **20 damage per stack / 2.5 DPS**). Up to **8 independent stacks** (base **160 total DoT** if all run their full duration); further hits replace the oldest stack. |
+| **Fire** | **40** | **1** | Applies one refreshing Burn dealing **100% of the basic hit each second for 2s** (base: **40 DPS × 2s = 80 total Burn damage**, plus the initial **40 direct hit**). Burn cannot stack. |
+| **Lightning** | **Random 1–200** | **1** | Each hit has **50% Shock chance** for **4s**. Shocked enemies take **×2 direct-hit damage**; DoT is unaffected. |
+| **Poison** | **0** | **2** | Every hit applies a **permanent 15 DPS stack**, equivalent to **120 damage over 8s**. Stacks have no count or duration limit. |
 
 ### Elemental damage formulas
+
+Base shot interval is `1 / attacks per second`: **1.0s** for Blood, Fire and Lightning, and **0.5s** for Poison. Rapid Fire multiplies the selected element's attack speed normally.
 
 - **Element Power:** Each upgrade adds `5% × rarity multiplier` to the base damage of the chosen element. Multiple bonuses **add**, rather than multiply.
 - **Blood:** basic hit = `20 × (1 + Blood Power bonus) + flat damage`. Bleed DPS per stack = `actual hit damage / 8` for **8s**, so each stack deals **100% of that hit** over its lifetime. With 8 base stacks: `8 × 20 = 160` total Bleed damage. Bleed scales with flat damage, Blood Power, crits and other direct-hit modifiers.
