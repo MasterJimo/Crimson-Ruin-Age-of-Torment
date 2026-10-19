@@ -130,3 +130,28 @@ body{padding:10px}
 .hunt-record span+span{color:#caa9b0}
 @media(max-width:650px){.intro h1{font-size:clamp(25px,7vw,43px)}.hunter-traits{gap:4px;margin:3px 0 8px}.hunter-traits span{font-size:8px;padding:4px 7px}.end-crest{width:34px;height:34px;font-size:24px}#endScreen .end-stats{margin:6px 0}#endScreen .end-stats div{min-width:73px;padding:7px 9px}.hunt-record{font-size:8px;margin-bottom:9px}.intro .crest{width:60px;height:60px}}
 @media(max-width:650px) and (orientation:portrait){.hunter-traits{margin:2px 0 5px}.hunter-traits span{font-size:7px;padding:3px 5px}.intro h1{font-size:23px}.intro-kicker{font-size:9px}.end-crest{display:none}#endScreen .end-stats{gap:5px;margin:3px 0}.hunt-record{gap:5px;font-size:7px;margin:2px 0 6px}}
+
+/* v0.7 — gothic boss HUD, readable combat and richer metallic UI */
+.site-shell{border-color:#51303b;box-shadow:0 26px 85px #000b,inset 0 0 0 1px #66414b}
+.topbar{background:linear-gradient(180deg,#21131c,#0d080d);border-color:#5d2c39}
+.game-frame{box-shadow:inset 0 0 0 1px #7b4659,0 22px 62px #000a}
+.hud-center{border-color:#b96f85;background:linear-gradient(180deg,#3f1b2ae8,#14070de8)}
+.hp-zone,.hud-right{border-color:#75505f;box-shadow:0 7px 20px #0008,inset 0 1px #fff1}
+.boss-bar{position:absolute;left:50%;top:62px;width:min(340px,52%);transform:translateX(-50%);z-index:2;pointer-events:none;filter:drop-shadow(0 8px 10px #000d)}
+.boss-bar[hidden]{display:none!important}
+.boss-heading{display:flex;justify-content:center;gap:12px;font-size:11px;letter-spacing:.21em;color:#ffe4e8;text-shadow:0 1px 6px #000;padding:6px 12px;background:linear-gradient(90deg,#1a090bdb,#4a172ade,#1a090bdb);border:1px solid #a54c67;border-radius:10px 10px 0 0}
+.boss-heading span{color:#e57e99}
+.boss-track{height:12px;border:1px solid #a05264;background:#180b12;overflow:hidden;border-radius:0 0 8px 8px;box-shadow:inset 0 0 6px #09030a}
+.boss-fill{height:100%;width:100%;background:linear-gradient(90deg,#8c1633,#df526a,#ffb5ba);box-shadow:inset 0 2px #ffcad766,0 0 14px #f94261;transition:width .12s linear}
+.audio-controls{gap:10px}.track-pill{border-color:#664453}.volume-control{border-color:#59414b}.sound-control{border-color:#744353}
+.intro .crest{border-color:#ad6783;box-shadow:0 0 0 8px #ffffff07,0 0 35px #f4759833,0 16px 40px #000}
+.intro h1{filter:drop-shadow(0 4px 14px #da627522)}
+.main-button{background:linear-gradient(180deg,#a93d55,#5b1328);border-color:#ea8495}
+.upgrade-card{border-color:#624154;background:linear-gradient(165deg,#26131c,#100a10)}
+.upgrade-card .glyph{text-shadow:0 0 12px #f38ea87a}
+.end-stats div{border-color:#8b5468;background:#21121c}
+@media(max-width:650px){.boss-bar{top:57px;width:min(270px,67%)}.boss-heading{font-size:8px;padding:4px 6px;letter-spacing:.09em}.boss-track{height:9px}}
+
+/* Final readability pass: boss announcements never overlap the boss bar. */
+.game-frame:has(.boss-bar:not([hidden])) .float-messages{top:116px;max-width:85%;font-size:12px}
+@media(max-width:650px){.game-frame:has(.boss-bar:not([hidden])) .float-messages{top:99px;font-size:9px;padding:5px 8px}}

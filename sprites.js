@@ -9,47 +9,75 @@
     const p = (color, a,b,w=1,h=1) => { x.fillStyle=color; x.fillRect(a,b,w,h); };
 
     if (kind==='hero') {
-      // Original gothic whip hunter: flowing auburn hair, crimson scarf,
-      // plated leather coat, brass buckle and an articulated whip grip.
+      // Grey / steel gothic hunter with a stronger Belmont-like silhouette,
+      // but kept original: layered coat, headband, long silver hair and whip stance.
       const stride = frame===1 ? -2 : frame===2 ? 2 : 0;
-      const striking = frame>=3;
-      // Split coat tails; movement and attack have distinct silhouettes.
-      p('#160d14',6,17,12,10);
-      p('#2a1720',5+(stride>0?1:0),19,6,7);
-      p('#3c1e29',13+(stride<0?-1:0),19,6,7);
-      p('#6c2b3b',7,20,2,5); p('#9f4352',16,19,2,5);
-      p('#160c10',7+stride,24,4,4); p('#160c10',14-stride,24,4,4);
-      p('#bd986c',8+stride,26,3,1); p('#bd986c',15-stride,26,3,1);
-      // Broad shoulder cape and fitted midnight coat.
-      p('#180f16',5,12,14,10);
-      p('#562331',6,13,5,11);p('#341721',12,13,6,10);
-      p('#812b3b',7,14,3,8);p('#ad4050',7,14,2,6);
-      p('#9e7c58',10,16,7,2);p('#d5b482',13,16,3,2);
-      p('#321d23',11,18,4,5);p('#f0cc92',12,17,2,2);
-      // Pale face, determined expression and windswept hair.
-      p('#2e181d',7,3,11,11);p('#5a312c',7,1,10,9);
-      p('#875443',8,2,8,4);p('#be7a54',9,3,5,2);
-      p('#e2b28d',10,8,6,5);p('#ffdbaf',11,8,4,3);
-      p('#291b1d',11,10,2,1);p('#291b1d',15,10,1,1);
-      p('#a16461',12,12,3,1);
-      // Whipping hair strands change between strides.
-      p('#5d352a',6,6,3,9);p('#91583b',7,6,2,7);
-      if(frame===1){p('#5e332d',5,9,2,8);p('#a46b46',6,7,2,4);}
-      if(frame===2){p('#6a3932',5,8,3,9);p('#a36a49',7,8,2,5);}
-      // Brass clasp and wine-red scarf flutter.
-      p('#b7384d',7,13,8,3);p('#f0787b',8,13,6,1);
-      if(striking){p('#b7384d',4,14,4,2);p('#8e283e',2,15,4,2);}
-      else if(frame===1){p('#a92e43',4,15,4,2);}
-      else if(frame===2){p('#a92e43',3,13,5,2);}
-      // Leather bracer and whip arm: raised on attack frame.
-      p('#27171e',3,14,4,7);p('#be9975',4,19,3,3);
-      if(striking){
-        p('#a98b6d',18,9,4,3);p('#27171e',18,11,4,4);
-        p('#e0c188',20,7,2,4);p('#8b6748',21,5,2,3);
-      }else{
-        p('#28171e',18,14,4,6);p('#ba9875',19,18,3,3);
-        p('#d6ae76',21,17,2,4);p('#775333',21,12,2,6);
+      const attackPhase = frame>=3 ? frame-3 : -1; // 0 windup, 1 crack, 2 recovery
+      const striking = attackPhase >= 0;
+      // Boots and split coat tails
+      p('#121318',6,17,12,10);
+      p('#23262f',5+(stride>0?1:0),19,6,7); p('#373c46',13+(stride<0?-1:0),19,6,7);
+      p('#5e6676',7,20,2,5); p('#9098a9',16,19,2,5);
+      p('#17171b',7+stride,24,4,4); p('#17171b',14-stride,24,4,4);
+      p('#8a6d3d',8+stride,26,3,1); p('#8a6d3d',15-stride,26,3,1);
+      // Torso and belts
+      p('#14161b',5,12,14,10); p('#414752',6,13,5,11); p('#2b2f39',12,13,6,10);
+      p('#828b9b',7,14,3,8); p('#bcc4cf',7,14,2,6);
+      p('#9a959d',10,16,7,2); p('#ddd8df',13,16,3,2);
+      p('#31353d',11,18,4,5); p('#f2ead8',12,17,2,2);
+      p('#8b7348',10,15,7,1); p('#d4c3ab',12,15,2,1);
+      // Head, face, and stronger silver hair silhouette.
+      p('#282328',7,3,11,11); p('#5e6470',7,1,10,9); p('#949aa7',8,2,8,4); p('#d9dde5',9,3,5,2);
+      p('#e2b58f',10,8,6,5); p('#f7dec1',11,8,4,3); p('#252124',11,10,2,1); p('#252124',15,10,1,1); p('#8d6f68',12,12,3,1);
+      // Headband and long hair fall.
+      p('#777f8f',8,5,8,2); p('#cfd4df',8,6,2,1);
+      p('#515762',6,6,3,9); p('#b7bcc7',7,6,2,7); p('#4a505a',16,6,2,8); p('#adb2be',16,7,2,6);
+      if(frame===1){p('#595f6a',5,9,2,8); p('#c1c6d0',6,7,2,4); p('#444952',16,8,2,7);} 
+      if(frame===2){p('#666c77',5,8,3,9); p('#c6cad4',7,8,2,5); p('#565b66',16,7,2,8);} 
+      // Muted scarf and shoulder wrap.
+      p('#5b6370',7,13,8,3); p('#aeb5c0',8,13,6,1);
+      if(striking){p('#5b6370',4,14,4,2); p('#444b57',2,15,4,2);} else if(frame===1){p('#525a67',4,15,4,2);} else if(frame===2){p('#525a67',3,13,5,2);} 
+      // Left arm / bracer.
+      p('#24232a',3,14,4,7); p('#c4a184',4,19,3,3);
+      // Whip arm and strike staging.
+      if(attackPhase === 0){ // windup
+        p('#20232a',18,13,4,6); p('#c4a184',19,17,3,3); p('#d7dde4',20,16,2,4); p('#7d838e',21,11,2,6);
+      } else if(attackPhase === 1){ // crack
+        p('#9ea6b4',18,7,4,3); p('#20232a',18,9,4,4); p('#e2e5ea',20,5,2,4); p('#8e949e',21,3,2,3);
+      } else if(attackPhase === 2){ // recovery
+        p('#40454f',17,11,5,4); p('#20232a',18,13,4,5); p('#d9dee5',20,12,2,4); p('#7f868f',21,8,2,5);
+      } else {
+        p('#24232a',18,14,4,6); p('#c4a184',19,18,3,3); p('#d5d8de',21,17,2,4); p('#7b7f88',21,12,2,6);
       }
+    }
+    if (kind==='heroPortrait') {
+      // Dedicated menu portrait, slightly brighter and more readable than the gameplay sprite.
+      p('#1a1b22',6,19,12,8); p('#313642',6,20,5,7); p('#565d6f',13,20,5,6); p('#9da6b8',8,21,2,5); p('#c4ccd7',16,20,2,5);
+      p('#28242a',6,4,12,13); p('#666d7c',6,2,11,10); p('#a7afbc',7,3,9,4); p('#e4e9f1',9,4,5,2);
+      p('#e3b58d',10,9,6,6); p('#f8e0c5',11,9,4,3); p('#272226',11,11,2,1); p('#272226',15,11,1,1); p('#8d6f68',12,13,3,1);
+      p('#82899a',8,6,8,2); p('#d6dbe4',8,7,2,1);
+      p('#555c69',5,7,3,10); p('#c6ccd7',6,7,2,8); p('#4b525d',16,8,2,9); p('#b6bcc8',16,8,2,7);
+      p('#5d6471',6,15,10,3); p('#b3bac6',8,15,6,1);
+      p('#7a838f',9,17,7,2); p('#ddd8df',13,17,3,2); p('#3a3f49',11,19,4,4); p('#f2ead8',12,18,2,2);
+      p('#8b7348',10,16,7,1); p('#d4c3ab',12,16,2,1);
+      p('#22242b',3,15,4,7); p('#c4a184',4,20,3,3); p('#23242d',18,14,4,6); p('#c4a184',19,18,3,3);
+      p('#d6dbe3',20,17,2,4); p('#7e858f',21,12,2,6);
+    }
+    if(kind==='warden') {
+      // Crimson Warden: towering red-black armoured vampire sentinel.
+      p('#180b13',7,6,11,19);p('#39202c',5,12,15,12);p('#7b243d',6,14,5,10);p('#aa3d59',15,13,5,11);
+      // Horned helm and pale mask
+      p('#33202b',7,2,11,10);p('#6f4b5a',6,3,13,7);
+      p('#d6bdba',9,7,8,7);p('#f7ddcf',10,8,6,3);p('#1d1218',10,11,2,2);p('#1d1218',15,11,2,2);
+      p('#ef3b69',10,11,2,1);p('#ef3b69',15,11,2,1);
+      p('#b98690',5,1,4,7);p('#d4afbc',6,0,2,4);p('#b98690',17,1,4,7);p('#d4afbc',19,0,2,4);
+      p('#e0c6c1',11,14,4,3);p('#a85264',7,13,12,3);
+      p('#30202b',8,17,9,9);p('#681d35',9,17,7,8);
+      p('#cba2ac',10,18,6,2);p('#f5d9cf',11,18,3,1);
+      p('#171016',8,23,4,5);p('#171016',15,23,4,5);p('#ae6674',8,25,4,1);p('#ae6674',15,25,4,1);
+      p('#6d3447',3,15,4,8);p('#c9a6ad',4,18,2,4);p('#6d3447',19,15,4,8);p('#c9a6ad',20,18,2,4);
+      p('#b6828d',22,9,2,15);p('#dbb8ba',21,7,3,4);p('#e2c8c4',22,4,2,4);
+      if(frame){p('#d64a6a',9,17,7,1);p('#f0d3cf',13,8,2,1);}
     }
     if(kind==='skeleton') {
       p('#1b1111',7,4,11,11); p('#c7baa1',8,3,10,10); p('#f1e5c8',9,4,8,7);
