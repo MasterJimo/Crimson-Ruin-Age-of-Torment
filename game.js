@@ -98,9 +98,9 @@
   // Common +5%, Magic +10%, Rare +20%, Legendary +40%, Mythic +80%.
   // No added proc chances, extra projectiles, or separate Burn affix.
   const POISON_DPS=15;
-  // Burn snapshots 50% of the current basic Fire hit (including flat damage)
-  // over two seconds; crits and Shock do not magnify this DoT.
-  function burnDps(p){return (p.damage+p.flatDamage)*.5/2;}
+  // Burn deals 100% of the basic Fire hit PER SECOND for 2 seconds
+  // (base: 40 DPS = 80 total DoT). Crits and Shock do not amplify Burn.
+  function burnDps(p){return p.damage+p.flatDamage;}
   function syncActiveBurn(p,g){
     if(p.element!=='fire')return;
     for(const enemy of g.enemies){
@@ -146,8 +146,8 @@
   // The four starting cards are intentionally brief. Full mechanics remain
   // available in the paused Power-Up Grimoire.
   const ELEMENT_CHOICES = [
-    {id:'blood',element:'blood',name:'BLOOD',desc:'20 DMG · Bleed on hit',longDesc:'20 direct damage. Every hit Bleeds for 50% of its damage over 8s, up to 8 stacks. Brutality and Blood Power improve Bleed.',tier:'rare'},
-    {id:'fire',element:'fire',name:'FIRE',desc:'40 DMG · Burn over 2s',longDesc:'40 direct damage. One Burn deals 50% of the basic hit over 2s and refreshes on hit. Brutality and Fire Power improve Burn.',tier:'rare'},
+    {id:'blood',element:'blood',name:'BLOOD',desc:'20 DMG · Bleed on hit',longDesc:'20 direct damage. Every hit Bleeds for 100% of its damage over 8s per stack (20 total each at base), up to 8 stacks. Brutality and Blood Power improve Bleed.',tier:'rare'},
+    {id:'fire',element:'fire',name:'FIRE',desc:'40 DMG · Burn over 2s',longDesc:'40 direct damage. Burn deals 100% of the basic hit every second for 2s (40 + 40 at base), refreshing on hit. Brutality and Fire Power improve Burn.',tier:'rare'},
     {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 50% Shock',longDesc:'Random 1–200 direct damage per hit. Each hit has a 50% chance to Shock for 4s; shocked enemies take double direct-hit damage.',tier:'rare'},
     {id:'poison',element:'poison',name:'POISON',desc:'15 DPS · Infinite stacks',longDesc:'Every hit adds a permanent 15 DPS Poison stack (120 damage per 8s). <strong>Infinite scaling</strong>: stacks never expire.',tier:'rare'}
   ];
@@ -167,11 +167,11 @@
     // per application before crits; Blood's initial hit can scale the bleed.
     if(p.element==='blood')return [
       ['DIRECT HIT',fmt(direct)],
-      ['DAMAGE OVER TIME',`${fmt(direct*.5)} / 8s per stack`]
+      ['DAMAGE OVER TIME',`${fmt(direct)} / 8s per stack (max 8)`]
     ];
     if(p.element==='fire')return [
       ['DIRECT HIT',fmt(direct)],
-      ['DAMAGE OVER TIME',`${fmt(burnDps(p)*2)} / 2s (1 stack)`]
+      ['DAMAGE OVER TIME',`${fmt(burnDps(p))} DPS × 2s (1 Burn)`]
     ];
     if(p.element==='lightning')return [
       ['DIRECT HIT',`${fmt(p.damage+p.flatDamage)}–${fmt(p.damage*200+p.flatDamage)}`]
@@ -618,13 +618,7 @@
       p.xp-=p.next;
       p.level++;
       p.next=Math.floor(12+p.level*8+p.level*p.level*1.5);
-      // Only a completed EXP bar restores health; the starting element choice doesn't.
-      const healed=Math.min(20,p.maxHp-p.hp);
-      if(healed>0){
-        p.hp+=healed;game.totalHealing+=healed;
-        floatText(p.x,p.y-33,`+${Math.round(healed)} HP`,'#98ffba',12);
-        addParticles(p.x,p.y,'#74ffc2',12,52,2,3);
-      }
+      // Leveling only grants a power-up: no automatic HP restoration.
       state='upgrade';openUpgrade();playSound('level');
     }
   }
@@ -1016,7 +1010,7 @@
     if(game)game.totalDamage+=finalDamage;
     return finalDamage;
   }
-  // Bleed stacks are independent 8-second effects, each worth 50% of the hit.
+  // Bleed stacks are independent 8-second effects, each worth 100% of the hit.
   // Blood has eight stacks by default. The legendary perk replaces them with
   // eight instant full-strength stacks and detonates on EVERY Blood hit.
   function tickBleedStacks(enemy,dt){
@@ -1050,12 +1044,12 @@
     const stacks=enemy.bleedStacks||(enemy.bleedStacks=[]);
     if(game.player.hemorrhagicBurst){
       // Instant 8-stack detonation on EVERY hit, replacing existing Bleed.
-      const damage=8*hitDamage*.5*(game.player.hemorrhagicBurstBoost||1);
+      const damage=8*hitDamage*(game.player.hemorrhagicBurstBoost||1);
       stacks.length=0;
       burstHemorrhage(enemy,damage);
       return;
     }
-    const stack={time:8,dps:hitDamage*.5/8,total:hitDamage*.5};
+    const stack={time:8,dps:hitDamage/8,total:hitDamage};
     if(stacks.length<8)stacks.push(stack);
     else{
       let oldest=0;
@@ -1069,7 +1063,7 @@
     enemy.poisonStacks=(enemy.poisonStacks||0)+1;
     enemy.poisonDps=enemy.poisonStacks*POISON_DPS*potency;
   }
-  // Fire's single Burn deals half of the basic hit over 2s and refreshes.
+  // Fire's single Burn deals the full basic hit each second for 2s; refreshes.
   function refreshBurn(enemy,p){
     enemy.burnDps=burnDps(p);
     enemy.burnTime=2;
