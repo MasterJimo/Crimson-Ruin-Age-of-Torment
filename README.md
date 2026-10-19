@@ -6,7 +6,7 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.24
+## Current gameplay — v0.24.1
 
 Survive up to a **30-minute run** in hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
@@ -16,13 +16,13 @@ In addition to the existing **minute-by-minute scaling** (enemy HP ×1.15, damag
 
 | From | Extra enemy HP | Extra damage | Extra speed | Extra spawn pressure | Extra flanking aggression |
 |---|---:|---:|---:|---:|---:|
-| 05:00 | ×1.5 | ×1.45 | ×1.12 | ×1.25 | ×1.10 |
-| 10:00 | ×2.7 | ×2.5 | ×1.22 | ×1.6 | ×1.25 |
-| 15:00 | ×4.6 | ×4.2 | ×1.32 | ×2.0 | ×1.40 |
-| 20:00 | ×7.6 | ×7.0 | ×1.42 | ×2.5 | ×1.55 |
-| 25:00 | ×12 | ×11 | ×1.5 | ×3.0 | ×1.75 |
+| 05:00 | ×2.8 | ×2.4 | ×1.4 | ×2.0 | ×1.4 |
+| 10:00 | ×4.8 | ×4.2 | ×1.65 | ×2.6 | ×1.7 |
+| 15:00 | ×8 | ×7.2 | ×1.9 | ×3.2 | ×2 |
+| 20:00 | ×13 | ×12 | ×2.1 | ×4 | ×2.3 |
+| 25:00 | ×20 | ×18 | ×2.3 | ×5 | ×2.6 |
 
-The surge **also upgrades surviving on-screen enemies immediately** while preserving their current HP percentage; fresh enemies use the full difficulty for the current minute. Every milestone announces a new phase. The active-enemy cap of **230** remains to avoid runaway performance costs. Easy Mode retains its normal 50% enemy-stat and spawn-pressure reductions. **10:00 is deliberately a harsh survival wall**; the goal of roughly half of players dying around this point is a balancing target, not a measured result. The forced 30:00 Reaper ending is unchanged.
+The surge **also upgrades surviving on-screen enemies immediately** while preserving their current HP percentage. Every milestone spawns an extra ring of **14–30 mixed aggressive enemies**, subject to the remaining enemy slots. Ordinary enemy spawn positions become closer after 05:00 and again after 10:00. Spawn pacing continues to accelerate at all five thresholds, with a raised spawn-pressure calculation limit but the same **230 active-enemy cap**. Every milestone announces a new phase. Easy Mode retains its normal 50% enemy-stat and spawn-pressure reductions. **10:00 is deliberately a harsh survival wall**; the goal of roughly half of players dying around this point is a balancing target, not a measured result. The forced 30:00 Reaper ending is unchanged.
 
 | Element | Starting direct damage | DoT / special behavior |
 |---|---:|---|
@@ -62,6 +62,13 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 ---
 
 ## Patch notes — newest first
+
+### v0.24.1 — Aggressive five-minute pressure
+- **05:00 now hits much harder**: extra tier HP **×2.8**, damage **×2.4**, speed **×1.4**, spawn pressure **×2** and flanking aggression **×1.4**, all on top of ongoing minute scaling.
+- Subsequent surges scale up further, maintaining a sharply increasing challenge at **10 / 15 / 20 / 25 minutes**.
+- Every threshold launches a close-range **14–30 enemy ambush ring** with wraiths, ghouls, cultists and spiders (while respecting the 230-enemy cap).
+- Normal enemies appear closer after 05:00 and 10:00, and the spawn interval now keeps getting shorter at all five thresholds instead of flattening prematurely.
+- Unchanged: Easy Mode's 50% reductions, the 30:00 Reaper, element balance and level-up systems.
 
 ### v0.24 — Five-minute nightmare escalation
 - Added five major difficulty surges at **05:00 / 10:00 / 15:00 / 20:00 / 25:00**.

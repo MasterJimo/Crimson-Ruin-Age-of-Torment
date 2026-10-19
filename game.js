@@ -333,20 +333,20 @@
   // ramp. Keeping a finite enemy cap protects performance under heavy pressure.
   const DIFFICULTY_SURGES=[
     {hp:1,damage:1,speed:1,spawn:1,aggression:1},
-    {hp:1.5,damage:1.45,speed:1.12,spawn:1.25,aggression:1.10},
-    {hp:2.7,damage:2.5,speed:1.22,spawn:1.6,aggression:1.25},
-    {hp:4.6,damage:4.2,speed:1.32,spawn:2,aggression:1.40},
-    {hp:7.6,damage:7,speed:1.42,spawn:2.5,aggression:1.55},
-    {hp:12,damage:11,speed:1.5,spawn:3,aggression:1.75}
+    {hp:2.8,damage:2.4,speed:1.4,spawn:2,aggression:1.4},
+    {hp:4.8,damage:4.2,speed:1.65,spawn:2.6,aggression:1.7},
+    {hp:8,damage:7.2,speed:1.9,spawn:3.2,aggression:2},
+    {hp:13,damage:12,speed:2.1,spawn:4,aggression:2.3},
+    {hp:20,damage:18,speed:2.3,spawn:5,aggression:2.6}
   ];
-  const SURGE_TITLES=['','THE HORDE GROWS','NIGHTMARE UNLEASHED','NO MERCY','THE ABYSS OPENS','FINAL ONSLAUGHT'];
+  const SURGE_TITLES=['','THE SLAUGHTER BEGINS','NIGHTMARE UNLEASHED','NO MERCY','THE ABYSS OPENS','FINAL ONSLAUGHT'];
   function difficultyTier(seconds){return Math.min(5,Math.floor(Math.max(0,seconds)/300));}
   function difficultyAt(seconds,easy=false){
     const minute=Math.min(29,Math.floor(Math.max(0,seconds)/60));
     const surge=DIFFICULTY_SURGES[difficultyTier(seconds)],factor=easy?.5:1;
     return {
       minute,
-      spawn:Math.min(32,Math.min(10,2*Math.pow(1.18,minute))*surge.spawn)*factor,
+      spawn:Math.min(60,Math.min(10,2*Math.pow(1.18,minute))*surge.spawn)*factor,
       hp:Math.pow(1.15,minute)*surge.hp*factor,
       damage:Math.pow(1.12,minute)*surge.damage*factor,
       speed:Math.pow(1.06,minute)*surge.speed*factor,
@@ -368,7 +368,16 @@
       enemy.aggression*=aggressionRatio;
     }
     g.difficultyTier=newTier;
-    g.spawn=Math.min(g.spawn,.08); // Give the new wave a prompt entrance.
+    // Visible encirclement at the milestone, not merely tougher distant spawns.
+    // Respect the global 230-enemy performance limit.
+    const ambushCount=Math.min(230-g.enemies.length,10+newTier*4);
+    const ambushTypes=['wraith','ghoul','cultist','spider'];
+    const ambushOffset=rand(0,TAU);
+    for(let i=0;i<ambushCount;i++){
+      spawnEnemy(ambushTypes[i%ambushTypes.length],rand(165,225),
+        ambushOffset+TAU*i/ambushCount);
+    }
+    g.spawn=Math.min(g.spawn,.08); // Regular pressure follows immediately.
     flashMessage(`☠ ${SURGE_TITLES[newTier]} · ${timeText(newTier*300)}`,2800);
     shake=Math.max(shake,3+newTier);
     playSound('boss');
@@ -391,7 +400,9 @@
     const p = game.player, t = game.time; let pool = ['skeleton'];
     if(t>14) pool.push('bat'); if(t>32) pool.push('slime'); if(t>53) pool.push('ghoul'); if(t>83) pool.push('cultist'); if(t>115) pool.push('wraith'); if(t>96) pool.push('spider');
     if(!type){ const weights=pool.map(k=>ENEMIES[k].weight); let q=Math.random()*weights.reduce((a,b)=>a+b,0); type = pool.find(k=>(q-=ENEMIES[k].weight)<=0) || pool[0]; }
-    const def=ENEMIES[type],a=angle??rand(0,TAU),d=distance??rand(225,345);
+    // Shorter approach distance at each survival wall.
+    const spawnRange=t>=600?[145,225]:t>=300?[170,255]:[225,345];
+    const def=ENEMIES[type],a=angle??rand(0,TAU),d=distance??rand(...spawnRange);
     const diff=difficultyAt(t,game.easyMode),hp=def.hp*diff.hp;
     game.enemies.push({type,x:p.x+Math.cos(a)*d,y:p.y+Math.sin(a)*d,
       hp,maxHp:hp,speed:def.speed*diff.speed,damage:def.damage*diff.damage,r:def.r,
@@ -1050,8 +1061,8 @@
       const count=Math.min(12,Math.max(1,Math.round(diff.spawn*(1+Math.random()*.25))));
       const room=Math.max(0,230-g.enemies.length);
       for(let i=0;i<Math.min(count,room);i++)spawnEnemy();
-      // First minute starts at ~2x; five-minute surges sharply intensify waves.
-      g.spawn=Math.max(.095,.50/Math.sqrt(Math.max(1,diff.spawn)));
+      // Higher-tier spawn multipliers keep accelerating the horde through 25:00.
+      g.spawn=Math.max(.045,.50/Math.sqrt(Math.max(1,diff.spawn)));
     }
 
     for(const e of [...g.enemies]){
