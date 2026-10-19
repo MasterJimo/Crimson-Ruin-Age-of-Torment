@@ -42,40 +42,27 @@
     spider:{name:'Night Spider',hp:58,speed:61,damage:13,xp:5,r:12,color:'#6b3945',blood:'#9a1932',weight:14}
   };
 
-  // A larger run-specific pool: banished powers never reappear this run.
+  // v0.13: sixteen curated perks. Twelve are universal and four are
+  // element-specific; only the power corresponding to the chosen element rolls.
+  // Descriptions match the exact mechanic rather than promising an unrelated stat.
   const POWERS = [
-    {id:'damage',icon:'✦',name:'HUNTER\'S EDGE',desc:'+25% projectile damage',tier:'common',apply:p=>p.damage*=1.25},
-    {id:'speed',icon:'➤',name:'SHADOW STRIDE',desc:'+16% move speed',tier:'common',apply:p=>p.speed*=1.16},
-    {id:'rate',icon:'✧',name:'RAPID FIRE',desc:'+18% attack speed',tier:'common',apply:p=>p.attackRate*=1.18},
-    {id:'multi',icon:'✹',name:'TWIN FANG',desc:'+1 projectile (max 5)',tier:'rare',can:p=>p.multishot<5,apply:p=>p.multishot++},
-    {id:'vitality',icon:'♥',name:'BLOOD PACT',desc:'+25 max HP & heal 35',tier:'common',apply:p=>{p.maxHp+=25;p.hp=Math.min(p.maxHp,p.hp+35)}},
-    {id:'magnet',icon:'◇',name:'SOUL MAGNET',desc:'+40% pickup range',tier:'common',apply:p=>p.magnet*=1.4},
-    {id:'pierce',icon:'✴',name:'PIERCING FANGS',desc:'Shots pierce +1 foe',tier:'rare',can:p=>p.pierce<4,apply:p=>p.pierce++},
-    {id:'restore',icon:'✚',name:'DARK RECOVERY',desc:'Heal 45 HP',tier:'common',can:p=>p.hp<p.maxHp-12,apply:p=>p.hp=Math.min(p.maxHp,p.hp+45)},
-    {id:'velocity',icon:'➳',name:'QUICK SILVER',desc:'+28% projectile speed',tier:'common',apply:p=>p.projectileSpeed*=1.28},
-    {id:'swell',icon:'◉',name:'ARCANE CALIBER',desc:'+25% projectile size',tier:'rare',can:p=>p.projectileSize<2.5,apply:p=>p.projectileSize*=1.25},
-    {id:'armor',icon:'⬡',name:'IRON WILL',desc:'Take 10% less damage',tier:'rare',can:p=>p.armor<.5,apply:p=>p.armor=1-(1-p.armor)*.9},
-    {id:'crit',icon:'✹',name:'DEADLY PRECISION',desc:'+12% crit chance',tier:'rare',can:p=>p.critChance<.6,apply:p=>p.critChance+=.12},
-    {id:'critrage',icon:'✸',name:'EXECUTIONER',desc:'+40% critical damage',tier:'rare',apply:p=>p.critDamage+=.4},
-    {id:'leech',icon:'♥',name:'VAMPIRIC TOUCH',desc:'8% chance to heal on hit',tier:'rare',can:p=>p.leechChance<.32,apply:p=>p.leechChance+=.08},
-    {id:'fire',icon:'♨',name:'HELLFIRE',desc:'+18% fire shot chance',tier:'legendary',can:p=>p.element!=='fire'&&p.fireChance<.72,apply:p=>p.fireChance+=.18},
-    {id:'frost',icon:'❄',name:'FROSTBITE',desc:'+20% slow chance for non-lightning shots',tier:'rare',can:p=>p.frostChance<.8,apply:p=>p.frostChance+=.2},
-    {id:'chain',icon:'ϟ',name:'STORMBRINGER',desc:'+16% chaining lightning',tier:'legendary',can:p=>p.chainChance<.64,apply:p=>p.chainChance+=.16},
-    {id:'blast',icon:'✺',name:'BLOOD DETONATION',desc:'+18% explosive shot chance',tier:'legendary',can:p=>p.blastChance<.72,apply:p=>p.blastChance+=.18},
-    {id:'souls',icon:'◆',name:'SOUL HARVEST',desc:'+30% XP earned',tier:'rare',apply:p=>p.xpBonus*=1.3},
-    {id:'bane',icon:'⚔',name:'GIANT SLAYER',desc:'+40% boss damage',tier:'rare',apply:p=>p.bossDamage*=1.4},
-    {id:'regen',icon:'✚',name:'BLOOD MENDING',desc:'+1 HP every 4 seconds',tier:'rare',can:p=>p.regen<2.5,apply:p=>p.regen+=.25},
-    {id:'reroll',icon:'↻',name:'FATE TWISTER',desc:'+1 Reroll charge',tier:'rare',apply:(_p,g)=>g.rerolls++},
-    {id:'banishtoken',icon:'✕',name:'CURSE BREAKER',desc:'+1 Banish charge',tier:'rare',apply:(_p,g)=>g.banishes++},
-    {id:'orbits',icon:'☽',name:'HALO OF BLADES',desc:'+1 orbiting blade (max 4)',tier:'legendary',can:p=>p.orbits<4,apply:p=>p.orbits++},
-    {id:'blood_lance',name:'BLOOD LANCE',desc:'Blood bolts pierce +1 enemy',tier:'rare',can:p=>p.element==='blood'&&p.bloodLance<3,apply:p=>p.bloodLance++},
-    {id:'blood_orb',name:'SANGUINE ORB',desc:'+18% chance for a slow explosive blood orb',tier:'legendary',can:p=>p.element==='blood'&&p.bloodOrbChance<.7,apply:p=>p.bloodOrbChance+=.18},
-    {id:'blood_burst',name:'HEMORRHAGE',desc:'+20% chance of a blood splash explosion',tier:'rare',can:p=>p.element==='blood'&&p.bloodSplashChance<.7,apply:p=>p.bloodSplashChance+=.2},
-    {id:'flame_wave',name:'CINDER VEINS',desc:'Fire burns last 50% longer',tier:'rare',can:p=>p.element==='fire'&&p.burnMultiplier<3,apply:p=>p.burnMultiplier*=1.5},
-    {id:'storm_arc',name:'VOLT CASCADE',desc:'Lightning chains more often',tier:'rare',can:p=>p.element==='lightning'&&p.stormBonus<.75,apply:p=>p.stormBonus+=.2},
-    {id:'venom_pool',name:'VENOM HEART',desc:'+35% permanent poison damage',tier:'rare',can:p=>p.element==='poison'&&p.poisonMultiplier<3,apply:p=>p.poisonMultiplier*=1.35}
+    {id:'brutality',icon:'brutality',name:'BRUTALITY',desc:'+5 flat damage to direct hits. Weak for Poison.',tier:'common',apply:p=>p.flatDamage+=5},
+    {id:'rapid_fire',icon:'rapid_fire',name:'RAPID FIRE',desc:'+18% attack speed.',tier:'common',apply:p=>p.attackRate*=1.18},
+    {id:'movement',icon:'movement',name:'SHADOW STRIDE',desc:'+16% movement speed.',tier:'common',apply:p=>p.speed*=1.16},
+    {id:'vitality',icon:'vitality',name:'VITALITY',desc:'+25 maximum HP. Heal 25 HP.',tier:'common',apply:p=>{p.maxHp+=25;p.hp=Math.min(p.maxHp,p.hp+25)}},
+    {id:'regen',icon:'regen',name:'REGENERATION',desc:'Recover 1 HP every 4 seconds.',tier:'common',can:p=>p.regen<1.5,apply:p=>p.regen+=.25},
+    {id:'armor',icon:'armor',name:'IRON WILL',desc:'Take 10% less incoming damage.',tier:'rare',can:p=>p.armor<.50,apply:p=>p.armor=1-(1-p.armor)*.90},
+    {id:'knowledge',icon:'knowledge',name:'FORBIDDEN KNOWLEDGE',desc:'+25% XP from blue crystals.',tier:'rare',apply:p=>p.xpBonus*=1.25},
+    {id:'magnet',icon:'magnet',name:'SOUL MAGNET',desc:'+40% crystal pickup range.',tier:'common',apply:p=>p.magnet*=1.4},
+    {id:'forward',icon:'forward',name:'FORWARD SHOT',desc:'+1 parallel projectile in the same direction.',tier:'rare',can:p=>p.forwardShots<3,apply:p=>p.forwardShots++},
+    {id:'spread',icon:'spread',name:'SPREAD SHOT',desc:'+2 projectiles angled outward.',tier:'rare',can:p=>p.spreadShots<2,apply:p=>p.spreadShots++},
+    {id:'pierce',icon:'pierce',name:'PIERCING FANGS',desc:'Each projectile pierces +1 enemy.',tier:'rare',can:p=>p.pierce<4,apply:p=>p.pierce++},
+    {id:'crit',icon:'crit',name:'DEADLY PRECISION',desc:'+12% critical hit chance.',tier:'rare',can:p=>p.critChance<.60,apply:p=>p.critChance+=.12},
+    {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',desc:'+25% Blood hit power. Unlock Blood Lance and Orb.',tier:'rare',can:p=>p.element==='blood'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;if(p.elementRank===2)p.bloodLance++;if(p.elementRank===3)p.bloodOrbChance+=.20;if(p.elementRank===4)p.bloodSplashChance+=.20;}},
+    {id:'fire_power',icon:'fire_power',name:'FIRE POWER',desc:'+25% Fire hit damage and stronger burns.',tier:'rare',can:p=>p.element==='fire'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.burnMultiplier*=1.2;}},
+    {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',desc:'+25% Lightning damage and chain chance.',tier:'rare',can:p=>p.element==='lightning'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.stormBonus+=.10;}},
+    {id:'poison_power',icon:'poison_power',name:'POISON POWER',desc:'+35% permanent poison DoT. Not direct hit.',tier:'rare',can:p=>p.element==='poison'&&p.elementRank<5,apply:p=>{p.elementRank++;p.poisonMultiplier*=1.35;}}
   ];
-
 
   // Initial choice occurs before any enemies spawn / game clock starts.
   // Every DOT damage number means *total damage over the stated duration*.
@@ -86,11 +73,12 @@
     {id:'poison',element:'poison',name:'POISON',desc:'5 hit · Poison deals 100 damage per 8s and NEVER expires.',tier:'rare'}
   ];
   const ELEMENT_DAMAGE={blood:16,fire:20,lightning:20,poison:5};
-  const ABILITY_ICON_CELLS = {'damage':[0,0],'speed':[1,0],'rate':[2,0],'multi':[3,0],'vitality':[4,0],'magnet':[5,0],'pierce':[0,1],'restore':[1,1],'velocity':[2,1],'swell':[3,1],'armor':[4,1],'crit':[5,1],'critrage':[0,2],'leech':[1,2],'fire':[2,2],'frost':[3,2],'chain':[4,2],'blast':[5,2],'souls':[0,3],'bane':[1,3],'regen':[2,3],'reroll':[3,3],'banishtoken':[4,3],'orbits':[5,3],'blood_lance':[0,4],'blood_orb':[1,4],'blood_burst':[2,4],'flame_wave':[3,4],'storm_arc':[4,4],'venom_pool':[5,4],'blood':[0,5],'lightning':[1,5],'poison':[2,5]};
+  // Icons are uniformly trimmed, without a second inset frame.
+  const ABILITY_ICON_CELLS = {"blood": [0, 0], "fire": [1, 0], "lightning": [2, 0], "poison": [3, 0], "blood_power": [0, 1], "fire_power": [1, 1], "lightning_power": [2, 1], "poison_power": [3, 1], "brutality": [0, 2], "rapid_fire": [1, 2], "movement": [2, 2], "vitality": [3, 2], "regen": [0, 3], "armor": [1, 3], "knowledge": [2, 3], "magnet": [3, 3], "forward": [0, 4], "spread": [1, 4], "pierce": [2, 4], "crit": [3, 4]};
   function powerIcon(id){
-    const coords=ABILITY_ICON_CELLS[id];
-    if(!coords)return '<span class="glyph">✦</span>';
-    return `<span class="glyph ability-icon" style="--ic:${coords[0]};--ir:${coords[1]}" role="img" aria-label="${id.replaceAll('_',' ')}"></span>`;
+    const xy=ABILITY_ICON_CELLS[id];
+    if(!xy)return '<span class="glyph">✦</span>';
+    return `<span class="glyph ability-icon" style="background-position:${xy[0]*100/3}% ${xy[1]*100/4}%" role="img" aria-label="${id.replaceAll('_',' ')}"></span>`;
   }
 
   const MUSIC_TRACKS = {
@@ -129,7 +117,7 @@
   function startGame(){
     game = {
       time:0,
-      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,leechChance:0,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
+      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,leechChance:0,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
     state='upgrade';
@@ -331,8 +319,11 @@
     p.face=Math.cos(aim)<0?-1:1;
     p.attackDir=aim;
     const speed=142*p.projectileSpeed;
-    for(let i=0;i<p.multishot;i++){
-      const angle=aim+(i-(p.multishot-1)/2)*.19;
+    const directions=[0];
+    for(let k=1;k<=p.spreadShots;k++)directions.push(-.36*k,.36*k);
+    for(const fan of directions)for(let i=0;i<=p.forwardShots;i++){
+      const angle=aim+fan;
+      const offset=(i-p.forwardShots/2)*9;
       const element=p.element;
       const fire=element==='fire'||Math.random()<p.fireChance;
       const frost=!fire&&Math.random()<p.frostChance;
@@ -341,8 +332,8 @@
       const orb=element==='blood'&&Math.random()<p.bloodOrbChance;
       const kind=orb?'blood_orb_v11':fire?'fire_bolt_v11':lightning?'lightning_bolt_v11':poison?'poison_bolt_v11':frost?'ice_bolt':'blood_bolt_v11';
       const shotSpeed=orb?Math.max(44,speed*.35):speed;
-      game.shots.push({hostile:false,x:p.x+Math.cos(angle)*14,y:p.y+Math.sin(angle)*14,
-        vx:Math.cos(angle)*shotSpeed,vy:Math.sin(angle)*shotSpeed,angle,life:Math.max(1.5,orb?3.5:2.85/p.projectileSpeed),damage:p.damage,kind,fire,frost,poison,lightning,orb,size:p.projectileSize*(orb?1.55:1),
+      game.shots.push({hostile:false,x:p.x+Math.cos(angle)*14-Math.sin(angle)*offset,y:p.y+Math.sin(angle)*14+Math.cos(angle)*offset,
+        vx:Math.cos(angle)*shotSpeed,vy:Math.sin(angle)*shotSpeed,angle,life:Math.max(1.5,orb?3.5:2.85/p.projectileSpeed),damage:p.damage+p.flatDamage,kind,fire,frost,poison,lightning,orb,size:p.projectileSize*(orb?1.55:1),
         pierce:orb?0:p.pierce+(element==='blood'?p.bloodLance:0),hit:new Set()});
     }
     addParticles(p.x+Math.cos(aim)*13,p.y+Math.sin(aim)*13,'#e8c3d0',4,25,2,3);
@@ -505,7 +496,7 @@
           if(b.frost)e.slowTime=2.5;
           // Poison persists until the enemy dies. Reapplication refreshes potency;
           // do not stack infinite instances, which would break long-run balance.
-          if(b.poison){e.poisonDps=Math.max(e.poisonDps||0,12.5*(dmg/5)*p.poisonMultiplier);}
+          if(b.poison){e.poisonDps=Math.max(e.poisonDps||0,12.5*p.poisonMultiplier);}
           if(Math.random()<p.leechChance)p.hp=Math.min(p.maxHp,p.hp+2);
           if(Math.random()<Math.min(.95,p.chainChance+(b.lightning?.36+p.stormBonus:0)))chainLightning(e,dmg*.55,b.hit);
           if(b.orb){explodeAt(e.x,e.y,dmg*.7,e,b.hit);addMagicFx(e.x,e.y,'blood_orb_v11',70,.26);}
@@ -727,6 +718,29 @@
     const bodyH=size*(e.type==='bat'||e.type==='ghoul'||e.type==='spider'?.8:1.08);
     if(!window.NoobArt?.paint(ctx,e.type,-size/2,-bodyH+14,size,bodyH))ctx.drawImage(sprite(e.type==='spider'?'bat':e.type,Math.floor(e.phase/3)%2),-Math.round(12*sc),-Math.round(18*sc),Math.round(24*sc),Math.round(28*sc));ctx.restore();
     if(e.type==='warden'&&e.hit>0){ctx.fillStyle='#ffe7db55';ctx.fillRect(x-23,y-41,46,36);}
+    // Persistent, readable status overlays; colour belongs to the status effect.
+    const statusSize=e.type==='warden'?36:22;
+    if(e.poisonDps>0){
+      ctx.save();ctx.globalAlpha=.25+.12*Math.sin(t*4+e.phase);
+      ctx.fillStyle='#4cf14d';ctx.shadowColor='#6dff45';ctx.shadowBlur=14;
+      ctx.beginPath();ctx.ellipse(x,y-13,statusSize,statusSize*.95,0,0,TAU);ctx.fill();
+      for(let j=0;j<3;j++){const yy=(t*(8+j*3)+j*12+e.phase*2)%31;
+        ctx.fillRect(x-10+j*9,y+9-yy,2,3);}
+      ctx.restore();
+    }
+    if(e.bleedTime>0){
+      ctx.save();ctx.globalAlpha=.31+.17*Math.sin(t*9+e.phase);
+      ctx.fillStyle='#ef214a';ctx.shadowColor='#ff174c';ctx.shadowBlur=9;
+      ctx.beginPath();ctx.ellipse(x,y-14,statusSize*.75,statusSize*.95,0,0,TAU);ctx.fill();ctx.restore();
+    }
+    if(e.burnTime>0){
+      ctx.save();ctx.globalAlpha=.68+.14*Math.sin(t*14+e.phase);
+      ctx.fillStyle='#ff8a16';ctx.shadowColor='#ff560c';ctx.shadowBlur=12;
+      for(let j=0;j<3;j++){
+        const xx=x-11+j*11, rise=Math.sin(t*13+j*2+e.phase)*5;
+        ctx.beginPath();ctx.moveTo(xx-3,y+5);ctx.lineTo(xx,y-19+rise);ctx.lineTo(xx+4,y+3);ctx.closePath();ctx.fill();
+      }ctx.restore();
+    }
     if(e.shockTime>0){
       ctx.save();ctx.shadowColor='#6dbdff';ctx.shadowBlur=8;
       ctx.strokeStyle='#67c8ff';ctx.lineWidth=1.3;

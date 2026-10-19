@@ -75,3 +75,10 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - Lightning now applies **Shock** for 4 seconds on a 50% proc, rather than Freeze.
 - Hits against a shocked enemy are multiplied by 2 while the effect is active. The hit that first applies Shock does not receive the bonus. Shock refreshes on reapplication.
 - Shock does not slow enemies, and does not amplify ticking damage-over-time.
+
+## v0.13 — Sixteen curated upgrade cards
+- Exactly 12 universal perks and 4 element-specific Power perks. Only the chosen element’s Power is offered.
+- Forward Shot fires parallel bullets; Spread Shot fans bullets outward. Both can combine.
+- One gold frame per icon; source icons are frameless and normalized in `assets/perk-icons-v013.png`.
+- Red Bleed, orange Burn, blue Shock and green permanent Poison overlays make enemy status readable.
+- See [full perk list](PERKS_V013.md).
