@@ -1,26 +1,26 @@
-# Noob Survivors — Hunter's Nocturne · Alpha 0.7
+# Noob Survivors — Alpha 0.8
 
-A browser-based dark fantasy survival game with a chain-whip hunter, six enemy types, and a miniboss.
+Play: https://masterjimo.github.io/Noob-Survivors/
 
-## New in v0.7
-- **Crimson Warden miniboss** at around 51 and 119 seconds: telegraphed area attacks, unique sprite and on-screen health bar.
-- Dodge the glowing red ring before the boss's area attack lands.
-- Defeating a Warden grants bonus XP and restores 22 HP.
-- Better whip combat feedback: sparks, slash arcs, knockback, hit rings and recoil.
-- Polished dark fantasy graphics, enemy animations, and high-contrast HUD.
-- English UI, 3-minute survival run, auto-attack, keyboard movement and mobile joystick.
-- Single CC0 soundtrack, **Ancient Caverns** by congusbongus: https://opengameart.org/content/ancient-caverns-horror-ambient-loop
-- Music default **10%**, SFX default **5%**; separate volume sliders, MUTE ON/OFF.
-- Stylized fantasy blood and remains. Audience guidance 18+ (not an official age rating).
+Browser-based gothic survival game (HTML, CSS, Canvas 2D, vanilla JavaScript).
 
-## Play
-[Play Noob Survivors](https://masterjimo.github.io/Noob-Survivors/)
+## Alpha 0.8 changes
+- Simplified start screen: hunter portrait, large title, start button, larger controls; removed promotional text and feature chips.
+- Restored slow auto-targeted **projectile attacks** (142 world pixels/second) instead of the whip sweep, with actual projectile collision.
+- Updated damage, fire-rate, multishot and piercing upgrades to match the projectile weapon.
+- Kept hunter sprite, six standard enemies, Crimson Warden mini-boss, blood effects, XP, pause and upgrades.
+- Ancient Caverns is the only music track (OpenGameArt CC0 by congusbongus). Default MUSIC 10% and SFX 5%; user preferences persist.
 
-Move: WASD / arrow keys; pause: P or Escape; upgrade: 1, 2 or 3. On touch screens, drag the joystick on the left.
+## Controls
+- WASD / arrow keys — move
+- P / Escape — pause
+- 1, 2, 3 — choose upgrade
+- Mobile — on-screen joystick
+- Attacks are automatic
 
-## Running locally
-Open `index.html` in a browser or run `python3 -m http.server 8000`. No dependencies, build tools or back-end.
+## Credits
+- Original procedural sprites and art effects created for Noob Survivors.
+- Music: [Ancient Caverns — congusbongus (CC0)](https://opengameart.org/content/ancient-caverns-horror-ambient-loop). Audio loads from OpenGameArt and requires network availability.
 
-## Source
-The game is in `index.html`, `style.css`, `sprites.js` and `game.js` and is published from `main` on GitHub Pages.
-The code-drawn sprites are original game assets. Music is externally hosted CC0 with source credited above.
+## Run & deploy
+Open `index.html` locally, or host these files from the repository root using GitHub Pages (`main` branch, `/`). There is no build step.

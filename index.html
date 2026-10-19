@@ -53,15 +53,10 @@
       <div class="float-messages" id="message"></div>
 
       <section class="screen-overlay intro" id="intro">
-        <div class="eyebrow">✦ THE HUNT NEVER ENDS ✦</div>
         <div class="crest"><canvas id="portrait" width="64" height="64" aria-hidden="true"></canvas></div>
         <h1>NOOB<br><em>SURVIVORS</em></h1>
-        <div class="intro-rule"><span>✦</span></div>
-        <p class="intro-kicker">HUNTER OF THE DAMNED</p>
-        <p class="description">Take up the whip and stalk the cursed night.<br>Rip through the horde. Hunt the darkness. Outlast the dead.</p>
-        <div class="hunter-traits" aria-label="Game features"><span>⛓ CHAIN WHIP</span><span>⚔ CRIMSON WARDEN</span><span>☾ 3-MINUTE NIGHT</span></div>
         <button class="main-button" id="startBtn"><span>▶</span> BEGIN THE HUNT</button>
-        <div class="intro-foot">WASD / ARROWS — MOVE <span>◆</span> AUTO ATTACK</div>
+        <div class="intro-foot" aria-label="Controls"><span class="control-group"><strong>WASD / ARROWS</strong> — MOVE</span><span class="control-sep">✦</span><span class="control-group"><strong>AUTO ATTACK</strong></span></div>
       </section>
 
       <section class="screen-overlay hidden" id="upgrade" aria-live="polite">
@@ -90,7 +85,7 @@
     <footer class="footer">
       <div><span class="green-dot"></span> <span id="statusText">READY FOR THE HUNT</span></div>
       <div class="footer-help">MOVE <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> <span class="spacer">·</span> PAUSE <kbd>P</kbd></div>
-      <div class="credit">DARK FANTASY · PIXEL-HD</div>
+      
     </footer>
   </div>
   <script src="sprites.js" defer></script>

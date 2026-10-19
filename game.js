@@ -37,13 +37,13 @@
   };
 
   const POWERS = [
-    {id:'damage',icon:'✦',name:'HUNTER\'S EDGE',desc:'+30% whip damage',apply:p=>p.damage*=1.3},
+    {id:'damage',icon:'✦',name:'HUNTER\'S EDGE',desc:'+30% projectile damage',apply:p=>p.damage*=1.3},
     {id:'speed',icon:'➤',name:'SHADOW FEET',desc:'+18% move speed',apply:p=>p.speed*=1.18},
-    {id:'rate',icon:'✧',name:'WHIP FRENZY',desc:'+20% attack speed',apply:p=>p.attackRate*=1.2},
-    {id:'multi',icon:'✹',name:'CHAIN FURY',desc:'+1 lash (max 5)',can:p=>p.multishot<5,apply:p=>p.multishot++},
+    {id:'rate',icon:'✧',name:'RAPID FIRE',desc:'+20% attack speed',apply:p=>p.attackRate*=1.2},
+    {id:'multi',icon:'✹',name:'MULTI SHOT',desc:'+1 projectile (max 5)',can:p=>p.multishot<5,apply:p=>p.multishot++},
     {id:'vitality',icon:'♥',name:'BLOOD PACT',desc:'+25 max health and heal',apply:p=>{p.maxHp+=25;p.hp=Math.min(p.maxHp,p.hp+40)}},
     {id:'magnet',icon:'◇',name:'SOUL THIEF',desc:'+50% pickup range',apply:p=>p.magnet*=1.5},
-    {id:'pierce',icon:'✴',name:'RAZOR LINKS',desc:'Each lash hits +1 foe',can:p=>p.pierce<3,apply:p=>p.pierce++},
+    {id:'pierce',icon:'✴',name:'PIERCING ROUNDS',desc:'Projectiles pierce +1 foe',can:p=>p.pierce<3,apply:p=>p.pierce++},
     {id:'restore',icon:'✚',name:'LAST BREATH',desc:'Recover 45 health',can:p=>p.hp<p.maxHp-15,apply:p=>p.hp=Math.min(p.maxHp,p.hp+45)}
   ];
 
@@ -83,7 +83,7 @@
     game = {
       time:0,
       player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1},
-      enemies:[], shots:[], lashes:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51
+      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51
     };
     state='playing';
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.upgrade.classList.add('hidden'); el.pause.classList.add('hidden');
@@ -215,50 +215,29 @@
     else if(state==='paused'){ state='playing'; el.pause.classList.add('hidden'); el.status.textContent='HUNT IN PROGRESS'; }
   }
 
-  // Auto-targeted leather whip. This is a short-range sweeping melee weapon,
-  // not a projectile: it damages enemies in a cone and creates a visible lash.
+  // Restored classic slow projectile auto-fire. Each shot travels across the arena
+  // and deals damage only on collision; no immediate or sweeping melee damage.
   function shoot(){
     const p=game.player;
-    let target=null, best=130*130;
+    let target=null,best=370*370;
     for(const e of game.enemies){
       const d=dist2(e.x,e.y,p.x,p.y);
       if(d<best){best=d;target=e;}
     }
-    if(!target) return;
+    if(!target)return;
     const aim=Math.atan2(target.y-p.y,target.x-p.x);
-    const count=p.multishot;
     p.face=Math.cos(aim)<0?-1:1;
-    p.attackAnim=.34;
+    p.attackAnim=.23;
     p.attackDir=aim;
-    p.attackSide=Math.sin(aim)>=0?1:-1;
-    const baseDmg=p.damage;
-    for(let i=0;i<count;i++){
-      const angle=aim+(i-(count-1)/2)*.29;
-      const range=112 + Math.min(2,p.pierce)*7;
-      game.lashes.push({x:p.x,y:p.y,angle,range,life:.34,max:.34,shift:i,hit:false,side:p.attackSide});
-      const eligible=game.enemies.filter(e=>{
-        const dx=e.x-p.x,dy=e.y-p.y,dd=Math.hypot(dx,dy);
-        const diff=Math.atan2(Math.sin(Math.atan2(dy,dx)-angle),Math.cos(Math.atan2(dy,dx)-angle));
-        return dd<range+e.r && dd>5 && Math.abs(diff)<.36;
-      }).sort((a,b)=>dist2(a.x,a.y,p.x,p.y)-dist2(b.x,b.y,p.x,p.y));
-      // Cleave scales with RAZOR LINKS. Avoid stacking damage from
-      // overlapping lashes onto the same target in a single attack.
-      for(const e of eligible.slice(0,2+p.pierce)){
-        if(e.lastWhip===game.whipSequence) continue;
-        e.lastWhip=game.whipSequence;
-        e.hp-=baseDmg;e.hit=.19;
-        const push=e.type==='warden'?6:13; e.x+=Math.cos(angle)*push;e.y+=Math.sin(angle)*push; e.knockX=Math.cos(angle)*31; e.knockY=Math.sin(angle)*31;
-        const hx=e.x+Math.cos(angle)*2,hy=e.y+Math.sin(angle)*2;
-        addSlashBurst(hx,hy,angle,e.type==='warden'||e.hp<=0);
-        floatText(e.x,e.y-20,String(Math.ceil(baseDmg)),'#ffe3cb');
-        if(e.hp<=0) enemyDie(e);
-        else {addBloodBurst(hx,hy,e.type==='warden'?13:9,ENEMIES[e.type].blood);}
-        shake=Math.max(shake,2.3);
-      }
+    const speed=142;
+    for(let i=0;i<p.multishot;i++){
+      const angle=aim+(i-(p.multishot-1)/2)*.19;
+      game.shots.push({hostile:false,x:p.x+Math.cos(angle)*14,y:p.y+Math.sin(angle)*14,
+        vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,angle,life:2.85,damage:p.damage,
+        pierce:p.pierce,hit:new Set()});
     }
-    if(game.lashes.length>24) game.lashes.splice(0,game.lashes.length-24);
-    addParticles(p.x+Math.cos(aim)*14,p.y+Math.sin(aim)*14,'#f0bb89',5,22,2,3);
-    playSound('crack');
+    addParticles(p.x+Math.cos(aim)*13,p.y+Math.sin(aim)*13,'#e8c3d0',4,25,2,3);
+    playSound('shot');
   }
 
   function enemyDie(e){
@@ -311,7 +290,7 @@
     const mag=Math.hypot(mx,my); p.moving=mag>.02; if(mag>0){ mx/=mag; my/=mag; p.x+=mx*p.speed*dt; p.y+=my*p.speed*dt; p.walk+=dt*11; p.face=mx<-.05?-1:mx>.05?1:p.face; }
 
     p.shotCd -= dt; p.hitCd = Math.max(0,p.hitCd-dt); p.attackAnim=Math.max(0,p.attackAnim-dt);
-    if(p.shotCd<=0){ g.whipSequence=(g.whipSequence||0)+1; shoot(); p.shotCd = 1/p.attackRate; }
+    if(p.shotCd<=0){shoot(); p.shotCd=1/p.attackRate;}
 
     g.spawn -= dt;
     if(g.spawn<=0){
@@ -347,17 +326,41 @@
     }
 
     for(let i=g.shots.length-1;i>=0;i--){
-      const b=g.shots[i]; b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt;
-      if(b.life<=0){ g.shots.splice(i,1); continue; }
-      if(dist2(b.x,b.y,p.x,p.y)<12*12 && p.hitCd<=0){
-        p.hp=Math.max(0,p.hp-b.damage);p.hitCd=.65;shake=5;flash=.2;
-        addBloodBurst(p.x,p.y,7,'#9c1832');g.shots.splice(i,1);
-        if(p.hp<=0){die(false);return;}
+      const b=g.shots[i];
+      // Substeps prevent slow bullets from tunneling through small fast enemies.
+      const travel=Math.hypot(b.vx,b.vy)*dt;
+      const substeps=Math.max(1,Math.ceil(travel/5));
+      let remove=false;
+      for(let step=0;step<substeps&&!remove;step++){
+        b.x+=b.vx*dt/substeps;
+        b.y+=b.vy*dt/substeps;
+        if(b.hostile){
+          if(dist2(b.x,b.y,p.x,p.y)<12*12){
+            if(p.hitCd<=0){damagePlayer(b.damage);if(state==='end')return;}
+            remove=true;
+          }
+          continue;
+        }
+        for(const e of g.enemies.slice()){
+          if(b.hit.has(e))continue;
+          if(dist2(b.x,b.y,e.x,e.y-4)>Math.pow(e.r+5,2))continue;
+          b.hit.add(e); e.hp-=b.damage; e.hit=.18;
+          const a=b.angle;
+          const push=e.type==='warden'?3.5:8;
+          e.knockX=Math.cos(a)*35;e.knockY=Math.sin(a)*35;
+          e.x+=Math.cos(a)*push;e.y+=Math.sin(a)*push;
+          addSlashBurst(e.x,e.y,a,e.type==='warden');
+          addParticles(e.x,e.y,'#ffd5dc',5,46,2,3);
+          floatText(e.x,e.y-20,String(Math.ceil(b.damage)),'#ffe9d0');
+          if(e.hp<=0)enemyDie(e);
+          else addBloodBurst(e.x,e.y,e.type==='warden'?11:6,ENEMIES[e.type].blood);
+          shake=Math.max(shake,1.5);
+          if(b.pierce<=0){remove=true;break;}
+          b.pierce--;
+        }
       }
-    }
-    for(let i=g.lashes.length-1;i>=0;i--){
-      g.lashes[i].life-=dt;
-      if(g.lashes[i].life<=0)g.lashes.splice(i,1);
+      b.life-=dt;
+      if(remove||b.life<=0)g.shots.splice(i,1);
     }
 
     for(let i=g.slashBursts.length-1;i>=0;i--){
@@ -538,54 +541,21 @@
     if(e.hit>0 && e.type!=='warden'){ ctx.fillStyle='#45111d'; ctx.fillRect(x-12,y-29,24,3); ctx.fillStyle='#d8506d'; ctx.fillRect(x-12,y-29,24*e.hp/e.maxHp,3); }
   }
   function drawShots(camX,camY){
-    // Cultists retain their hostile spell bolts; the hunter fires none.
     for(const b of game.shots){
       const x=b.x-camX,y=b.y-camY;
       ctx.save();ctx.translate(x,y);ctx.rotate(b.angle);
-      ctx.fillStyle='#7d233840';ctx.fillRect(-12,-7,23,14);
-      ctx.fillStyle='#a02f4b';ctx.fillRect(-5,-3,11,6);
-      ctx.fillStyle='#ffc1cd';ctx.fillRect(-2,-2,5,4);
-      ctx.restore();
-    }
-  }
-  function drawLashes(camX,camY){
-    for(const lash of game.lashes){
-      const progress=1-lash.life/lash.max;
-      const extension=Math.sin(Math.min(progress,1)*Math.PI*.92);
-      const range=lash.range*extension;
-      if(range<2)continue;
-      const originX=lash.x-camX, originY=lash.y-camY-8;
-      const a=lash.angle;
-      const sweep=(progress-.5)*0.42 + (lash.shift||0)*0.04;
-      const curveAngle=a+sweep;
-      const endX=originX+Math.cos(curveAngle)*range, endY=originY+Math.sin(curveAngle)*range;
-      const ctrl1X=originX+Math.cos(a)*range*.26-Math.sin(a)*(18+range*.08)*game.player.attackSide;
-      const ctrl1Y=originY+Math.sin(a)*range*.26+Math.cos(a)*(18+range*.08)*game.player.attackSide;
-      const ctrl2X=originX+Math.cos(curveAngle)*range*.72-Math.sin(curveAngle)*(8+range*.03)*game.player.attackSide;
-      const ctrl2Y=originY+Math.sin(curveAngle)*range*.72+Math.cos(curveAngle)*(8+range*.03)*game.player.attackSide;
-      ctx.save();
-      ctx.globalAlpha=Math.min(1,lash.life/.12);
-      ctx.lineCap='round';ctx.lineJoin='round';
-      ctx.strokeStyle='rgba(255,174,128,.18)';ctx.lineWidth=10;
-      ctx.beginPath();ctx.moveTo(originX,originY);ctx.bezierCurveTo(ctrl1X,ctrl1Y,ctrl2X,ctrl2Y,endX,endY);ctx.stroke();
-      ctx.strokeStyle='#2e2325';ctx.lineWidth=5.5;
-      ctx.beginPath();ctx.moveTo(originX,originY);ctx.bezierCurveTo(ctrl1X,ctrl1Y,ctrl2X,ctrl2Y,endX,endY);ctx.stroke();
-      ctx.strokeStyle='#c79d6f';ctx.lineWidth=2.4;
-      ctx.beginPath();ctx.moveTo(originX,originY);ctx.bezierCurveTo(ctrl1X,ctrl1Y,ctrl2X,ctrl2Y,endX,endY);ctx.stroke();
-      for(let j=1;j<=7;j++){
-        const u=j/8, omt=1-u;
-        const px=omt*omt*omt*originX+3*omt*omt*u*ctrl1X+3*omt*u*u*ctrl2X+u*u*u*endX;
-        const py=omt*omt*omt*originY+3*omt*omt*u*ctrl1Y+3*omt*u*u*ctrl2Y+u*u*u*endY;
-        ctx.fillStyle=j%2?'#f1c894':'#4f3230';
-        ctx.beginPath();ctx.arc(px,py,j===7?2.1:1.5,0,TAU);ctx.fill();
+      if(b.hostile){
+        ctx.fillStyle='#7d233840';ctx.fillRect(-12,-7,23,14);
+        ctx.fillStyle='#a02f4b';ctx.fillRect(-5,-3,11,6);
+        ctx.fillStyle='#ffc1cd';ctx.fillRect(-2,-2,5,4);
+      }else{
+        // Slow steel-blue hunter bolt with a pale core and short readable trail.
+        ctx.fillStyle='#8092a944';ctx.fillRect(-13,-6,19,12);
+        ctx.fillStyle='#667b96';ctx.fillRect(-12,-3,14,6);
+        ctx.fillStyle='#b7cedf';ctx.fillRect(-7,-3,16,6);
+        ctx.fillStyle='#fff6e5';ctx.fillRect(2,-2,7,4);
+        ctx.fillStyle='#e6a6a2';ctx.fillRect(8,-1,3,2);
       }
-      // Small cracking trail to make the whip feel snappier.
-      ctx.strokeStyle='rgba(255,242,212,.55)';ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(endX,endY);
-      ctx.lineTo(endX-Math.cos(curveAngle)*10+Math.sin(curveAngle)*4,endY-Math.sin(curveAngle)*10-Math.cos(curveAngle)*4);
-      ctx.stroke();
-      ctx.shadowColor='#ffe0b7';ctx.shadowBlur=10;
-      ctx.fillStyle='#fff7dc';ctx.beginPath();ctx.arc(endX,endY,3.2,0,TAU);ctx.fill();
       ctx.restore();
     }
   }
@@ -620,7 +590,7 @@
       drawDrops(camX,camY,t);
       const objects=[...game.enemies.map(e=>({y:e.y,e})),{y:p.y,p}]; objects.sort((a,b)=>a.y-b.y);
       for(const item of objects){ if(item.e) drawEnemy(item.e,camX,camY,t); else drawPlayer(p,camX,camY,t); }
-      drawShots(camX,camY,t); drawLashes(camX,camY); drawSlashBursts(camX,camY); drawImpacts(camX,camY); drawFx(camX,camY);
+      drawShots(camX,camY,t); drawSlashBursts(camX,camY); drawImpacts(camX,camY); drawFx(camX,camY);
     } else {
       shadowAt(W/2,H/2+55,22,.5); ctx.drawImage(sprite('hero'),W/2-29,H/2-22,58,70);
     }
