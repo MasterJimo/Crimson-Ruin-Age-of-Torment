@@ -65,7 +65,7 @@ All existing 24 common, rare and legendary options remain, with icons mapped to 
 - [x] Keep other regular upgrades and Reroll/Banish functional.
 - [x] Test desktop and mobile selection, hit effects, and normal upgrade flow.
 - [x] Base assets and systems published for v0.11.
-- [ ] Publish v0.12 rules, gold frame, and UI changes on GitHub `main`; verify GitHub Pages.
+- [x] Publish v0.12 rules, gold frame, and UI changes on GitHub `main`; verify GitHub Pages.
 
 ## 6. Controls and caveats
 - WASD/arrows — move; attacks are automatic.
