@@ -1,4 +1,4 @@
-# Noob Survivors — Alpha 0.8
+# Noob Survivors — Alpha 0.12
 
 Play: https://masterjimo.github.io/Noob-Survivors/
 
@@ -48,3 +48,25 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - Built a new opaque idle + three-frame walk atlas from the original beige-background model poses.
 - Projectile auto-fire is unchanged and **does not trigger any casting/attack animation**.
 - Updated on-screen portrait to the existing Veilwarden portrait and cache-busted scripts.
+
+## v0.11.0 — Elemental Progression
+- Added **blue crystal XP** and a blue XP progress strip.
+- Added ability icons from the user's RPG icon sheet.
+- Added the user's **Blood / Fire / Lightning / Poison** spell artwork.
+- Choose your starting elemental projectile **before the run starts**: Blood, Fire, Lightning or Poison. The world starts only after selection.
+- Introduced Blood Lance, slow Sanguine Orb, Hemorrhage, Cinder Veins, Volt Cascade and Venom Heart.
+- The usual 3-card Reroll/Banish upgrade loop continues from the next level-up.
+- See [Implementation plan](IMPLEMENTATION_PLAN.md) for the complete progression specification.
+
+## v0.12 — Starting element, precise DOT rules, and interface cleanup
+- **Choose Blood / Fire / Lightning / Poison immediately after Begin the Hunt, before combat**.
+- Blood: **16 hit**, bleeding equal to **50% of hit** over **8 seconds**.
+- Fire: **20 hit**, burns for an additional **100% of hit** over **2 seconds**.
+- Lightning: **20 hit**, **50% chance to freeze** for 1.5 seconds (no movement/attacks).
+- Poison: **5 hit**, then **100 damage every 8 seconds forever**, until enemy death (does not stack; reapplied poison retains strongest DPS).
+- The soundtrack **name is no longer displayed**, but Music 10% / SFX 5% sliders and mute remain.
+- Footer controls are condensed into compact MOVE/PAUSE groups.
+- Perk icons appear inside the provided **golden transparent frame** without cropped edges, including on phones.
+- Existing elemental projectile sprites and blue XP shards remain.
+
+[Exact status formulas and implementation order](ELEMENT_BALANCE.md)

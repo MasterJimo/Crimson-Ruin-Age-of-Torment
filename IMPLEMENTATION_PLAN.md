@@ -1,10 +1,10 @@
-# Noob Survivors — Elemental Skills Implementation (v0.11)
+# Noob Survivors — Elemental Skills Implementation (v0.12)
 
 ## 1. Design rules
 - Keep the game a lightweight HTML/CSS/Canvas 2D project, playable directly through GitHub Pages.
 - **The Veilwarden** remains unchanged: idle and walking animations only; projectiles launch automatically.
 - Keep Ancient Caverns music and the default 10% music / 5% SFX audio settings.
-- Players begin with a basic **Blood Bolt**. **The very first level-up (level 2)** displays 4 primary-element choices instead of 3 normal perk cards. This is a one-time selection per run.
+- Before gameplay begins, **Begin the Hunt** presents 4 primary elements instead of starting combat. Selection is mandatory and uses no rerolls/banishes. The game timer and enemies begin only after choosing.
 - Subsequent level-ups provide three random upgrades with the existing 2 Reroll and 2 Banish charges. A banished perk does not return that run.
 
 ## 2. Asset layout
@@ -18,15 +18,15 @@
 The spritesheet coordinates are registered in `assets.js`. New art has versioned filenames to avoid browser cache collisions.
 
 ## 3. Start weapon and first level-up
-- **Level 1:** auto-targeted Blood Bolt, slow (142 world units/s), one projectile.
-- **First level-up:** forced choice, keyboard **1–4** or touch/click. No reroll or banish at this selection.
+- **Before Level 1:** forced choice, keyboard **1–4** or touch/click. No reroll or banish. Each element has its own baseline hit and DOT.
+- **Level 1:** an automatically fired slow projectile of the chosen element.
 - **Blood:** keeps the starter projectile; enables Blood Lance / Sanguine Orb / Hemorrhage perks.
 - **Fire:** all primary shots ignite enemies; burn duration increases with Cinder Veins.
 - **Lightning:** 25% faster bolts and a chance to arc to another nearby enemy; Volt Cascade can further increase this chance.
 - **Poison:** venom bolts apply damage over time; Venom Heart strengthens the effect.
-- Each choice locks in a primary element for the current run and uses its own visuals.
+- Each choice locks in a primary element for the current run and uses its own visuals. Details: [Element Balance](ELEMENT_BALANCE.md).
 
-## 4. Normal perk progression (level 3 onward)
+## 4. Normal perk progression (level 2 onward)
 All existing 24 common, rare and legendary options remain, with icons mapped to the user-supplied art.
 
 ### Blood weapon branch
@@ -64,10 +64,11 @@ All existing 24 common, rare and legendary options remain, with icons mapped to 
 - [x] Implement Blood Lance, slow burst orb, blood splash, burning bolts, chain lightning and poison DOT.
 - [x] Keep other regular upgrades and Reroll/Banish functional.
 - [x] Test desktop and mobile selection, hit effects, and normal upgrade flow.
-- [x] Publish source + both atlases on GitHub `main` and verify GitHub Pages.
+- [x] Base assets and systems published for v0.11.
+- [ ] Publish v0.12 rules, gold frame, and UI changes on GitHub `main`; verify GitHub Pages.
 
 ## 6. Controls and caveats
 - WASD/arrows — move; attacks are automatic.
-- **1/2/3/4** — choose an element at the first level-up.
+- **1/2/3/4** — choose an element before gameplay begins.
 - **1/2/3**, **R**, **B** — choose, reroll, banish later perks.
 - The 2D sprites are still images, not rigged 3D animations. Additional supplied asset sheets can be swapped in later without changing the basic build architecture.

@@ -59,7 +59,7 @@
     {id:'critrage',icon:'✸',name:'EXECUTIONER',desc:'+40% critical damage',tier:'rare',apply:p=>p.critDamage+=.4},
     {id:'leech',icon:'♥',name:'VAMPIRIC TOUCH',desc:'8% chance to heal on hit',tier:'rare',can:p=>p.leechChance<.32,apply:p=>p.leechChance+=.08},
     {id:'fire',icon:'♨',name:'HELLFIRE',desc:'+18% fire shot chance',tier:'legendary',can:p=>p.element!=='fire'&&p.fireChance<.72,apply:p=>p.fireChance+=.18},
-    {id:'frost',icon:'❄',name:'FROSTBITE',desc:'+20% frost shot chance',tier:'rare',can:p=>p.frostChance<.8,apply:p=>p.frostChance+=.2},
+    {id:'frost',icon:'❄',name:'FROSTBITE',desc:'+20% slow chance for non-lightning shots',tier:'rare',can:p=>p.frostChance<.8,apply:p=>p.frostChance+=.2},
     {id:'chain',icon:'ϟ',name:'STORMBRINGER',desc:'+16% chaining lightning',tier:'legendary',can:p=>p.chainChance<.64,apply:p=>p.chainChance+=.16},
     {id:'blast',icon:'✺',name:'BLOOD DETONATION',desc:'+18% explosive shot chance',tier:'legendary',can:p=>p.blastChance<.72,apply:p=>p.blastChance+=.18},
     {id:'souls',icon:'◆',name:'SOUL HARVEST',desc:'+30% XP earned',tier:'rare',apply:p=>p.xpBonus*=1.3},
@@ -73,17 +73,19 @@
     {id:'blood_burst',name:'HEMORRHAGE',desc:'+20% chance of a blood splash explosion',tier:'rare',can:p=>p.element==='blood'&&p.bloodSplashChance<.7,apply:p=>p.bloodSplashChance+=.2},
     {id:'flame_wave',name:'CINDER VEINS',desc:'Fire burns last 50% longer',tier:'rare',can:p=>p.element==='fire'&&p.burnMultiplier<3,apply:p=>p.burnMultiplier*=1.5},
     {id:'storm_arc',name:'VOLT CASCADE',desc:'Lightning chains more often',tier:'rare',can:p=>p.element==='lightning'&&p.stormBonus<.75,apply:p=>p.stormBonus+=.2},
-    {id:'venom_pool',name:'VENOM HEART',desc:'Poison lasts longer and deals +35% damage',tier:'rare',can:p=>p.element==='poison'&&p.poisonMultiplier<3,apply:p=>p.poisonMultiplier*=1.35}
+    {id:'venom_pool',name:'VENOM HEART',desc:'+35% permanent poison damage',tier:'rare',can:p=>p.element==='poison'&&p.poisonMultiplier<3,apply:p=>p.poisonMultiplier*=1.35}
   ];
 
 
-  // Run starts with Blood Bolt. First level-up determines the primary school.
+  // Initial choice occurs before any enemies spawn / game clock starts.
+  // Every DOT damage number means *total damage over the stated duration*.
   const ELEMENT_CHOICES = [
-    {id:'blood',element:'blood',name:'BLOOD',desc:'Blood Bolt · piercing and bursting upgrades',tier:'rare'},
-    {id:'fire',element:'fire',name:'FIRE',desc:'Burning shots · fiery detonation',tier:'rare'},
-    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'Faster bolts · chain between foes',tier:'rare'},
-    {id:'poison',element:'poison',name:'POISON',desc:'Venom shots · lingering damage',tier:'rare'}
+    {id:'blood',element:'blood',name:'BLOOD',desc:'16 hit · Bleed for 8s: +50% of the hit over time. Lowest upfront damage.',tier:'rare'},
+    {id:'fire',element:'fire',name:'FIRE',desc:'20 hit · Burn for 2s: +100% of the hit over time.',tier:'rare'},
+    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'20 hit · 50% chance to FREEZE an enemy for 1.5s.',tier:'rare'},
+    {id:'poison',element:'poison',name:'POISON',desc:'5 hit · Poison deals 100 damage per 8s and NEVER expires.',tier:'rare'}
   ];
+  const ELEMENT_DAMAGE={blood:16,fire:20,lightning:20,poison:5};
   const ABILITY_ICON_CELLS = {'damage':[0,0],'speed':[1,0],'rate':[2,0],'multi':[3,0],'vitality':[4,0],'magnet':[5,0],'pierce':[0,1],'restore':[1,1],'velocity':[2,1],'swell':[3,1],'armor':[4,1],'crit':[5,1],'critrage':[0,2],'leech':[1,2],'fire':[2,2],'frost':[3,2],'chain':[4,2],'blast':[5,2],'souls':[0,3],'bane':[1,3],'regen':[2,3],'reroll':[3,3],'banishtoken':[4,3],'orbits':[5,3],'blood_lance':[0,4],'blood_orb':[1,4],'blood_burst':[2,4],'flame_wave':[3,4],'storm_arc':[4,4],'venom_pool':[5,4],'blood':[0,5],'lightning':[1,5],'poison':[2,5]};
   function powerIcon(id){
     const coords=ABILITY_ICON_CELLS[id];
@@ -127,16 +129,16 @@
   function startGame(){
     game = {
       time:0,
-      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,leechChance:0,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:'blood',bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
+      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,leechChance:0,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
-    state='playing';
-    el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.upgrade.classList.add('hidden'); el.pause.classList.add('hidden');
-    el.hud.hidden = false; el.xpStrip.hidden = false; el.bossBar.hidden = true; el.pauseBtn.hidden = false; el.msg.textContent = ''; el.status.textContent = 'HUNT IN PROGRESS';
+    state='upgrade';
+    el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.pause.classList.add('hidden');
+    el.hud.hidden = false; el.xpStrip.hidden = false; el.bossBar.hidden = true; el.pauseBtn.hidden = true; el.msg.textContent = ''; el.status.textContent = 'CHOOSE YOUR STARTING ELEMENT';
     updateHUD();
-    for(let i=0;i<5;i++) spawnEnemy('skeleton',rand(180,320),rand(0,TAU));
-    for(let i=0;i<2;i++) spawnEnemy('bat',rand(200,270),rand(0,TAU));
-    playSound('start'); syncMusic();
+    openUpgrade();
+    // Audio begins after the player chooses a school (browser gesture).
+
   }
 
   function spawnEnemy(type=null,distance=null,angle=null){
@@ -234,7 +236,7 @@
     el.upgradeCards.replaceChildren();
     g.upgradeChoices.forEach((opt,index)=>{
       const b=document.createElement('button');b.type='button';b.className='upgrade-card perk-'+opt.tier;
-      b.innerHTML=`<span class="perk-tier">${opt.tier}</span>${powerIcon(opt.id)}<strong>${opt.name}</strong><span class="detail">${opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
+      b.innerHTML=`<span class="perk-tier">${opt.tier}</span><span class="perk-art-frame">${powerIcon(opt.id)}</span><strong>${opt.name}</strong><span class="detail">${opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
       b.addEventListener('click',()=>chooseUpgrade(index));el.upgradeCards.appendChild(b);
     });
     const choosingElement=!g.elementChosen;
@@ -244,10 +246,10 @@
     el.reroll.disabled=g.rerolls<=0;
     el.banish.disabled=g.banishes<=0 || eligiblePowers().length<=3;
     el.banish.classList.toggle('armed',g.banishMode);
-    el.perkNotice.textContent=choosingElement?'CHOOSE YOUR PRIMARY ELEMENT':g.banishMode?'SELECT A CARD TO BANISH · CLICK BANISH TO CANCEL':'CHOOSE AN UPGRADE · R TO REROLL · B TO BANISH';
-    el.upgrade.querySelector('h2').textContent=choosingElement?'CHOOSE AN ELEMENT':'NEW POWER';
-    el.upgrade.querySelector('.overlay-sub').textContent=choosingElement?'Your choice shapes this run':'Choose one upgrade';
-    el.upgrade.querySelector('.card-hint').textContent=choosingElement?'Choose 1–4 · Each element has unique upgrades':'Pick 1–3 · R to reroll · B to banish';
+    el.perkNotice.textContent=choosingElement?'SELECT ONE TO BEGIN YOUR HUNT':g.banishMode?'SELECT A CARD TO BANISH · CLICK BANISH TO CANCEL':'CHOOSE AN UPGRADE · R TO REROLL · B TO BANISH';
+    el.upgrade.querySelector('h2').textContent=choosingElement?'CHOOSE YOUR ELEMENT':'NEW POWER';
+    el.upgrade.querySelector('.overlay-sub').textContent=choosingElement?'Your starting weapon · You can upgrade it as you survive':'Choose one upgrade';
+    el.upgrade.querySelector('.card-hint').textContent=choosingElement?'Choose 1–4 to start the hunt':'Pick 1–3 · R to reroll · B to banish';
   }
   function openUpgrade(){
     game.banishMode=false;
@@ -271,11 +273,14 @@
     if(!game.elementChosen){
       if(!choice.element)return;
       game.player.element=choice.element;game.elementChosen=true;
-      // Lightning gets speed; poison gets potency, fire inflicts burn. Blood maintains the starting bolt.
+      game.player.damage=ELEMENT_DAMAGE[choice.element];
       if(choice.element==='lightning')game.player.projectileSpeed*=1.25;
       game.player.shotCd=0;
-      state='playing';el.upgrade.classList.add('hidden');el.status.textContent=`${choice.name} ATTUNED`;
-      flashMessage(`✦ ${choice.name} ATTUNED`,2200);playSound('level');updateHUD();return;
+      state='playing';el.upgrade.classList.add('hidden');el.pauseBtn.hidden=false;
+      el.status.textContent=`${choice.name} ATTUNED`;
+      for(let i=0;i<5;i++)spawnEnemy('skeleton',rand(180,320),rand(0,TAU));
+      for(let i=0;i<2;i++)spawnEnemy('bat',rand(200,270),rand(0,TAU));
+      flashMessage(`✦ ${choice.name} ATTUNED`,2200);playSound('start');syncMusic();updateHUD();return;
     }
     if(game.banishMode){
       if(game.banishes<=0||eligiblePowers().length<=3)return;
@@ -432,14 +437,17 @@
       g.spawn = Math.max(.13, .60 - intensity*.38 - Math.random()*.08);
     }
 
-    for(const e of g.enemies){
+    for(const e of [...g.enemies]){
       const a=Math.atan2(p.y-e.y,p.x-e.x), d=Math.hypot(p.x-e.x,p.y-e.y); e.phase+=dt*6; e.hit=Math.max(0,e.hit-dt);
-      if(e.burnTime>0){e.burnTime-=dt;e.hp-=(e.burnDps||0)*dt;}
-      if(e.poisonTime>0){e.poisonTime-=dt;e.hp-=(e.poisonDps||0)*dt;}
+      if(e.bleedTime>0){const elapsed=Math.min(dt,e.bleedTime);e.hp-=(e.bleedDps||0)*elapsed;e.bleedTime-=elapsed;}
+      if(e.burnTime>0){const elapsed=Math.min(dt,e.burnTime);e.hp-=(e.burnDps||0)*elapsed;e.burnTime-=elapsed;}
+      if(e.poisonDps>0){e.hp-=e.poisonDps*dt;}
       if(e.hp<=0){enemyDie(e);continue;}
       if(e.slowTime>0)e.slowTime=Math.max(0,e.slowTime-dt);
-      const slowed=e.slowTime>0?.58:1;
+      if(e.freezeTime>0)e.freezeTime=Math.max(0,e.freezeTime-dt);
+      const slowed=e.freezeTime>0?0:e.slowTime>0?.58:1;
       if(e.knockX||e.knockY){e.x+=e.knockX*dt;e.y+=e.knockY*dt;e.knockX*=Math.exp(-10*dt);e.knockY*=Math.exp(-10*dt);}
+      if(e.freezeTime>0)continue; // Frozen enemies cannot walk or attack (including boss skills).
       if(e.type==='warden'){
         if(e.windup>0){
           e.windup-=dt;
@@ -483,8 +491,16 @@
           if(b.hit.has(e))continue;
           if(dist2(b.x,b.y,e.x,e.y-4)>Math.pow(e.r+5*(b.size||1),2))continue;
           b.hit.add(e);const crit=Math.random()<p.critChance;const dmg=b.damage*(e.type==='warden'?p.bossDamage:1)*(crit?p.critDamage:1);e.hp-=dmg;e.hit=.18;
-          if(b.fire){e.burnTime=2.4*p.burnMultiplier;e.burnDps=dmg*.13;}if(b.frost)e.slowTime=2.5;
-          if(b.poison){e.poisonTime=3.6*p.poisonMultiplier;e.poisonDps=dmg*.14*p.poisonMultiplier;}
+          // Damage-over-time uses real seconds and the damage of the actual hit.
+          if(p.element==='blood'&&!b.orb){
+            e.bleedTime=8;e.bleedDps=dmg*.5/8;
+          }
+          if(b.fire){e.burnTime=2*p.burnMultiplier;e.burnDps=dmg*1.0/(2*p.burnMultiplier);}
+          if(b.lightning && Math.random()<.5){e.freezeTime=Math.max(e.freezeTime||0,1.5);}
+          if(b.frost)e.slowTime=2.5;
+          // Poison persists until the enemy dies. Reapplication refreshes potency;
+          // do not stack infinite instances, which would break long-run balance.
+          if(b.poison){e.poisonDps=Math.max(e.poisonDps||0,12.5*(dmg/5)*p.poisonMultiplier);}
           if(Math.random()<p.leechChance)p.hp=Math.min(p.maxHp,p.hp+2);
           if(Math.random()<Math.min(.95,p.chainChance+(b.lightning?.36+p.stormBonus:0)))chainLightning(e,dmg*.55,b.hit);
           if(b.orb){explodeAt(e.x,e.y,dmg*.7,e,b.hit);addMagicFx(e.x,e.y,'blood_orb_v11',70,.26);}
