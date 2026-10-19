@@ -287,7 +287,6 @@
     if(!target)return;
     const aim=Math.atan2(target.y-p.y,target.x-p.x);
     p.face=Math.cos(aim)<0?-1:1;
-    p.attackAnim=.23;
     p.attackDir=aim;
     const speed=142*p.projectileSpeed;
     for(let i=0;i<p.multishot;i++){
@@ -618,15 +617,15 @@
     shadowAt(x,y+11,19,.52);
     ctx.save(); ctx.translate(Math.round(x),Math.round(y+Math.sin(p.walk)*1)); ctx.scale(p.face,1);
     if(p.hitCd>0 && Math.floor(p.hitCd*13)%2===0) ctx.globalAlpha=.55;
-    const walking = Math.sin(p.walk)>0 ? 1 : 2;
-    const pose = p.attackAnim>0 ? (p.attackAnim>.22 ? 3 : p.attackAnim>.11 ? 4 : 5) : (p.moving ? walking : 0);
-    // Dedicated HD animation frames, anchored at the boots so the character never bounces in place.
-    const art=pose===0?'hero_idle':pose===1?'hero_walk1':pose===2?'hero_walk2':pose===3?'hero_cast':'hero_attack';
+    // Projectile-only attacks: no casting/attack animation while auto-firing.
+    // Opaque art retains the complete coat, armour and hair textures.
+    const walkIndex=Math.floor(p.walk*0.55)%3;
+    const art=p.moving ? ['hero_walk1','hero_walk2','hero_walk3'][walkIndex] : 'hero_idle';
     const dimensions=window.NoobArt?.dimension(art);
-    const height = pose>=3 ? 77 : 78;
-    const width = dimensions ? Math.min(110,Math.max(41,height*dimensions.w/dimensions.h)) : 55;
-    const played=window.NoobArt?.paint(ctx,art,-width/2,12-height,width,height);
-    if(!played)ctx.drawImage(sprite('hero',pose),-20,-32,40,47);
+    const height=78;
+    const width=dimensions ? Math.max(40,Math.min(65,height*dimensions.w/dimensions.h)) : 43;
+    if(!window.NoobArt?.paint(ctx,art,-width/2,12-height,width,height))
+      ctx.drawImage(sprite('hero',p.moving?1:0),-20,-32,40,47);
     ctx.restore();
     for(let i=0;i<3;i++){ const a=t*1.8+i*TAU/3; ctx.fillStyle=i===0?'#ffc7d2':'#f1607f'; ctx.fillRect(Math.round(x+Math.cos(a)*20),Math.round(y-8+Math.sin(a)*11),2,2); }
   }

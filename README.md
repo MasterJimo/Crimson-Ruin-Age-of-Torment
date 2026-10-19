@@ -40,3 +40,10 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - Playable character replaced with The Veilwarden (idle, walking, casting and arcane slash frames).
 - New hero sprites and menu portrait: `assets/veilwarden-v101.png` and `assets/veilwarden-portrait-v101.png`.
 - No changes to enemy models, combat balance or arena.
+
+
+## v0.10.3 — Opaque Veilwarden / projectile-only attacks
+- Fixed missing character textures caused by an overly aggressive removal of dark colours from the sheet.
+- Opaque HD atlas with idle and 3 walking poses is used in the game.
+- Projectiles launch automatically; no attack animation is played.
+- The menu uses the Veilwarden portrait.
