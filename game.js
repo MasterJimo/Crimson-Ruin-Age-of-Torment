@@ -72,7 +72,7 @@
   function perkDescription(id,tier){
     const u=rarityScale(tier),percent=n=>Math.round(n*100)+'%';
     switch(id){
-      case 'brutality':return '+'+(5*u)+' flat direct damage (Blood / Fire / Lightning).';
+      case 'brutality':return '+'+(5*u)+' flat hit damage (also improves Bleed and Burn).';
       case 'rapid_fire':return '+'+(6*u)+'% attack speed.';
       case 'movement':return '+'+(5*u)+'% base movement speed.';
       case 'vitality':return '+'+(10*u)+' maximum HP and heal '+(10*u)+' HP.';
@@ -96,29 +96,33 @@
   // A single effect for every Element Power: additive % of base elemental damage.
   // Common +5%, Magic +10%, Rare +20%, Legendary +40%, Mythic +80%.
   // No added proc chances, extra projectiles, or separate Burn affix.
+  const POISON_DPS=15;
+  // Burn snapshots 50% of the current basic Fire hit (including flat damage)
+  // over two seconds; crits and Shock do not magnify this DoT.
+  function burnDps(p){return (p.damage+p.flatDamage)*.5/2;}
+  function syncActiveBurn(p,g){
+    if(p.element!=='fire')return;
+    for(const enemy of g.enemies){
+      if(enemy.burnTime>0)enemy.burnDps=burnDps(p);
+    }
+  }
   function increaseElementDamage(p,g,rarityUnits){
     p.elementRank++;
     p.elementDamageBonus=(p.elementDamageBonus||0)+.05*rarityUnits;
     const multiplier=1+p.elementDamageBonus;
     if(p.element!=='poison')p.damage=ELEMENT_DAMAGE[p.element]*multiplier;
     // Existing elemental DoT scales by the same single damage modifier.
-    if(p.element==='fire'){
-      p.burnMultiplier=multiplier;
-      // Apply the damage increase to an already burning enemy immediately,
-      // without adding a Burn stack or changing its remaining duration.
-      for(const enemy of g.enemies){
-        if(enemy.burnTime>0)enemy.burnDps=10*multiplier;
-      }
-    }
+    // Existing Burn immediately benefits from Fire Power as well as Brutality.
+    if(p.element==='fire')syncActiveBurn(p,g);
     if(p.element==='poison'){
       p.poisonMultiplier=multiplier;
       for(const enemy of g.enemies){
-        if(enemy.poisonStacks>0)enemy.poisonDps=enemy.poisonStacks*13*multiplier;
+        if(enemy.poisonStacks>0)enemy.poisonDps=enemy.poisonStacks*POISON_DPS*multiplier;
       }
     }
   }
   const POWERS = [
-    {id:'brutality',icon:'brutality',name:'BRUTALITY',can:p=>p.element!=='poison',apply:(p,g,u)=>p.flatDamage+=5*u},
+    {id:'brutality',icon:'brutality',name:'BRUTALITY',can:p=>p.element!=='poison',apply:(p,g,u)=>{p.flatDamage+=5*u;syncActiveBurn(p,g);}},
     {id:'rapid_fire',icon:'rapid_fire',name:'RAPID FIRE',apply:(p,g,u)=>p.attackRate*=1+.06*u},
     {id:'movement',icon:'movement',name:'SHADOW STRIDE',can:p=>p.speed<200,apply:(p,g,u)=>{p.speed=Math.min(200,p.speed+100*.05*u);}},
     {id:'vitality',icon:'vitality',name:'VITALITY',apply:(p,g,u)=>{const amount=10*u;p.maxHp+=amount;const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+amount);g.totalHealing+=p.hp-before;}},
@@ -138,24 +142,22 @@
     {id:'poison_power',icon:'poison_power',name:'POISON POWER',can:p=>p.element==='poison'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)}
   ];
 
-  // Initial choice occurs before any enemies spawn / game clock starts.
-  // Every DOT damage number means *total damage over the stated duration*.
+  // The four starting cards are intentionally brief. Full mechanics remain
+  // available in the paused Power-Up Grimoire.
   const ELEMENT_CHOICES = [
-    {id:'blood',element:'blood',name:'BLOOD',desc:'20 direct · Every hit Bleeds (50% over 8s), up to 8 stacks.',tier:'rare'},
-    {id:'fire',element:'fire',name:'FIRE',desc:'40 direct · Single Burn deals 20 over 2s; hits refresh it.',tier:'rare'},
-    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'Damage 10–100 hit · 50% Shock for 4s; shocked targets take double damage',tier:'rare'},
-    {id:'poison',element:'poison',name:'POISON',desc:'13 Damage over time for 8s. Infinite scaling',tier:'rare'}
+    {id:'blood',element:'blood',name:'BLOOD',desc:'20 DMG · Bleed on hit',longDesc:'20 direct damage. Every hit Bleeds for 50% of its damage over 8s, up to 8 stacks. Brutality and Blood Power improve Bleed.',tier:'rare'},
+    {id:'fire',element:'fire',name:'FIRE',desc:'40 DMG · Burn over 2s',longDesc:'40 direct damage. One Burn deals 50% of the basic hit over 2s and refreshes on hit. Brutality and Fire Power improve Burn.',tier:'rare'},
+    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 50% Shock',longDesc:'Random 1–200 direct damage per hit. Each hit has a 50% chance to Shock for 4s; shocked enemies take double direct-hit damage.',tier:'rare'},
+    {id:'poison',element:'poison',name:'POISON',desc:'15 DPS · Infinite stacks',longDesc:'Every hit adds a permanent 15 DPS Poison stack (120 damage per 8s). <strong>Infinite scaling</strong>: stacks never expire.',tier:'rare'}
   ];
-  const ELEMENT_DAMAGE={blood:20,fire:40,lightning:10,poison:0};
+  const ELEMENT_DAMAGE={blood:20,fire:40,lightning:1,poison:0};
   // User-supplied v0.23 art: four starting elements without arrows, 18
   // power-ups with upgrade arrows. Each cell already has the new gold frame.
   // 5 x 5 atlas, row major; other non-power-up game icons are unchanged.
   const SKILL_ICON_CELLS={"blood":[0,0],"fire":[1,0],"lightning":[2,0],"poison":[3,0],"blood_power":[4,0],"fire_power":[0,1],"lightning_power":[1,1],"poison_power":[2,1],"hemorrhagic_burst":[3,1],"brutality":[4,1],"rapid_fire":[0,2],"movement":[1,2],"vitality":[2,2],"regen":[3,2],"armor":[4,2],"knowledge":[0,3],"magnet":[1,3],"forward":[2,3],"spread":[3,3],"pierce":[4,3],"crit":[0,4],"crit_damage":[1,4]};
-  // Element descriptions are shared by selection cards and the O-key Grimoire.
-  // The visual emphasis is presentation only; element values come from gameplay.
-  function elementDescriptionHTML(choice){
-    if(choice?.element==='poison')return '13 Damage over time for 8s. <strong>Infinite scaling</strong>';
-    return choice?.desc||'';
+  // The opening choice is concise; the Grimoire shows the fuller explanation.
+  function elementDescriptionHTML(choice,detailed=false){
+    return (detailed?choice?.longDesc:choice?.desc)||'';
   }
   function damageStatRows(p){
     const fmt=n=>String(Number(n.toFixed(2)));
@@ -168,13 +170,13 @@
     ];
     if(p.element==='fire')return [
       ['DIRECT HIT',fmt(direct)],
-      ['DAMAGE OVER TIME',`${fmt(20*p.burnMultiplier)} / 2s (1 stack)`]
+      ['DAMAGE OVER TIME',`${fmt(burnDps(p)*2)} / 2s (1 stack)`]
     ];
     if(p.element==='lightning')return [
-      ['DIRECT HIT',`${fmt(p.damage+p.flatDamage)}–${fmt(p.damage*10+p.flatDamage)}`]
+      ['DIRECT HIT',`${fmt(p.damage+p.flatDamage)}–${fmt(p.damage*200+p.flatDamage)}`]
     ];
     if(p.element==='poison')return [
-      ['DAMAGE OVER TIME',`${fmt(13*p.poisonMultiplier)} DPS / stack`]
+      ['DAMAGE OVER TIME',`${fmt(POISON_DPS*p.poisonMultiplier)} DPS / stack`]
     ];
     return [['DIRECT HIT',fmt(direct)]];
   }
@@ -227,7 +229,7 @@
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
-      player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
+      player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:rand(240,360), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
@@ -725,7 +727,7 @@
     const chosen=ELEMENT_CHOICES.find(v=>v.element===p.element);
     el.inventoryElementIcon.innerHTML=powerIcon(p.element);
     el.inventoryElementName.textContent=chosen?.name || 'UNKNOWN';
-    el.inventoryElementDesc.innerHTML=elementDescriptionHTML(chosen);
+    el.inventoryElementDesc.innerHTML=elementDescriptionHTML(chosen,true);
     el.inventoryElementRank.textContent='ELEMENT RANK '+(p.elementRank+1);
     el.inventoryPerks.replaceChildren();
     let perkTotal=0;
@@ -832,7 +834,7 @@
       const kind=orb?'blood_orb_v11':fire?'fire_bolt_v11':lightning?'lightning_bolt_v11':poison?'poison_bolt_v11':frost?'ice_bolt':'blood_bolt_v11';
       const shotSpeed=orb?Math.max(44,speed*.35):speed;
       game.shots.push({hostile:false,x:p.x+Math.cos(angle)*14-Math.sin(angle)*offset,y:p.y+Math.sin(angle)*14+Math.cos(angle)*offset,
-        vx:Math.cos(angle)*shotSpeed,vy:Math.sin(angle)*shotSpeed,angle,life:Math.max(1.5,orb?3.5:2.85/p.projectileSpeed),damage:poison?0:lightning?(10+Math.floor(Math.random()*91))*(p.damage/10)+p.flatDamage:p.damage+p.flatDamage,kind,fire,frost,poison,lightning,orb,size:p.projectileSize*(orb?1.55:1),
+        vx:Math.cos(angle)*shotSpeed,vy:Math.sin(angle)*shotSpeed,angle,life:Math.max(1.5,orb?3.5:2.85/p.projectileSpeed),damage:poison?0:lightning?(1+Math.floor(Math.random()*200))*p.damage+p.flatDamage:p.damage+p.flatDamage,kind,fire,frost,poison,lightning,orb,size:p.projectileSize*(orb?1.55:1),
         pierce:orb?0:p.pierce+(element==='blood'?p.bloodLance:0),hit:new Set()});
     }
     addParticles(p.x+Math.cos(aim)*13,p.y+Math.sin(aim)*13,'#e8c3d0',4,25,2,3);
@@ -935,17 +937,15 @@
       stacks[oldest]=stack;
     }
   }
-  // One permanent Poison stack per hit: 13 DPS = 104 damage / 8 seconds.
-  // Aggregate DPS and count instead of allocating an object per stack, so even
-  // hundreds or thousands of stacks stay cheap to simulate.
-  function applyPoisonStack(enemy, potency){
+  // Each Poison hit adds a permanent, unlimited 15 DPS stack (120 / 8s).
+  // Aggregate DPS instead of allocating an object per stack.
+  function applyPoisonStack(enemy,potency){
     enemy.poisonStacks=(enemy.poisonStacks||0)+1;
-    enemy.poisonDps=enemy.poisonStacks*13*potency;
+    enemy.poisonDps=enemy.poisonStacks*POISON_DPS*potency;
   }
-  // Burn: one stack, 20 total base damage across 2s. Refreshes on hit.
-  function refreshBurn(enemy,_hitDamage,potency){
-    const dps=10*potency;
-    enemy.burnDps=enemy.burnTime>0?Math.max(enemy.burnDps||0,dps):dps;
+  // Fire's single Burn deals half of the basic hit over 2s and refreshes.
+  function refreshBurn(enemy,p){
+    enemy.burnDps=burnDps(p);
     enemy.burnTime=2;
   }
   function chainLightning(origin,damage,hitSet){
@@ -1073,10 +1073,10 @@
           b.hit.add(e);const crit=Math.random()<p.critChance;const dmg=applyHitDamage(e,b.damage*(e.type==='warden'?p.bossDamage:1)*(crit?p.critDamage:1));e.hit=.18;
           // Damage-over-time uses real seconds and the damage of the actual hit.
           if(p.element==='blood')applyBleedStack(e,dmg);
-          if(b.fire)refreshBurn(e,dmg,p.burnMultiplier);
+          if(b.fire)refreshBurn(e,p);
           if(b.lightning && Math.random()<.5){e.shockTime=4;floatText(e.x,e.y-35,'SHOCK!','#86d8ff');addMagicFx(e.x,e.y,'lightning',33,.19);}
           if(b.frost)e.slowTime=2.5;
-          // Poison has no stack limit or expiry; every hit permanently increases DPS.
+          // Poison has no stack limit or expiry; every hit adds 15 DPS.
           if(b.poison)applyPoisonStack(e,p.poisonMultiplier);
           if(p.chainChance>0&&Math.random()<Math.min(.95,p.chainChance))chainLightning(e,dmg*.55,b.hit);
           if(b.orb){explodeAt(e.x,e.y,dmg*.7,e,b.hit);addMagicFx(e.x,e.y,'blood_orb_v11',70,.26);}

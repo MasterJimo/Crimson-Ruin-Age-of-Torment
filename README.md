@@ -6,22 +6,22 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.23.1
+## Current gameplay — v0.23.2
 
 Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
 | Element | Starting direct damage | DoT / special behavior |
 |---|---:|---|
-| **Blood** | **20** | Every hit applies Bleed equal to **50% of its hit** over 8 seconds. **8-stack cap** on each enemy; excess hits refresh the oldest stack. |
-| **Fire** | **40** | **One Burn** only: **20 extra damage over 2 seconds** (10 DPS), refreshed by further hits, never stacked. |
-| **Lightning** | **Random 10–100** per projectile | **50%** Shock chance for **4 seconds**. Direct hits against shocked enemies deal **×2** damage; a Chain Lightning can damage another nearby target **only after an appropriate upgrade** (no free chain at level 1). |
-| **Poison** | **0** | Every hit adds a **permanent, unlimited 13 DPS stack** (= 104 damage every 8 seconds). Each hit adds another stack; they never expire while the enemy lives. |
+| **Blood** | **20** | Every hit guarantees Bleed worth **50% of hit damage** over 8s, up to **8 stacks** per enemy. **Brutality** flat damage and **Blood Power** increase Bleed. |
+| **Fire** | **40** | One refreshing Burn deals **50% of the basic hit** over 2s (**20 total / 10 DPS** at base). **Brutality** flat damage and **Fire Power** increase Burn. |
+| **Lightning** | **Random 1–200** per projectile | Each hit has **50%** chance to Shock for **4s**; shocked enemies take **×2 direct-hit damage**. Chain Lightning requires an upgrade. |
+| **Poison** | **0** | Every hit adds a **permanent 15 DPS stack** (= 120 damage per 8s). Stack count is unlimited and stacks never expire. |
 
 ### Hemorrhagic Burst — unique Blood perk (5% appearance)
 
 **Hemorrhagic Burst appears with an independent 5% chance per complete four-card level-up offer, including Rerolls.** Only Blood players can roll it, and the perk appears at most once per run after acquisition. When selected, **every subsequent Blood hit instantly produces eight Bleed stacks and detonates all eight** in a short-range explosion for their full combined base damage. A 20-damage Blood hit therefore causes an **80-damage base AoE burst** (eight stacks × 50% of 20); rarity upgrades its burst potency before other modifiers. The stacks are consumed immediately and do not keep ticking. Existing Bleed stacks on that target are replaced; the burst does not apply new Bleed to nearby targets.
 
-**Blood Power, Fire Power, Lightning Power and Poison Power** now each have **one effect only: +5% / +10% / +20% / +40% / +80% elemental damage** for **Common / Magic / Rare / Legendary / Mythic** respectively. Multiple ranks add their bonuses together against the original elemental base damage (e.g. Common + Rare = +25%). That single elemental damage multiplier applies to Blood hits and their derived Bleed, Fire hits and existing Burn, the full Lightning hit range, and every Poison DoT stack (including stacks already on an enemy). Element Power upgrades do **not** add chances to Chain Lightning, new Blood projectiles/splashes or extra status effects. **Hemorrhagic Burst stays a separate rare Blood perk** with its own 5% appearance chance, not a Blood Power affix. Other perks retain their existing mechanics.
+**Blood Power, Fire Power, Lightning Power and Poison Power** now each have **one effect only: +5% / +10% / +20% / +40% / +80% elemental damage** for **Common / Magic / Rare / Legendary / Mythic** respectively. Multiple ranks add their bonuses together against the original elemental base damage (e.g. Common + Rare = +25%). That single elemental damage multiplier applies to Blood hits and their derived Bleed, Fire hits and existing Burn, the full Lightning hit range, and every Poison DoT stack (including stacks already on an enemy). Fire Burn also inherits flat damage from Brutality (without extra Burn stacks). Element Power upgrades do **not** add chances to Chain Lightning, new Blood projectiles/splashes or extra status effects. **Hemorrhagic Burst stays a separate rare Blood perk** with its own 5% appearance chance, not a Blood Power affix. Other perks retain their existing mechanics.
 
 ### Life Shrines and rare Magnet Shrines
 
@@ -48,6 +48,14 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 ---
 
 ## Patch notes — newest first
+
+### v0.23.2 — Compact element descriptions and updated elemental damage
+- Restored **one short mechanic line** below each starting element while keeping the large icons and number keys.
+- Blood retains **20 direct**, guaranteed 8s Bleed worth **50% of hit damage**, and at most **8 stacks**; Brutality and Blood Power increase Bleed.
+- Fire retains **40 direct** and a single refreshing Burn for **50% of basic hit damage over 2s**. Burn now scales with **Brutality's flat damage** and Fire Power, including updates to existing Burn.
+- Lightning's base roll is now **1–200** per shot. The **50% Shock** chance, **4s** duration and **×2** direct damage taken remain unchanged.
+- Poison now adds **15 permanent DPS per hit**, with unlimited stacks (120 damage per 8s per stack). Poison Power scales old and new stacks.
+- Updated live Grimoire damage values, current rules, and page asset-cache version.
 
 ### v0.23.1 — Clean draft screens, bolder keycaps and corrected icon edges
 - **Choose Your Element** now uses one large, decorative but legible title, with names, new framed icons and conspicuous white number keys. Removed the repeated intro copy, rarity labels, descriptions and footer instructions from this selection screen.
