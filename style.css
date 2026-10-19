@@ -189,3 +189,56 @@ body{padding:10px}
 .footer>div:first-child{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media(max-width:650px){.intro-foot{font-size:12px;letter-spacing:0}.footer-help{font-size:12px}.footer-help kbd{font-size:13px;padding:3px 4px}}
 @media(max-width:410px){.intro-foot{font-size:11px;letter-spacing:0}.footer-help{font-size:11.5px}}
+
+/* v0.9 · roguelite upgrade tools */
+.perk-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;margin:0 0 14px;width:min(740px,100%)}
+.perk-tool{font:900 12px system-ui,sans-serif;letter-spacing:.08em;color:#ffe5ea;background:#25141e;border:1px solid #9b5b70;border-radius:12px;padding:10px 16px;cursor:pointer;box-shadow:0 8px 20px #0007}
+.perk-tool span{display:inline-block;background:#4e2035;border-radius:999px;padding:2px 7px;margin-left:5px;color:#ffd5a6}
+.perk-tool:disabled{opacity:.36;cursor:not-allowed}.perk-tool.armed{background:#7b1e39;border-color:#ff9cb2;box-shadow:0 0 18px #e6527a66}
+.perk-notice{font-size:10px;letter-spacing:.06em;color:#e4b6bf;font-weight:750}
+.upgrade-card .perk-tier{text-transform:uppercase;font-size:10px;color:#b6a3b1;letter-spacing:.17em}.upgrade-card.perk-rare{border-color:#765d9c}.upgrade-card.perk-rare .perk-tier{color:#c4b4fa}
+.upgrade-card.perk-legendary{border-color:#b8874d;box-shadow:inset 0 0 28px #c8963410,0 18px 44px #0008}.upgrade-card.perk-legendary .perk-tier{color:#f7d18b}
+@media(max-width:650px){.perk-actions{gap:5px;margin-bottom:5px}.perk-tool{font-size:10px;padding:7px 10px}.perk-notice{font-size:9px;width:100%}#upgrade .upgrade-card .perk-tier{font-size:8px}}
+
+/* v0.9 — painted HD fantasy visuals and responsive level-up UI */
+#game{image-rendering:auto}
+.intro .crest{width:144px;height:144px;overflow:hidden;border:2px solid #9e6b79;background:radial-gradient(circle,#4e303d,#150b11 73%);box-shadow:0 0 48px #b0466844,0 18px 45px #000d;flex-shrink:0}
+.hero-art-portrait{height:100%;width:100%;object-fit:contain;transform:scale(1.18) translateY(8px);filter:drop-shadow(0 8px 8px #000b)}
+.intro h1{font-size:clamp(46px,7vw,78px);text-shadow:0 4px 8px #000,0 0 24px #b8506460}
+#upgrade{background:radial-gradient(ellipse at center,#311b2beF,#0b060cef 75%);gap:4px}
+#upgrade h2{font:800 clamp(26px,4vw,43px) Georgia,serif;letter-spacing:.10em;color:#f4dfe3;margin:0 0 4px}
+#upgrade .overlay-sub{font-size:12px;margin:0 0 10px;color:#debbc9}
+#upgrade .upgrade-cards{max-width:815px;gap:12px}
+#upgrade .upgrade-card{min-height:165px;background:linear-gradient(160deg,#31212f,#171019);border-radius:16px;border-width:1px}
+#upgrade .upgrade-card strong{font:900 13px system-ui,sans-serif;letter-spacing:.02em}
+#upgrade .upgrade-card .detail{font-size:13px}
+#upgrade .upgrade-card .glyph{font-size:31px}
+@media(max-width:650px){.intro .crest{width:87px;height:87px}.intro h1{font-size:clamp(30px,7.4vw,42px)}#upgrade{padding:5px}#upgrade .upgrade-cards{gap:5px}#upgrade .upgrade-card{min-height:92px;padding:5px}#upgrade .upgrade-card .glyph{font-size:19px}#upgrade .upgrade-card strong{font-size:10px}#upgrade .upgrade-card .detail{font-size:10px}#upgrade .upgrade-card .perk-tier{font-size:8px}#upgrade .overlay-sub{margin:0 0 2px}#upgrade .card-hint{display:none}}
+@media(max-width:650px) and (orientation:portrait){.intro .crest{height:61px;width:61px;margin-bottom:5px}#upgrade h2{font-size:19px}#upgrade .upgrade-card{min-height:78px}}
+/* Mobile level-up must never be clipped by the 16:10 gameplay viewport. */
+@media(max-width:650px){
+  #upgrade{position:fixed;inset:0;z-index:40;box-sizing:border-box;min-height:100dvh;height:100dvh;max-height:100dvh;overflow-y:auto;padding:22px 14px;justify-content:center;gap:8px;background:radial-gradient(ellipse at 50% 38%,#422b3c,#0d0812 76%);}
+  #upgrade .eyebrow{display:block;font-size:10px;letter-spacing:.18em;margin:0}
+  #upgrade h2{font-size:30px;letter-spacing:.04em;margin:0}
+  #upgrade .overlay-sub{font-size:13px;margin:0 0 8px}
+  #upgrade .perk-actions{max-width:410px;gap:8px;margin:0 0 7px}
+  #upgrade .perk-tool{font-size:12px;padding:9px 13px}
+  #upgrade .perk-notice{display:block;flex:1 1 100%;font-size:10px;line-height:1.3;min-height:13px}
+  #upgrade .upgrade-cards{display:grid;grid-template-columns:1fr;max-width:410px;gap:11px}
+  #upgrade .upgrade-card{position:relative;display:grid;grid-template-columns:64px 1fr;grid-template-rows:auto auto 1fr;gap:3px 10px;text-align:left;align-content:center;min-height:125px;padding:12px 15px;align-items:center;justify-items:start}
+  #upgrade .upgrade-card .perk-tier{grid-column:2;grid-row:1;font-size:10px}
+  #upgrade .upgrade-card .glyph{grid-column:1;grid-row:1/4;align-self:center;justify-self:center;font-size:33px}
+  #upgrade .upgrade-card strong{grid-column:2;grid-row:2;font-size:13px;min-height:unset}
+  #upgrade .upgrade-card .detail{grid-column:2;grid-row:3;font-size:12px;min-height:unset}
+  #upgrade .upgrade-card .hotkey{position:absolute;right:13px;bottom:10px;font-size:10px}
+  #upgrade .card-hint{display:block;margin:0;font-size:11px}
+}
+@media(max-width:650px) and (max-height:610px){
+  #upgrade{justify-content:flex-start;padding:12px 10px}
+  #upgrade .upgrade-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  #upgrade .upgrade-card{display:flex;flex-direction:column;text-align:center;align-items:center;justify-content:flex-start;gap:4px;min-height:130px;padding:8px 4px}
+  #upgrade .upgrade-card .glyph{font-size:21px;align-self:center}
+  #upgrade .upgrade-card strong{font-size:10px;line-height:1.1}
+  #upgrade .upgrade-card .detail{font-size:10px;line-height:1.1}
+  #upgrade .upgrade-card .hotkey{position:static;font-size:9px;margin:0}
+}
