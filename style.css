@@ -306,3 +306,12 @@ body{padding:10px}
 /* Desktop-only controls: the keyboard (WASD/arrows) and O grimoire are the sole input scheme. */
 .inventory-panel{width:min(940px,calc(100% - 18px));}
 .inventory-button{right:58px;}
+
+/* v0.17 — desktop grimoire chest, temporary HP regen, legendary Blood. */
+.inventory-button{top:auto;right:auto;left:14px;bottom:14px;width:45px;height:45px;display:grid;place-items:center;border-color:#ad7855;background:#211019ea}
+.inventory-button svg{display:block;filter:drop-shadow(0 2px 3px #000a)}
+.fountain-buff{display:inline-flex;align-items:center;white-space:nowrap;border:1px solid #e65f75;border-radius:7px;padding:4px 7px;background:#552032df;color:#ffb9c8;font:800 11px system-ui,sans-serif;box-shadow:0 0 12px #b82b4a77}
+.fountain-buff[hidden]{display:none!important}
+#upgrade .upgrade-card.perk-legendary{border-color:#ffc66a;box-shadow:0 0 24px #f9af4555,inset 0 0 28px #b34d2328}
+#upgrade .upgrade-card.perk-legendary .perk-tier{color:#ffd37f}
+#upgrade .upgrade-card.perk-legendary .perk-tier::before{content:'✦ ';color:#ffe59e}

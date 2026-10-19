@@ -25,7 +25,7 @@
     inventoryElementIcon:$('inventoryElementIcon'), inventoryElementName:$('inventoryElementName'),
     inventoryElementDesc:$('inventoryElementDesc'), inventoryElementRank:$('inventoryElementRank'),
     inventoryPerks:$('inventoryPerks'), inventoryStats:$('inventoryStats'), inventoryPerkCount:$('inventoryPerkCount'),
-    start:$('startBtn'), restart:$('restartBtn'), resume:$('resumeBtn'), pauseBtn:$('pauseBtn'), hud:$('hud'),
+    start:$('startBtn'), restart:$('restartBtn'), resume:$('resumeBtn'), hud:$('hud'), fountainBuff:$('fountainBuff'),
     hp:$('hpFill'), hpText:$('hpText'), xp:$('xpFill'), level:$('levelText'), kills:$('killText'), time:$('timeText'),
     sound:$('soundBtn'), musicVolume:$('musicVolume'), sfxVolume:$('sfxVolume'),
     musicVolumeValue:$('musicVolumeValue'), sfxVolumeValue:$('sfxVolumeValue'), xpStrip:$('xpStrip'),
@@ -53,7 +53,7 @@
   // element-specific; only the power corresponding to the chosen element rolls.
   // Descriptions match the exact mechanic rather than promising an unrelated stat.
   const POWERS = [
-    {id:'brutality',icon:'brutality',name:'BRUTALITY',desc:'+5 flat damage to direct hits. Weak for Poison.',tier:'common',apply:p=>p.flatDamage+=5},
+    {id:'brutality',icon:'brutality',name:'BRUTALITY',desc:'+5 flat damage to direct hits (no Poison impact).',tier:'common',apply:p=>p.flatDamage+=5},
     {id:'rapid_fire',icon:'rapid_fire',name:'RAPID FIRE',desc:'+18% attack speed.',tier:'common',apply:p=>p.attackRate*=1.18},
     {id:'movement',icon:'movement',name:'SHADOW STRIDE',desc:'+16% movement speed.',tier:'common',apply:p=>p.speed*=1.16},
     {id:'vitality',icon:'vitality',name:'VITALITY',desc:'+25 maximum HP. Heal 25 HP.',tier:'common',apply:p=>{p.maxHp+=25;p.hp=Math.min(p.maxHp,p.hp+25)}},
@@ -66,21 +66,21 @@
     {id:'pierce',icon:'pierce',name:'PIERCING FANGS',desc:'Each projectile pierces +1 enemy.',tier:'rare',can:p=>p.pierce<4,apply:p=>p.pierce++},
     {id:'crit',icon:'crit',name:'DEADLY PRECISION',desc:'+12% critical hit chance.',tier:'rare',can:p=>p.critChance<.60,apply:p=>p.critChance+=.12},
     {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',desc:'+25% Blood hit and Bleed damage. Unlock Lance and Orb.',tier:'rare',can:p=>p.element==='blood'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;if(p.elementRank===2)p.bloodLance++;if(p.elementRank===3)p.bloodOrbChance+=.20;if(p.elementRank===4)p.bloodSplashChance+=.20;}},
-    {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC BURST',desc:'Bleed cap 8. At 8 stacks, explode for their full Bleed damage in an area.',tier:'rare',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:p=>{p.hemorrhagicBurst=true;}},
-    {id:'fire_power',icon:'fire_power',name:'FIRE POWER',desc:'+25% Fire hit damage and stronger burns.',tier:'rare',can:p=>p.element==='fire'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.burnMultiplier*=1.2;}},
-    {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',desc:'+25% Lightning damage and chain chance.',tier:'rare',can:p=>p.element==='lightning'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.stormBonus+=.10;}},
+    {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC BURST',desc:'Every Blood hit immediately detonates 8 Bleed stacks. Only 5% chance to appear!',tier:'legendary',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:p=>{p.hemorrhagicBurst=true;}},
+    {id:'fire_power',icon:'fire_power',name:'FIRE POWER',desc:'+25% Fire direct damage and +20% Burn potency.',tier:'rare',can:p=>p.element==='fire'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.burnMultiplier*=1.2;}},
+    {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',desc:'+25% Lightning hit range and +10% chain chance.',tier:'rare',can:p=>p.element==='lightning'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.stormBonus+=.10;}},
     {id:'poison_power',icon:'poison_power',name:'POISON POWER',desc:'+35% DPS per newly applied Poison stack.',tier:'rare',can:p=>p.element==='poison'&&p.elementRank<5,apply:p=>{p.elementRank++;p.poisonMultiplier*=1.35;}}
   ];
 
   // Initial choice occurs before any enemies spawn / game clock starts.
   // Every DOT damage number means *total damage over the stated duration*.
   const ELEMENT_CHOICES = [
-    {id:'blood',element:'blood',name:'BLOOD',desc:'16 hit · Bleed: 50% hit over 8s per stack. Max 4 stacks.',tier:'rare'},
-    {id:'fire',element:'fire',name:'FIRE',desc:'20 hit · Burn for 2s: +100% of the hit over time.',tier:'rare'},
-    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'20 hit · 50% chance to SHOCK for 4s. Hits deal +100% damage while shocked.',tier:'rare'},
-    {id:'poison',element:'poison',name:'POISON',desc:'5 hit · Each hit adds 12.5 poison DPS forever. Unlimited stacks.',tier:'rare'}
+    {id:'blood',element:'blood',name:'BLOOD',desc:'20 direct · Every hit Bleeds (50% over 8s), up to 8 stacks.',tier:'rare'},
+    {id:'fire',element:'fire',name:'FIRE',desc:'40 direct · Single Burn deals 20 over 2s; hits refresh it.',tier:'rare'},
+    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'Random 10–100 hit · 50% Shock for 4s; shocked targets take double hits.',tier:'rare'},
+    {id:'poison',element:'poison',name:'POISON',desc:'0 direct · Permanent 13 DPS per hit (104/8s). Infinite stacks.',tier:'rare'}
   ];
-  const ELEMENT_DAMAGE={blood:16,fire:20,lightning:20,poison:5};
+  const ELEMENT_DAMAGE={blood:20,fire:40,lightning:10,poison:0};
   // Icons are uniformly trimmed, without a second inset frame.
   const ABILITY_ICON_CELLS = {"blood": [0, 0], "fire": [1, 0], "lightning": [2, 0], "poison": [3, 0], "blood_power": [0, 1], "fire_power": [1, 1], "lightning_power": [2, 1], "poison_power": [3, 1], "brutality": [0, 2], "rapid_fire": [1, 2], "movement": [2, 2], "vitality": [3, 2], "regen": [0, 3], "armor": [1, 3], "knowledge": [2, 3], "magnet": [3, 3], "forward": [0, 4], "spread": [1, 4], "pierce": [2, 4], "crit": [3, 4]};
   // Original, unframed SVG Blood icons: a red droplet and an upgraded droplet.
@@ -140,7 +140,7 @@
     game = {
       time:0,
       perkRanks:Object.create(null),perkOrder:[],
-      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
+      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,fountainRegenTime:0,fountainRegenTick:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], nextFountainAt:rand(44,60), kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
@@ -148,7 +148,7 @@
     state='upgrade';
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.pause.classList.add('hidden');
     el.inventory.classList.add('hidden'); el.inventoryBtn.hidden=true;
-    el.hud.hidden = false; el.xpStrip.hidden = false; el.bossBar.hidden = true; el.pauseBtn.hidden = true; el.msg.textContent = ''; el.status.textContent = 'CHOOSE YOUR STARTING ELEMENT';
+    el.hud.hidden = false; el.xpStrip.hidden = false; el.bossBar.hidden = true; el.msg.textContent = ''; el.status.textContent = 'CHOOSE YOUR STARTING ELEMENT';
     updateHUD();
     openUpgrade();
     // Audio begins after the player chooses a school (browser gesture).
@@ -164,7 +164,7 @@
       const a=rand(0,TAU), d=rand(initial?570:480,initial?1000:1120);
       const x=p.x+Math.cos(a)*d, y=p.y+Math.sin(a)*d;
       if(game.fountains.some(f=>dist2(x,y,f.x,f.y)<720*720))continue;
-      game.fountains.push({x,y,heal:40});
+      game.fountains.push({x,y,heal:20});
       return true;
     }
     return false;
@@ -180,15 +180,16 @@
     }
     for(let i=g.fountains.length-1;i>=0;i--){
       const f=g.fountains[i];
-      if(p.hp>=p.maxHp || dist2(p.x,p.y,f.x,f.y)>34*34)continue;
+      if(dist2(p.x,p.y,f.x,f.y)>36*36)continue;
       const healed=Math.min(f.heal,p.maxHp-p.hp);
       p.hp+=healed;
+      p.fountainRegenTime=10; p.fountainRegenTick=0;
       g.fountains.splice(i,1);
-      floatText(p.x,p.y-36,`+${Math.round(healed)} HP`,'#ffb0c3',13);
+      floatText(p.x,p.y-36,`+${Math.round(healed)} HP · REGEN`,'#ffb0c3',13);
       addParticles(f.x,f.y,'#ff4769',25,100,2,4);
       addImpact(f.x,f.y,35,'#ff5c82');
       playSound('level');
-      flashMessage(`♥ BLOOD FOUNTAIN · +${Math.round(healed)} HP`,1900);
+      flashMessage(`♥ BLOOD FOUNTAIN · +${Math.round(healed)} HP · REGEN 10s`,1900);
     }
   }
 
@@ -288,11 +289,20 @@
   }
   function eligiblePowers(){return POWERS.filter(opt=>!game.banned.has(opt.id) && (!opt.can||opt.can(game.player)));}
   function rollChoices(previous=[]){
-    const allowed=eligiblePowers();
-    const alternative=allowed.filter(o=>!previous.includes(o.id));
-    const selection=alternative.length>=3?alternative:allowed;
-    for(let i=selection.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[selection[i],selection[j]]=[selection[j],selection[i]];}
-    return selection.slice(0,3);
+    // One independent 5% chance per entire offering (also after Reroll).
+    // Excluded from ordinary choices; only Blood can see it, once.
+    const eligible=eligiblePowers();
+    const special=eligible.find(o=>o.id==='hemorrhagic_burst');
+    const ordinary=eligible.filter(o=>o.id!=='hemorrhagic_burst');
+    const alternatives=ordinary.filter(o=>!previous.includes(o.id));
+    const pool=alternatives.length>=3?alternatives:ordinary;
+    for(let i=pool.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[pool[i],pool[j]]=[pool[j],pool[i]];}
+    const cards=pool.slice(0,3);
+    if(special&&!previous.includes(special.id)&&Math.random()<.05){
+      if(cards.length>=3)cards[(Math.random()*cards.length)|0]=special;
+      else cards.push(special);
+    }
+    return cards;
   }
   function renderUpgrade(){
     const g=game;
@@ -340,7 +350,7 @@
       game.player.damage=ELEMENT_DAMAGE[choice.element];
       if(choice.element==='lightning')game.player.projectileSpeed*=1.25;
       game.player.shotCd=0;
-      state='playing';el.upgrade.classList.add('hidden');el.pauseBtn.hidden=false;
+      state='playing';el.upgrade.classList.add('hidden');
       el.status.textContent=`${choice.name} ATTUNED`;
       for(let i=0;i<5;i++)spawnEnemy('skeleton',rand(180,320),rand(0,TAU));
       for(let i=0;i<2;i++)spawnEnemy('bat',rand(200,270),rand(0,TAU));
@@ -365,7 +375,7 @@
   function flashMessage(text,ms=1750){ el.msg.textContent=text; clearTimeout(flashMessage.timer); flashMessage.timer=setTimeout(()=>el.msg.textContent='',ms); }
 
   function die(won){
-    state='end'; el.end.classList.remove('hidden'); el.pauseBtn.hidden=true; el.bossBar.hidden=true;
+    state='end'; el.end.classList.remove('hidden'); el.inventoryBtn.hidden=true; el.bossBar.hidden=true;
     $('endTitle').textContent = won ? 'YOU SURVIVED!' : 'YOU DIED';
     $('endEyebrow').textContent = won ? 'THE DAWN REMEMBERS YOUR NAME' : 'THE NIGHT CLAIMS ANOTHER SOUL';
     $('endSub').textContent = won ? 'Daybreak came. You lived through another massacre.' : 'The horde still hungers...';
@@ -378,7 +388,7 @@
     el.end.classList.toggle('victory',won);
     el.status.textContent = won ? 'HUNT COMPLETE' : 'HUNT FAILED'; playSound('death');
   }
-  // TAB opens a paused grimoire. Values and ranks come from the active run.
+  // O opens a paused grimoire. Values and ranks come from the active run.
   function renderInventory(){
     if(!game || !game.elementChosen)return;
     const p=game.player;
@@ -410,7 +420,7 @@
     const shots=(1+p.forwardShots)*(1+2*p.spreadShots);
     const fmt=(n,d=1)=>Number(n).toFixed(d);
     const stats=[
-      ['DIRECT HIT',fmt(p.damage+p.flatDamage,1)],
+      ['DIRECT HIT',p.element==='poison'?'0 (DoT only)':p.element==='lightning'?`${fmt(p.damage+p.flatDamage,0)}–${fmt(p.damage*10+p.flatDamage,0)}`:fmt(p.damage+p.flatDamage,1)],
       ['ATTACKS / SEC',fmt(p.attackRate,2)],
       ['MOVE SPEED',fmt(p.speed,0)],
       ['PROJECTILES',String(shots)],
@@ -420,8 +430,9 @@
       ['XP BONUS','×'+fmt(p.xpBonus,2)],
       ['PICKUP RANGE',fmt(84*p.magnet,0)],
       ['REGEN',fmt(p.regen,2)+' HP/s'],
+      ['FOUNTAIN REGEN',p.fountainRegenTime>0?`${Math.ceil(p.fountainRegenTime)}s · +1/3s`:'—'],
       ['MAX HEALTH',String(p.maxHp)],
-      ['BLEED CAP',p.element==='blood'?String(p.hemorrhagicBurst?8:4):'—']
+      ['BLEED CAP',p.element==='blood'?'8':'—']
     ];
     el.inventoryStats.replaceChildren();
     for(const [label,value] of stats){
@@ -484,7 +495,7 @@
       const kind=orb?'blood_orb_v11':fire?'fire_bolt_v11':lightning?'lightning_bolt_v11':poison?'poison_bolt_v11':frost?'ice_bolt':'blood_bolt_v11';
       const shotSpeed=orb?Math.max(44,speed*.35):speed;
       game.shots.push({hostile:false,x:p.x+Math.cos(angle)*14-Math.sin(angle)*offset,y:p.y+Math.sin(angle)*14+Math.cos(angle)*offset,
-        vx:Math.cos(angle)*shotSpeed,vy:Math.sin(angle)*shotSpeed,angle,life:Math.max(1.5,orb?3.5:2.85/p.projectileSpeed),damage:p.damage+p.flatDamage,kind,fire,frost,poison,lightning,orb,size:p.projectileSize*(orb?1.55:1),
+        vx:Math.cos(angle)*shotSpeed,vy:Math.sin(angle)*shotSpeed,angle,life:Math.max(1.5,orb?3.5:2.85/p.projectileSpeed),damage:poison?0:lightning?(10+Math.floor(Math.random()*91))*(p.damage/10)+p.flatDamage:p.damage+p.flatDamage,kind,fire,frost,poison,lightning,orb,size:p.projectileSize*(orb?1.55:1),
         pierce:orb?0:p.pierce+(element==='blood'?p.bloodLance:0),hit:new Set()});
     }
     addParticles(p.x+Math.cos(aim)*13,p.y+Math.sin(aim)*13,'#e8c3d0',4,25,2,3);
@@ -540,8 +551,8 @@
     return finalDamage;
   }
   // Bleed stacks are independent 8-second effects, each worth 50% of the hit.
-  // Four stacks normally; Hemorrhagic Burst raises the cap to eight.
-  // A fifth normal hit renews the oldest stack without increasing the cap.
+  // Blood has eight stacks by default. The legendary perk replaces them with
+  // eight instant full-strength stacks and detonates on EVERY Blood hit.
   function tickBleedStacks(enemy,dt){
     const stacks=enemy.bleedStacks;
     if(!stacks||!stacks.length)return;
@@ -571,32 +582,32 @@
   }
   function applyBleedStack(enemy,hitDamage){
     const stacks=enemy.bleedStacks||(enemy.bleedStacks=[]);
+    if(game.player.hemorrhagicBurst){
+      // Instant 8-stack detonation on EVERY hit, replacing existing Bleed.
+      const damage=8*hitDamage*.5;
+      stacks.length=0;
+      burstHemorrhage(enemy,damage);
+      return;
+    }
     const stack={time:8,dps:hitDamage*.5/8,total:hitDamage*.5};
-    const cap=game.player.hemorrhagicBurst?8:4;
-    if(stacks.length<cap)stacks.push(stack);
+    if(stacks.length<8)stacks.push(stack);
     else{
-      // Replace the oldest (least remaining duration) when already capped.
       let oldest=0;
       for(let i=1;i<stacks.length;i++)if(stacks[i].time<stacks[oldest].time)oldest=i;
       stacks[oldest]=stack;
     }
-    if(game.player.hemorrhagicBurst&&stacks.length===8){
-      const total=stacks.reduce((sum,s)=>sum+s.total,0);
-      stacks.length=0;
-      burstHemorrhage(enemy,total);
-    }
   }
-  // One persistent Poison stack per hit: 100 damage / 8 seconds = 12.5 DPS.
+  // One permanent Poison stack per hit: 13 DPS = 104 damage / 8 seconds.
   // Aggregate DPS and count instead of allocating an object per stack, so even
   // hundreds or thousands of stacks stay cheap to simulate.
   function applyPoisonStack(enemy, potency){
     enemy.poisonStacks=(enemy.poisonStacks||0)+1;
-    enemy.poisonDps=(enemy.poisonDps||0)+12.5*potency;
+    enemy.poisonDps=(enemy.poisonDps||0)+13*potency;
   }
-  // Fire is explicitly single-stack: new hits refresh its two-second timer.
-  // Keep the stronger burn if a weaker hit lands while one is active.
-  function refreshBurn(enemy, hitDamage, potency){
-    enemy.burnDps=enemy.burnTime>0?Math.max(enemy.burnDps||0,hitDamage*potency/2):hitDamage*potency/2;
+  // Burn: one stack, 20 total base damage across 2s. Refreshes on hit.
+  function refreshBurn(enemy,_hitDamage,potency){
+    const dps=10*potency;
+    enemy.burnDps=enemy.burnTime>0?Math.max(enemy.burnDps||0,dps):dps;
     enemy.burnTime=2;
   }
   function chainLightning(origin,damage,hitSet){
@@ -629,8 +640,18 @@
     const mag=Math.hypot(mx,my); p.moving=mag>.02; if(mag>0){ mx/=mag; my/=mag; p.x+=mx*p.speed*dt; p.y+=my*p.speed*dt; p.walk+=dt*11; p.face=mx<-.05?-1:mx>.05?1:p.face; }
 
     updateFountains(dt);
-    // Intentional sustain only: Regeneration must be picked during level-up.
+    // Continuous perk regeneration plus nonstacking 10s Fountain Regen.
     if(p.regen>0)p.hp=Math.min(p.maxHp,p.hp+p.regen*dt);
+    if(p.fountainRegenTime>0){
+      const elapsed=Math.min(dt,p.fountainRegenTime);
+      p.fountainRegenTime=Math.max(0,p.fountainRegenTime-dt);
+      p.fountainRegenTick+=elapsed;
+      while(p.fountainRegenTick>=3){
+        p.fountainRegenTick-=3;
+        p.hp=Math.min(p.maxHp,p.hp+1);
+      }
+      if(p.fountainRegenTime<=0)p.fountainRegenTick=0;
+    }
     p.orbitCd=Math.max(0,p.orbitCd-dt);
     if(p.orbits>0 && p.orbitCd<=0){
       p.orbitCd=.4;
@@ -717,7 +738,7 @@
           e.x+=Math.cos(a)*push;e.y+=Math.sin(a)*push;
           addSlashBurst(e.x,e.y,a,e.type==='warden');
           addParticles(e.x,e.y,'#ffd5dc',5,46,2,3);
-          floatText(e.x,e.y-20,`${Math.ceil(dmg)}${crit?'!':''}`,crit?'#ffd274':'#ffe9d0');
+          if(dmg>0)floatText(e.x,e.y-20,`${Math.ceil(dmg)}${crit?'!':''}`,crit?'#ffd274':'#ffe9d0');
           addMagicFx(e.x,e.y,b.fire?'impact':b.frost?'frost_nova':'impact',b.fire?40:28,.28);
           if(e.hp<=0)enemyDie(e);
           else addBloodBurst(e.x,e.y,e.type==='warden'?11:6,ENEMIES[e.type].blood);
@@ -768,6 +789,12 @@
     if(!game) return;
     const p=game.player;
     el.hp.style.width=`${100*p.hp/p.maxHp}%`; el.hpText.textContent=`${Math.ceil(p.hp)} / ${p.maxHp}`;
+    el.fountainBuff.hidden=p.fountainRegenTime<=0;
+    if(p.fountainRegenTime>0){
+      const remaining=Math.ceil(p.fountainRegenTime);
+      el.fountainBuff.textContent=`✚ ${remaining}s`;
+      el.fountainBuff.title=`Fountain Regen: +1 HP every 3 seconds (${remaining}s left)`;
+    }
     const xpPct=clamp(100*p.xp/p.next,0,100);
     el.xp.style.width=`${xpPct}%`; el.xpStrip.setAttribute('aria-valuenow',String(Math.round(xpPct)));
     el.level.textContent=p.level; el.kills.textContent=game.kills; el.time.textContent=timeText(game.time);
@@ -784,6 +811,10 @@
       ctx.save();
       ctx.fillStyle=`rgba(238,40,77,${.065+pulse*.045})`;
       ctx.beginPath();ctx.ellipse(x,y+8,43,22,0,0,TAU);ctx.fill();
+      ctx.strokeStyle=`rgba(255,64,94,${.65+pulse*.3})`;
+      ctx.lineWidth=2.5;ctx.shadowColor='#ff2d55';ctx.shadowBlur=12;
+      ctx.beginPath();ctx.arc(x,y,36,0,TAU);ctx.stroke();
+      ctx.shadowBlur=0;
       shadowAt(x,y+15,29,.38);
       if(fountainArt.complete&&fountainArt.naturalWidth){
         ctx.imageSmoothingEnabled=true;
@@ -1116,7 +1147,7 @@
   document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);
-  el.start.addEventListener('click',startGame); el.restart.addEventListener('click',startGame); el.pauseBtn.addEventListener('click',togglePause); el.resume.addEventListener('click',togglePause);
+  el.start.addEventListener('click',startGame); el.restart.addEventListener('click',startGame); el.resume.addEventListener('click',togglePause);
   el.inventoryBtn.addEventListener('click',toggleInventory);el.inventoryClose.addEventListener('click',closeInventory);
   function updateAudioUI(){
     el.sound.textContent=muted?'MUTE ON':'MUTE OFF';

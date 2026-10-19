@@ -1,46 +1,24 @@
-# Noob Survivors — Element Balance v0.12
+# Crimson Ruin: Age of Torment — Element Balance v0.17
 
-The player chooses a primary element **before gameplay begins** (after clicking Begin the Hunt). A selection pauses the clock and the first enemies have not yet spawned. No reroll/banish is used on this choice. The first normal level-up offers three perk cards, with existing reroll and banish.
-
-| Starting skill | Immediate hit | Extra status | Duration / rules |
+| Element | Direct hit | Status damage | Special rules |
 |---|---:|---|---|
-| Blood Bolt | 16 | Each Bleed stack deals **50% of its own hit** (8 base damage) | 8 seconds per stack; maximum **4** by default. Hemorrhagic Burst unlocks **8** and detonates them |
-| Fire Bolt | 20 | Burning totaling **100% of hit** (20 base damage) | 2 seconds (10 DPS) |
-| Lightning Bolt | 20 | **50% chance** to apply Shock for **4 seconds** | Direct hits against shocked enemies deal **+100% damage (2×)**; Shock does not stop movement and can be refreshed. Chain effects also benefit from Shock. |
-| Poison Bolt | 5 | Poison deals **100 damage every 8 seconds** | Every hit adds **one permanent stack** worth 12.5 DPS; unlimited stacks until enemy death. At 200 stacks = 2,500 DPS |
+| Blood | **20** | **50% of actual hit** per Bleed stack, spread over 8 seconds (10 at base) | Each Blood hit always inflicts Bleed, max **8** independent active stacks; additional hits refresh the oldest. |
+| Fire | **40** | **20 total Burn** over 2 seconds, 10 DPS | Only one Burn stack, resets its 2s timer on hit. Fire Power increases direct damage by 25% and Burn DPS by 20%. |
+| Lightning | **Random integer 10–100** | No DoT | 50% Shock chance for 4 seconds; direct hits on shocked enemies deal double damage. Nearby Chain Lightning chance starts at 36%. |
+| Poison | **0** | Each hit applies **permanent +13 DPS** (= 104 total every 8 seconds) | No stack cap or expiry. Poison Power makes *new* stacks 35% stronger per rank. |
 
-## Upgrade paths
+## Hemorrhagic Burst (legendary Blood)
+- **5% independent chance per complete level-up three-card offer** (and per Reroll), **not per card**; unavailable to other elements and after acquisition or Banish.
+- **Every direct Blood hit instantly creates 8 full-damage Bleed stacks and explodes them all in a compact AoE** (8 × 50% of that hit).
+- Base hit = 20 direct damage, explosion = **80 AoE damage**. Regular hit damage still applies.
+- Explosion hits the original target and nearby enemies. It consumes the stacks, does not keep ticking and does not cause secondary Bleed chain reactions.
+- Blood Power increases hit and hence Bleed/explosion damage by 25% per rank.
 
-Normal perks remain: damage, rate, extra shot, projectile speed, pierce, survivability, magnet, crit, luck-like utilities, etc. Icons now sit inside the user-supplied gold frame.
+## Blood Fountains
+- 20 flat instant HP (max HP cap) + 10s timed regen: 1 HP after 3s, 6s and 9s.
+- Red activation circle radius 36 world units; buff timer next to player's HP bar.
+- Buff refreshes rather than stacks and is granted even at full HP.
 
-- **Blood**: Blood Lance (+1 pierce), Sanguine Orb (slow explosive orb), Hemorrhage (area splash).
-- **Fire**: Cinder Veins (longer burn at the same total burn damage), cross-element Hellfire proc perk.
-- **Lightning**: Volt Cascade (higher chain chance), Stormbringer proc perk.
-- **Poison**: Venom Heart (+35% poison DPS). Poison never expires, and stacks indefinitely. Each hit adds +12.5 DPS multiplied by current Poison Power. Existing stacks keep their previous strength.
-
-Bleed stacks independently up to 4 (each lasts 8 seconds and deals 50% of its originating hit). At the cap, another Blood hit replaces the oldest stack. Hemorrhagic Burst raises the cap to 8; on application of the 8th stack it consumes all eight and immediately damages the target and nearby enemies for the sum of all eight stacks' full original Bleed damage. Fire refreshes its one burn; Poison stacks permanently without a limit. Critical hits and damage upgrades scale DOT through actual hit damage.
-
-## Interface rules
-
-- Only `MUSIC`, `SFX` sliders and `MUTE` at top; soundtrack name is not shown.
-- Compact footer: `MOVE WASD / arrows` and `PAUSE P`.
-- `REROLL` and `BANISH` continue working on normal level-ups.
-- XP drops stay bright blue crystals.
-
-## v0.12.1 — Lightning Shock correction
-- Lightning now applies **Shock** for 4 seconds on a 50% proc, rather than Freeze.
-- Hits against a shocked enemy are multiplied by 2 while the effect is active. The hit that first applies Shock does not receive the bonus. Shock refreshes on reapplication.
-- Shock does not slow enemies, and does not amplify ticking damage-over-time.
-## v0.13.1 — Endgame Poison / refresh-only Fire
-- Poison: 5 base direct hit plus **12.5 DPS per permanent stack** (100 per 8 seconds), **no stack cap**.
-- 1/10/200 Poison hits on one surviving enemy = 12.5/125/2,500 DPS.
-- Poison Power increases only future stacks. Stacks never expire and require no per-stack timers or objects.
-- Fire: **one active burn only**; subsequent hits reset its 2-second timer and retain the stronger burn DPS rather than adding stacks.
-
-## v0.14.1 — Blood stacking + Hemorrhagic Burst
-- Blood Bolt starts at 16 direct damage; each stack of Bleed deals 8 additional total damage across 8 seconds (50% of its original direct hit).
-- Base maximum: **4 independent stacks** on the same enemy. Reapplying at the cap replaces the oldest stack with a fresh 8-second stack.
-- New Blood-exclusive perk **Hemorrhagic Burst** (heart + up arrow): raises the cap to **8**. On the eighth stack all eight are consumed; a compact area explosion hits the trigger enemy and nearby targets within ~76 world units (plus enemy radius) for the **sum of eight full Bleed totals**, not their remaining DoT.
-- At base 16 hit per stack, this is 8 × 8 = **64 explosion damage** to every enemy struck (before Shock modifiers). The regular projectile's direct hit still applies separately.
-- **Blood Power** increases Blood direct-hit damage by 25% each rank; since Bleed derives from the actual hit damage, each new Bleed stack gains the same proportional increase automatically. Existing stacks retain their original damage values.
-- When the explosion consumes the stacks, they begin accumulating again from zero. This does not change unlimited Poison stacks or single refreshable Fire burn.
+## UI
+- Desktop only. Chest icon lower-left opens the Grimoire; shortcut O; P pauses. No on-screen Pause icon.
+- README patch notes are in descending version order v0.17 through v0.8.
