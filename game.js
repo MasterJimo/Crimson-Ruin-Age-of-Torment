@@ -228,7 +228,7 @@
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
       player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
-      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:rand(240,360), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
+      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:rand(240,360), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
     spawnFountain(true);
@@ -564,10 +564,12 @@
     el.reroll.disabled=g.rerolls<=0;
     el.banish.disabled=g.banishes<=0 || eligiblePowers().length<=4;
     el.banish.classList.toggle('armed',g.banishMode);
-    el.perkNotice.textContent=choosingElement?'SELECT ONE TO BEGIN YOUR HUNT':g.banishMode?'SELECT A CARD TO BANISH · CLICK BANISH TO CANCEL':'CHOOSE AN UPGRADE · R TO REROLL · B TO BANISH';
+    // Keep useful announcements for screen readers, without UI clutter.
+    el.perkNotice.textContent=choosingElement?'Choose your starting element':
+      g.banishMode?'Choose a power to banish. Press B to cancel.':
+      'Choose your new power';
     el.upgrade.querySelector('h2').textContent=choosingElement?'CHOOSE YOUR ELEMENT':'NEW POWER';
-    el.upgrade.querySelector('.overlay-sub').textContent=choosingElement?'Your starting weapon · You can upgrade it as you survive':'Choose one upgrade';
-    el.upgrade.querySelector('.card-hint').textContent=choosingElement?'Choose 1–4 to start the hunt':'Pick 1–4 · ATTACK / DEFENSE / 2 RANDOM · R / B';
+
   }
   function openUpgrade(){
     game.banishMode=false;

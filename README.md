@@ -6,7 +6,7 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.23
+## Current gameplay — v0.23.1
 
 Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
@@ -48,6 +48,14 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 ---
 
 ## Patch notes — newest first
+
+### v0.23.1 — Clean draft screens, bolder keycaps and corrected icon edges
+- **Choose Your Element** now uses one large, decorative but legible title, with names, new framed icons and conspicuous white number keys. Removed the repeated intro copy, rarity labels, descriptions and footer instructions from this selection screen.
+- **New Power** likewise has one prominent title. Removed the redundant blessing slogan, explanation, extra R/B directions and bottom instruction line. Power-up card names, rarities and actionable bonus descriptions remain.
+- Increased **Reroll / Banish** button size and contrast, set both starting reserves to **three uses per complete run**, and hid the redundant side text while keeping accessibility announcements.
+- Rebuilt the user-supplied v0.23 icon atlas with smaller artwork and transparent rounded outer borders so elemental textures and upgraded skill artwork stay inside the ornate gold frame. The new file is `assets/skill-icons-v0231.webp`.
+- Unchanged game damage, spawn balance, skill rarity chances and non-skill icons.
+
 
 ### v0.23 — Remastered Element and Power-Up icons
 - Replaced **four starting element icons** (Blood, Fire, Lightning, Poison) with the supplied color-matched crystal projectiles.

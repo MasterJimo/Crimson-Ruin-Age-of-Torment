@@ -506,7 +506,7 @@ body{padding:10px}
 #upgrade .upgrade-card .perk-art-frame .skill-icon-v023{
   display:block;flex:0 0 101px;
   width:101px;height:101px;min-width:101px;
-  background-image:url('assets/skill-icons-v023.webp')!important;
+  background-image:url('assets/skill-icons-v0231.webp')!important;
   background-size:500% 500%!important;
   background-repeat:no-repeat!important;
   image-rendering:auto;filter:none!important;
@@ -520,7 +520,7 @@ body{padding:10px}
 }
 .inventory-gold-frame .skill-icon-v023{
   display:block;flex:0 0 94px;width:94px;height:94px;min-width:94px;
-  background-image:url('assets/skill-icons-v023.webp')!important;
+  background-image:url('assets/skill-icons-v0231.webp')!important;
   background-size:500% 500%!important;background-repeat:no-repeat!important;
   filter:none!important;
 }
@@ -529,7 +529,7 @@ body{padding:10px}
 }
 .inventory-perk-icon .skill-icon-v023{
   display:block;flex:0 0 57px;width:57px;height:57px;min-width:57px;
-  background-image:url('assets/skill-icons-v023.webp')!important;
+  background-image:url('assets/skill-icons-v0231.webp')!important;
   background-size:500% 500%!important;background-repeat:no-repeat!important;
   filter:none!important;
 }
@@ -542,4 +542,89 @@ body{padding:10px}
   #upgrade .upgrade-card .perk-art-frame .skill-icon-v023{
     flex-basis:81px;width:81px;height:81px;min-width:81px;
   }
+}
+
+/* v0.23.1: focused, ornate draft screens with only meaningful card content. */
+#upgrade .eyebrow,#upgrade .overlay-sub,#upgrade .card-hint{display:none!important}
+#upgrade .upgrade-display-title{
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(48px,5.9vw,82px)!important;
+  font-weight:900!important;line-height:1.04!important;
+  letter-spacing:.075em!important;
+  margin:0 0 23px!important;text-align:center;
+  color:#ffedf0;
+  background:linear-gradient(170deg,#fff9ee 8%,#ffdfdd 47%,#e5b1be 82%,#fff2e9);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 5px 13px #b03a6680);
+}
+#upgrade.element-select .upgrade-display-title{
+  font-size:clamp(48px,6.0vw,86px)!important;
+  margin-bottom:34px!important;letter-spacing:.055em!important;
+}
+#upgrade .upgrade-display-title::after{
+  content:"";display:block;width:min(270px,45%);height:2px;
+  margin:19px auto 0;
+  background:linear-gradient(90deg,transparent,#f3c29e,#fff6dc,#f3c29e,transparent);
+  box-shadow:0 0 15px #da7487a3;
+  -webkit-text-fill-color:initial;
+}
+#upgrade.element-select .perk-actions{display:none!important}
+#upgrade .perk-actions{
+  display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;
+  gap:18px;width:auto;max-width:100%;margin:0 0 27px!important;
+}
+#upgrade .perk-tool{
+  display:inline-flex;align-items:center;justify-content:center;gap:12px;
+  min-width:209px;min-height:66px;box-sizing:border-box;
+  padding:15px 22px;font:950 19px/1 system-ui,sans-serif;
+  letter-spacing:.065em;border:2px solid #ad617a;border-radius:16px;
+  background:linear-gradient(155deg,#4b1c30,#21101c);
+  box-shadow:0 10px 25px #0009,inset 0 1px 0 #fff2;
+}
+#upgrade .perk-tool span{
+  font:950 18px/1 system-ui,sans-serif;
+  padding:7px 11px;margin-left:0;border-radius:99px;
+  background:#712b4a;color:#fff3ee;
+}
+#upgrade .perk-tool:hover:not(:disabled),#upgrade .perk-tool:focus-visible{
+  border-color:#ffd2cf;box-shadow:0 0 20px #d45e8f82,0 8px 22px #0009;
+}
+#upgrade .perk-notice{
+  position:absolute!important;width:1px;height:1px;padding:0!important;
+  margin:-1px!important;overflow:hidden;clip:rect(0 0 0 0);
+  white-space:nowrap;clip-path:inset(50%);border:0;
+}
+#upgrade .upgrade-card .hotkey{
+  color:#fff!important;font:950 20px/1.1 system-ui,sans-serif!important;
+  letter-spacing:.06em;opacity:1!important;
+  text-shadow:0 2px 9px #000,0 0 6px #fff4;
+  padding:4px 9px;margin-top:auto;
+}
+#upgrade.element-select .upgrade-card .hotkey{
+  font-size:24px!important;
+}
+#upgrade.element-select .upgrade-card .perk-tier,
+#upgrade.element-select .upgrade-card .detail{display:none!important}
+#upgrade.element-select .upgrade-card{
+  justify-content:center;gap:15px;min-height:270px;
+}
+#upgrade.element-select .upgrade-card strong{
+  font-size:clamp(15px,1.35vw,19px);letter-spacing:.07em;
+}
+#upgrade .upgrade-card .perk-art-frame{
+  overflow:visible;isolation:isolate;
+}
+#upgrade .skill-icon-v023{
+  /* Exterior atlas pixels are now transparent and the artwork stays
+     inside the gold edges; avoid clipping the ornate frame itself. */
+  image-rendering:auto;
+}
+@media(max-height:710px){
+  #upgrade .upgrade-display-title{font-size:clamp(42px,5vw,64px)!important;margin-bottom:14px!important}
+  #upgrade.element-select .upgrade-display-title{font-size:clamp(43px,5.3vw,68px)!important;margin-bottom:15px!important}
+  #upgrade .upgrade-display-title::after{margin-top:9px}
+  #upgrade .perk-actions{margin-bottom:12px!important}
+  #upgrade .perk-tool{min-width:170px;min-height:53px;font-size:16px;padding:10px 15px}
+  #upgrade.element-select .upgrade-card{min-height:192px;gap:8px}
 }

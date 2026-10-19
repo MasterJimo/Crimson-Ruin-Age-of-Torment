@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.23.0">
+  <meta name="game-version" content="0.23.1">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.23.0">
+  <link rel="stylesheet" href="style.css?v=0.23.1">
 </head>
 <body>
   <div class="site-shell">
@@ -61,16 +61,13 @@
       </section>
 
       <section class="screen-overlay hidden" id="upgrade" aria-live="polite">
-        <div class="eyebrow">✧ THE BLOOD MOON BLESSES YOU ✧</div>
-        <h2>NEW POWER</h2>
-        <p class="overlay-sub">Choose one upgrade</p>
+        <h2 class="upgrade-display-title">NEW POWER</h2>
         <div class="perk-actions">
-          <button id="rerollBtn" class="perk-tool" type="button">↻ REROLL <span id="rerollCount">2</span></button>
-          <button id="banishBtn" class="perk-tool" type="button">✕ BANISH <span id="banishCount">2</span></button>
-          <span id="perkNotice" class="perk-notice" aria-live="polite">Choose a power to continue</span>
+          <button id="rerollBtn" class="perk-tool" type="button" title="Reroll the four cards (R)" aria-keyshortcuts="R">↻ REROLL <span id="rerollCount">3</span></button>
+          <button id="banishBtn" class="perk-tool" type="button" title="Remove a power from this run (B)" aria-keyshortcuts="B">✕ BANISH <span id="banishCount">3</span></button>
+          <span id="perkNotice" class="perk-notice visually-hidden" aria-live="polite">Choose a power</span>
         </div>
         <div id="upgradeCards" class="upgrade-cards"></div>
-        <p class="card-hint">Pick 1–4 · Attack + Defense + 2 Random · R to reroll · B to banish</p>
       </section>
 
       <section class="screen-overlay hidden" id="endScreen" aria-live="polite">
@@ -154,7 +151,7 @@
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="assets.js?v=0.23.0" defer></script>
-  <script src="game.js?v=0.23.0" defer></script>
+  <script src="assets.js?v=0.23.1" defer></script>
+  <script src="game.js?v=0.23.1" defer></script>
 </body>
 </html>
