@@ -227,7 +227,7 @@
   }
   function startGame(easyMode=false){
     game = {
-      time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,
+      time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
       player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:rand(240,360), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
@@ -328,18 +328,50 @@
     }
   }
 
-  // Starts at ~2× original encounter pressure; grows every minute.
-  // Controlled active-enemy and spawn caps protect the frame rate.
+  // Major danger spikes at 05:00, 10:00, 15:00, 20:00 and 25:00.
+  // Multipliers are TOTAL stage bonuses on top of the existing minute-by-minute
+  // ramp. Keeping a finite enemy cap protects performance under heavy pressure.
+  const DIFFICULTY_SURGES=[
+    {hp:1,damage:1,speed:1,spawn:1,aggression:1},
+    {hp:1.5,damage:1.45,speed:1.12,spawn:1.25,aggression:1.10},
+    {hp:2.7,damage:2.5,speed:1.22,spawn:1.6,aggression:1.25},
+    {hp:4.6,damage:4.2,speed:1.32,spawn:2,aggression:1.40},
+    {hp:7.6,damage:7,speed:1.42,spawn:2.5,aggression:1.55},
+    {hp:12,damage:11,speed:1.5,spawn:3,aggression:1.75}
+  ];
+  const SURGE_TITLES=['','THE HORDE GROWS','NIGHTMARE UNLEASHED','NO MERCY','THE ABYSS OPENS','FINAL ONSLAUGHT'];
+  function difficultyTier(seconds){return Math.min(5,Math.floor(Math.max(0,seconds)/300));}
   function difficultyAt(seconds,easy=false){
     const minute=Math.min(29,Math.floor(Math.max(0,seconds)/60));
-    const factor=easy?.5:1;
+    const surge=DIFFICULTY_SURGES[difficultyTier(seconds)],factor=easy?.5:1;
     return {
-      minute,spawn:Math.min(10,2*Math.pow(1.18,minute))*(easy?.5:1),
-      hp:Math.pow(1.15,minute)*factor,
-      damage:Math.pow(1.12,minute)*factor,
-      speed:Math.pow(1.06,minute)*factor,
-      aggression:easy?.5:1
+      minute,
+      spawn:Math.min(32,Math.min(10,2*Math.pow(1.18,minute))*surge.spawn)*factor,
+      hp:Math.pow(1.15,minute)*surge.hp*factor,
+      damage:Math.pow(1.12,minute)*surge.damage*factor,
+      speed:Math.pow(1.06,minute)*surge.speed*factor,
+      aggression:surge.aggression*factor
     };
+  }
+  // Old enemies also gain the new stage bonus immediately. Their HP percentage
+  // is preserved; newly spawned enemies additionally use the current minute ramp.
+  function applyDifficultySurge(g,newTier){
+    const previous=DIFFICULTY_SURGES[g.difficultyTier];
+    const next=DIFFICULTY_SURGES[newTier];
+    const hpRatio=next.hp/previous.hp;
+    const damageRatio=next.damage/previous.damage;
+    const speedRatio=next.speed/previous.speed;
+    const aggressionRatio=next.aggression/previous.aggression;
+    for(const enemy of g.enemies){
+      enemy.hp*=hpRatio;enemy.maxHp*=hpRatio;
+      enemy.damage*=damageRatio;enemy.speed*=speedRatio;
+      enemy.aggression*=aggressionRatio;
+    }
+    g.difficultyTier=newTier;
+    g.spawn=Math.min(g.spawn,.08); // Give the new wave a prompt entrance.
+    flashMessage(`☠ ${SURGE_TITLES[newTier]} · ${timeText(newTier*300)}`,2800);
+    shake=Math.max(shake,3+newTier);
+    playSound('boss');
   }
   function enemyTarget(enemy,player){
     const mode=enemy.aiRole||0,pressure=enemy.aggression||1;
@@ -970,8 +1002,13 @@
     if(!game || state!=='playing') return;
     const g=game, p=g.player; g.time+=dt; g.worldTime+=dt;
     if(g.time>=DURATION){g.time=DURATION;startDeathArrival();return;}
+    const nextTier=difficultyTier(g.time),surgeStarted=nextTier>g.difficultyTier;
+    if(surgeStarted)applyDifficultySurge(g,nextTier);
     if(g.time>=g.bossNext && !g.enemies.some(e=>e.type==='warden'))spawnWarden();
-    if(g.time>g.nextNotice){ flashMessage(g.time>=DURATION-60?'FINAL MINUTE!':'THE HORDE THICKENS...',2000); g.nextNotice+=35; }
+    if(g.time>g.nextNotice){
+      if(!surgeStarted)flashMessage(g.time>=DURATION-60?'FINAL MINUTE!':'THE HORDE THICKENS...',2000);
+      g.nextNotice+=35;
+    }
 
     let mx=Number(keys.has('d')||keys.has('arrowright')) - Number(keys.has('a')||keys.has('arrowleft'));
     let my=Number(keys.has('s')||keys.has('arrowdown')) - Number(keys.has('w')||keys.has('arrowup'));
@@ -1013,7 +1050,7 @@
       const count=Math.min(12,Math.max(1,Math.round(diff.spawn*(1+Math.random()*.25))));
       const room=Math.max(0,230-g.enemies.length);
       for(let i=0;i<Math.min(count,room);i++)spawnEnemy();
-      // First minute: ~2x the old spawn rate; stronger each following minute.
+      // First minute starts at ~2x; five-minute surges sharply intensify waves.
       g.spawn=Math.max(.095,.50/Math.sqrt(Math.max(1,diff.spawn)));
     }
 

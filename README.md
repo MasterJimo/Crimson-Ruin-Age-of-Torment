@@ -6,9 +6,23 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.23.2
+## Current gameplay — v0.24
 
-Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
+Survive up to a **30-minute run** in hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
+
+### Five-minute difficulty surges (Hardcore)
+
+In addition to the existing **minute-by-minute scaling** (enemy HP ×1.15, damage ×1.12 and speed ×1.06 per full minute), the hunt enters increasingly deadly tiers at exactly **05:00, 10:00, 15:00, 20:00 and 25:00**. These are **total tier multipliers** on top of the ongoing minute scaling, not additional multipliers applied repeatedly at each threshold:
+
+| From | Extra enemy HP | Extra damage | Extra speed | Extra spawn pressure | Extra flanking aggression |
+|---|---:|---:|---:|---:|---:|
+| 05:00 | ×1.5 | ×1.45 | ×1.12 | ×1.25 | ×1.10 |
+| 10:00 | ×2.7 | ×2.5 | ×1.22 | ×1.6 | ×1.25 |
+| 15:00 | ×4.6 | ×4.2 | ×1.32 | ×2.0 | ×1.40 |
+| 20:00 | ×7.6 | ×7.0 | ×1.42 | ×2.5 | ×1.55 |
+| 25:00 | ×12 | ×11 | ×1.5 | ×3.0 | ×1.75 |
+
+The surge **also upgrades surviving on-screen enemies immediately** while preserving their current HP percentage; fresh enemies use the full difficulty for the current minute. Every milestone announces a new phase. The active-enemy cap of **230** remains to avoid runaway performance costs. Easy Mode retains its normal 50% enemy-stat and spawn-pressure reductions. **10:00 is deliberately a harsh survival wall**; the goal of roughly half of players dying around this point is a balancing target, not a measured result. The forced 30:00 Reaper ending is unchanged.
 
 | Element | Starting direct damage | DoT / special behavior |
 |---|---:|---|
@@ -48,6 +62,13 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 ---
 
 ## Patch notes — newest first
+
+### v0.24 — Five-minute nightmare escalation
+- Added five major difficulty surges at **05:00 / 10:00 / 15:00 / 20:00 / 25:00**.
+- Enemy HP, attack damage, movement speed, flanking aggression and spawn pressure sharply increase each tier in addition to the existing minute-based scaling.
+- **10:00** is intended to become a major failure point, while surviving to 30:00 remains an extreme challenge; actual death percentages require player testing.
+- Existing enemies gain the new tier's stats immediately without healing their current HP percentage. Incoming waves also use the increased stats.
+- Added short on-screen surge announcements; kept the 230-enemy cap, Easy Mode reductions and scripted Reaper at 30:00.
 
 ### v0.23.2 — Compact element descriptions and updated elemental damage
 - Restored **one short mechanic line** below each starting element while keeping the large icons and number keys.
