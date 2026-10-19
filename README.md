@@ -1,4 +1,7 @@
-# Noob Survivors — Alpha 0.12
+# Crimson Ruin: Age of Torment
+
+A dark fantasy arena survival game (formerly Noob Survivors).
+
 
 Play: https://masterjimo.github.io/Noob-Survivors/
 
@@ -106,3 +109,12 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - **Hemorrhagic Burst** (Blood-only perk with a heart-up icon) upgrades the stack limit to 8, then consumes all eight in a close-range explosion. Damage = sum of all eight stacks' full original Bleed totals, delivered immediately to enemies around the target.
 - **Blood Power** continues to scale the hit and therefore its associated Bleed stack proportionally.
 - A crimson ×N indicator shows current Bleed stacks. Poison and Fire stacking rules remain unchanged.
+
+
+## v0.15 — Title, Blood icons and TAB grimoire
+- Game renamed to **Crimson Ruin: Age of Torment** (UI, browser tab and documentation).
+- Blood's original heart icon is replaced by an original crimson droplet; Blood Power and Hemorrhagic Burst show a droplet with an upward gold arrow.
+- During a run press **TAB** or use the small **✧** button near Pause to open a read-only grimoire. Gameplay pauses until TAB, ESC, or Close.
+- The grimoire lists the selected element, each acquired power-up and its rank, effect descriptions, and live stats (hit, fire rate, move speed, projectile count, pierce, crit, armor, XP bonus, pickup range, regen, health, Bleed cap).
+- Power-up ranks are tracked per run and reset correctly on restart. Perks you banish do not appear as acquired.
+- Game repository remains at its previous GitHub address until renamed manually in Settings; a repository rename also changes the GitHub Pages URL.

@@ -21,6 +21,10 @@
   const $ = id => document.getElementById(id);
   const el = {
     intro:$('intro'), upgrade:$('upgrade'), upgradeCards:$('upgradeCards'), end:$('endScreen'), pause:$('pauseOverlay'),
+    inventory:$('inventoryOverlay'), inventoryBtn:$('inventoryBtn'), inventoryClose:$('inventoryClose'),
+    inventoryElementIcon:$('inventoryElementIcon'), inventoryElementName:$('inventoryElementName'),
+    inventoryElementDesc:$('inventoryElementDesc'), inventoryElementRank:$('inventoryElementRank'),
+    inventoryPerks:$('inventoryPerks'), inventoryStats:$('inventoryStats'), inventoryPerkCount:$('inventoryPerkCount'),
     start:$('startBtn'), restart:$('restartBtn'), resume:$('resumeBtn'), pauseBtn:$('pauseBtn'), hud:$('hud'),
     hp:$('hpFill'), hpText:$('hpText'), xp:$('xpFill'), level:$('levelText'), kills:$('killText'), time:$('timeText'),
     sound:$('soundBtn'), musicVolume:$('musicVolume'), sfxVolume:$('sfxVolume'),
@@ -79,7 +83,22 @@
   const ELEMENT_DAMAGE={blood:16,fire:20,lightning:20,poison:5};
   // Icons are uniformly trimmed, without a second inset frame.
   const ABILITY_ICON_CELLS = {"blood": [0, 0], "fire": [1, 0], "lightning": [2, 0], "poison": [3, 0], "blood_power": [0, 1], "fire_power": [1, 1], "lightning_power": [2, 1], "poison_power": [3, 1], "brutality": [0, 2], "rapid_fire": [1, 2], "movement": [2, 2], "vitality": [3, 2], "regen": [0, 3], "armor": [1, 3], "knowledge": [2, 3], "magnet": [3, 3], "forward": [0, 4], "spread": [1, 4], "pierce": [2, 4], "crit": [3, 4]};
+  // Original, unframed SVG Blood icons: a red droplet and an upgraded droplet.
+  const BLOOD_ICON_KEYS={blood:'blood_drop',blood_power:'blood_drop_up',hemorrhagic_burst:'blood_drop_up'};
+  function bloodGlyph(kind){
+    const upgraded=kind==='blood_drop_up';
+    return `<span class="glyph blood-glyph" role="img" aria-label="${upgraded?'Blood upgrade':'Blood element'}">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path d="M32 5C24 17 14 29 14 40a18 18 0 0 0 36 0C50 29 40 17 32 5Z" fill="#620b23" stroke="#260714" stroke-width="3.5"/>
+        <path d="M32 10C24 23 18 32 18 41a14 14 0 0 0 28 0C46 32 39 21 32 10Z" fill="#d92248"/>
+        <path d="M26 24c-6 9-8 14-7 19 1 5 5 9 9 10-3-4-3-8-1-13 1-4 4-7 5-13Z" fill="#ff7990" opacity=".95"/>
+        <path d="M38 27c7 12 6 20-3 26 9-2 13-11 10-19Z" fill="#8a0929"/>
+        ${upgraded?`<path d="M44 5 57 18h-7v14H38V18h-7Z" fill="#ffcf70" stroke="#402410" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M44 10 51 17h-5v10h-4V17h-4Z" fill="#fff1b2"/>`:''}
+      </svg></span>`;
+  }
   function powerIcon(id){
+    if(BLOOD_ICON_KEYS[id])return bloodGlyph(BLOOD_ICON_KEYS[id]);
     const xy=ABILITY_ICON_CELLS[id];
     if(!xy)return '<span class="glyph">✦</span>';
     return `<span class="glyph ability-icon" style="background-position:${xy[0]*100/3}% ${xy[1]*100/4}%" role="img" aria-label="${id.replaceAll('_',' ')}"></span>`;
@@ -121,6 +140,7 @@
   function startGame(){
     game = {
       time:0,
+      perkRanks:Object.create(null),perkOrder:[],
       player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], nextFountainAt:rand(44,60), kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
@@ -128,6 +148,7 @@
     spawnFountain(true);
     state='upgrade';
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.pause.classList.add('hidden');
+    el.inventory.classList.add('hidden'); el.inventoryBtn.hidden=true;
     el.hud.hidden = false; el.xpStrip.hidden = false; el.bossBar.hidden = true; el.pauseBtn.hidden = true; el.msg.textContent = ''; el.status.textContent = 'CHOOSE YOUR STARTING ELEMENT';
     updateHUD();
     openUpgrade();
@@ -316,6 +337,7 @@
     if(!game.elementChosen){
       if(!choice.element)return;
       game.player.element=choice.element;game.elementChosen=true;
+      el.inventoryBtn.hidden=false;
       game.player.damage=ELEMENT_DAMAGE[choice.element];
       if(choice.element==='lightning')game.player.projectileSpeed*=1.25;
       game.player.shotCd=0;
@@ -335,6 +357,8 @@
       renderUpgrade();playSound('hit');return;
     }
     choice.apply(game.player,game);
+    if(!game.perkRanks[choice.id])game.perkOrder.push(choice.id);
+    game.perkRanks[choice.id]=(game.perkRanks[choice.id]||0)+1;
     addParticles(game.player.x,game.player.y,'#ff8ba0',28,105,2,4);
     state='playing';el.upgrade.classList.add('hidden');el.status.textContent='HUNT IN PROGRESS';
     flashMessage(`✦ ${choice.name}`,1800);updateHUD();
@@ -354,6 +378,79 @@
     $('bestKills').textContent = `BEST: ${best} KILLS`;
     el.end.classList.toggle('victory',won);
     el.status.textContent = won ? 'HUNT COMPLETE' : 'HUNT FAILED'; playSound('death');
+  }
+  // TAB opens a paused grimoire. Values and ranks come from the active run.
+  function renderInventory(){
+    if(!game || !game.elementChosen)return;
+    const p=game.player;
+    const chosen=ELEMENT_CHOICES.find(v=>v.element===p.element);
+    el.inventoryElementIcon.innerHTML=powerIcon(p.element);
+    el.inventoryElementName.textContent=chosen?.name || 'UNKNOWN';
+    el.inventoryElementDesc.textContent=chosen?.desc || '';
+    el.inventoryElementRank.textContent='ELEMENT RANK '+(p.elementRank+1);
+    el.inventoryPerks.replaceChildren();
+    let perkTotal=0;
+    for(const id of game.perkOrder){
+      const perk=POWERS.find(v=>v.id===id);
+      const rank=game.perkRanks[id]||0;
+      if(!perk||rank<1)continue;
+      perkTotal+=rank;
+      const row=document.createElement('article');
+      row.className='inventory-perk';
+      row.innerHTML=`<span class="inventory-perk-icon">${powerIcon(perk.icon||id)}</span>
+        <div class="inventory-perk-copy"><div class="inventory-perk-heading"><strong>${perk.name}</strong><span class="inventory-rank">RANK ${rank}</span></div>
+        <p>${perk.desc}</p></div>`;
+      el.inventoryPerks.appendChild(row);
+    }
+    if(!game.perkOrder.length){
+      const empty=document.createElement('p');empty.className='inventory-empty';
+      empty.textContent='No passive upgrades yet. Collect blue crystals to level up.';
+      el.inventoryPerks.appendChild(empty);
+    }
+    el.inventoryPerkCount.textContent=perkTotal+' PICKED · '+game.perkOrder.length+' TYPES';
+    const shots=(1+p.forwardShots)*(1+2*p.spreadShots);
+    const fmt=(n,d=1)=>Number(n).toFixed(d);
+    const stats=[
+      ['DIRECT HIT',fmt(p.damage+p.flatDamage,1)],
+      ['ATTACKS / SEC',fmt(p.attackRate,2)],
+      ['MOVE SPEED',fmt(p.speed,0)],
+      ['PROJECTILES',String(shots)],
+      ['PIERCE',String(p.pierce+(p.element==='blood'?p.bloodLance:0))],
+      ['CRITICAL',Math.round(p.critChance*100)+'%'],
+      ['ARMOR',Math.round(p.armor*100)+'%'],
+      ['XP BONUS','×'+fmt(p.xpBonus,2)],
+      ['PICKUP RANGE',fmt(84*p.magnet,0)],
+      ['REGEN',fmt(p.regen,2)+' HP/s'],
+      ['MAX HEALTH',String(p.maxHp)],
+      ['BLEED CAP',p.element==='blood'?String(p.hemorrhagicBurst?8:4):'—']
+    ];
+    el.inventoryStats.replaceChildren();
+    for(const [label,value] of stats){
+      const tile=document.createElement('div');tile.className='inventory-stat';
+      const caption=document.createElement('span');caption.textContent=label;
+      const number=document.createElement('strong');number.textContent=value;
+      tile.append(caption,number);el.inventoryStats.appendChild(tile);
+    }
+  }
+  function openInventory(){
+    if(state!=='playing'||!game?.elementChosen)return;
+    touchVec={x:0,y:0};keys.clear();
+    renderInventory();
+    state='inventory';
+    el.inventory.classList.remove('hidden');
+    el.inventoryClose.focus();
+    el.status.textContent='POWER-UPS · PAUSED';
+  }
+  function closeInventory(){
+    if(state!=='inventory')return;
+    state='playing';
+    el.inventory.classList.add('hidden');
+    el.status.textContent='HUNT IN PROGRESS';
+    el.inventoryBtn.focus();
+  }
+  function toggleInventory(){
+    if(state==='inventory')closeInventory();
+    else if(state==='playing')openInventory();
   }
   function togglePause(){
     if(state==='playing'){ state='paused'; el.pause.classList.remove('hidden'); el.status.textContent='PAUSED'; }
@@ -1002,7 +1099,12 @@
 
   document.addEventListener('keydown',e=>{
     const k=e.key.toLowerCase();
+    if(k==='tab'&&(state==='playing'||state==='inventory')){e.preventDefault();if(!e.repeat)toggleInventory();return;}
     if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+    if(state==='inventory'){
+      if(k==='escape'||k==='p'){e.preventDefault();closeInventory();}
+      return;
+    }
     keys.add(k);
     if(k==='p'||k==='escape'){ if(state==='playing'||state==='paused') togglePause(); }
     if(state==='upgrade'&&['1','2','3','4'].includes(k)) chooseUpgrade(Number(k)-1);
@@ -1016,6 +1118,7 @@
 
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);
   el.start.addEventListener('click',startGame); el.restart.addEventListener('click',startGame); el.pauseBtn.addEventListener('click',togglePause); el.resume.addEventListener('click',togglePause);
+  el.inventoryBtn.addEventListener('click',toggleInventory);el.inventoryClose.addEventListener('click',closeInventory);
   function updateAudioUI(){
     el.sound.textContent=muted?'MUTE ON':'MUTE OFF';
     el.sound.setAttribute('aria-pressed',String(muted));

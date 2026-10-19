@@ -333,3 +333,69 @@ body{padding:10px}
   #upgrade.element-select .upgrade-card .perk-art-frame{width:53px;height:53px;min-width:53px;flex:0 0 53px}
   #upgrade.element-select .perk-art-frame .ability-icon{width:37px;height:37px;min-width:37px;background-size:400% 500%}
 }
+
+/* v0.15 — Crimson Ruin identity and paused power-up grimoire. */
+.intro h1{font-size:clamp(33px,5.15vw,66px);letter-spacing:.035em;line-height:1.02;text-wrap:balance}
+.intro h1 em{font-size:.72em;letter-spacing:.14em;font-weight:800}
+.blood-glyph{display:grid;place-items:center;aspect-ratio:1;width:100%;height:100%;min-width:0!important;filter:drop-shadow(0 2px 6px #000b)}
+.blood-glyph svg{width:100%;height:100%;overflow:visible;display:block}
+.perk-art-frame .blood-glyph{width:62px;height:62px}
+.inventory-gold-frame .blood-glyph{width:58px;height:58px}
+.inventory-perk-icon .blood-glyph{width:35px;height:35px}
+.inventory-button{position:absolute;top:12px;right:58px;z-index:4;width:38px;height:38px;border:1px solid #815466;border-radius:12px;background:#140b14;color:#f8d7a2;font-size:24px;box-shadow:0 9px 24px #000a;cursor:pointer}
+.inventory-button:hover,.inventory-button:focus-visible{border-color:#e0ae74;background:#3b1d2b}
+.inventory-button[hidden],.inventory-overlay[hidden]{display:none!important}
+.inventory-overlay{position:absolute;inset:0;z-index:50;display:grid;place-items:center;padding:15px;background:#050309e8;backdrop-filter:blur(7px);box-sizing:border-box;color:#ffe8e5}
+.inventory-panel{width:min(940px,100%);max-height:100%;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(152deg,#26151d,#100a12 53%,#0c0a12);border:2px solid #a77750;border-radius:18px;box-shadow:0 0 0 4px #180c12,0 35px 85px #000e,inset 0 1px #fff3}
+.inventory-heading{padding:13px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #755046;background:#201019}
+.inventory-heading h2{font-size:clamp(22px,3vw,32px);letter-spacing:.09em;color:#ffe4ce;margin:2px 0}
+.inventory-eyebrow,.inventory-section-kicker{color:#c79670;letter-spacing:.18em;font:800 10px system-ui,sans-serif}
+.inventory-subtitle{font-size:11px;color:#c7a8b0}
+.inventory-close{flex-shrink:0;background:#341b26;color:#ffdfce;border:1px solid #9b6973;border-radius:9px;padding:8px 11px;cursor:pointer;font:800 12px system-ui,sans-serif}
+.inventory-close:hover,.inventory-close:focus-visible{background:#6b2b3f}
+.inventory-scroll{min-height:0;overflow:auto;padding:15px 18px 14px;overscroll-behavior:contain}
+.inventory-element{display:flex;align-items:center;gap:15px;background:#321a25a8;border:1px solid #745046;border-radius:12px;padding:10px;margin-bottom:14px}
+.inventory-gold-frame{display:grid;place-items:center;flex:0 0 86px;height:86px;background:url('assets/perk-frame-v013.png') center/contain no-repeat}
+.inventory-element-copy{min-width:0}
+.inventory-element-title{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.inventory-element-title h3{font:900 22px system-ui,sans-serif;margin:4px 0;color:#ffdde3}
+.inventory-element-title span{font:800 10px system-ui,sans-serif;color:#efbe8b;background:#402330;padding:5px 8px;border-radius:999px}
+.inventory-element-copy p{font-size:12px;line-height:1.45;color:#dfc6c8;margin:4px 0 0}
+.inventory-columns{display:grid;grid-template-columns:minmax(0,1.14fr) minmax(0,.86fr);gap:14px}
+.inventory-col{min-width:0}
+.inventory-section-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #69414d;padding:0 2px 8px;margin:0 0 9px}
+.inventory-section-heading h3{font-size:13px;letter-spacing:.08em;margin:0;color:#ffd4c1}
+.inventory-section-heading span{font-size:10px;color:#ccaa87}
+.inventory-perks{display:grid;gap:7px}
+.inventory-perk{display:flex;align-items:center;gap:10px;background:#1d111be0;border:1px solid #563544;border-radius:10px;padding:7px 10px}
+.inventory-perk-icon{flex:0 0 51px;display:grid;place-items:center;width:51px;height:51px;background:url('assets/perk-frame-v013.png') center/contain no-repeat}
+.inventory-perk-icon .ability-icon{display:block;width:34px;height:34px;background-image:url('assets/perk-icons-v013.png');background-size:400% 500%;background-repeat:no-repeat}
+.inventory-perk-copy{min-width:0;flex:1}
+.inventory-perk-heading{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.inventory-perk-heading strong{font-size:11px;color:#ffe2e5}
+.inventory-rank{font-size:10px;white-space:nowrap;background:#512433;color:#ffd6a3;padding:3px 5px;border-radius:6px}
+.inventory-perk-copy p{font-size:10.5px;line-height:1.35;color:#c9b1ba;margin:4px 0 0}
+.inventory-empty{font-size:12px;color:#c9b1ba;padding:14px;border:1px dashed #674556;border-radius:10px}
+.inventory-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.inventory-stat{display:flex;flex-direction:column;gap:4px;background:#1b1119d9;border:1px solid #553747;border-radius:9px;padding:9px 10px}
+.inventory-stat span{font-size:9px;letter-spacing:.04em;color:#bda0ab}
+.inventory-stat strong{font-size:15px;color:#ffdbb4;font-variant-numeric:tabular-nums}
+.inventory-footer{text-align:center;padding:10px;border-top:1px solid #67434d;font-size:11px;letter-spacing:.07em;color:#d8b7ac}
+.inventory-footer kbd{padding:2px 5px;border:1px solid #795364;border-radius:4px;color:#ffe3ce}
+@media(max-width:700px){
+ .intro h1{font-size:clamp(24px,6vw,43px)}
+ .perk-art-frame .blood-glyph{width:44px;height:44px}
+ .inventory-overlay{position:fixed;inset:0;padding:8px;z-index:90;align-items:stretch}
+ .inventory-panel{width:100%;max-height:100%;height:100%;border-radius:12px}
+ .inventory-heading{padding:11px 13px}
+ .inventory-heading h2{font-size:23px}
+ .inventory-scroll{padding:10px 10px 16px}
+ .inventory-columns{grid-template-columns:1fr}
+ .inventory-gold-frame{flex-basis:64px;height:64px}
+ .inventory-gold-frame .blood-glyph{width:44px;height:44px}
+ .inventory-element-title h3{font-size:18px}
+ .inventory-element-copy p{font-size:11px}
+ .inventory-footer{padding:8px 5px;font-size:10px}
+ .inventory-button{top:9px;right:57px;width:33px;height:33px}
+}
+@media(max-width:380px){.inventory-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.inventory-stat{padding:6px}}
