@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.19.1">
+  <meta name="game-version" content="0.20.0">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.19.1">
+  <link rel="stylesheet" href="style.css?v=0.20.0">
 </head>
 <body>
   <div class="site-shell">
@@ -37,7 +37,7 @@
       <canvas id="game" width="1280" height="720" aria-label="Crimson Ruin: Age of Torment game"></canvas>
       <div class="hud" id="hud" hidden>
         <div class="hud-row">
-          <div class="hp-zone"><span class="hp-icon">♥</span><div class="hp-track"><div id="hpFill" class="hp-fill"></div></div><span class="hp-num" id="hpText">100 / 100</span><span class="fountain-buff" id="fountainBuff" hidden>✚ 10s</span></div>
+          <div class="hp-zone"><span class="hp-icon">♥</span><div class="hp-track"><div id="hpFill" class="hp-fill"></div></div><span class="hp-num" id="hpText">100 / 100</span><span class="fountain-buff" id="fountainBuff" hidden>✚ 30s</span><span class="magnet-buff" id="magnetBuff" hidden>🧲 15s</span></div>
           <div class="hud-center"><strong id="timeText">00:00</strong></div>
           <div class="hud-right"><span class="skull">☠</span> <strong id="killText">0</strong><span class="divider-v"></span> <span>LVL</span> <strong id="levelText">1</strong></div>
         </div>
@@ -69,6 +69,17 @@
       </section>
 
       <section class="screen-overlay hidden" id="endScreen" aria-live="polite">
+        <nav class="end-actions" aria-label="Choose next game mode">
+          <button type="button" class="main-button end-new-game" id="restartBtn">↻ NEW GAME</button>
+          <section class="easy-retry hidden" id="easyRetryOffer" aria-labelledby="easyRetryTitle">
+            <h3 id="easyRetryTitle">🎀 EASY MODE — NEXT RUN ONLY</h3>
+            <p class="easy-retry-description">Died before 05:00? Your next run can have enemies with 50% HP, speed and damage, fewer spawns, and a pink ribbon. The 30:00 Reaper is still lethal.</p>
+            <div class="easy-retry-buttons">
+              <button type="button" id="easyYes" class="easy-retry-yes">YES · EASY MODE</button>
+              <button type="button" id="easyNo" class="easy-retry-no">NO · HARDCORE</button>
+            </div>
+          </section>
+        </nav>
         <div class="eyebrow" id="endEyebrow">THE NIGHT CLAIMS ANOTHER SOUL</div>
         <div class="end-crest" aria-hidden="true">☽</div>
         <h2 id="endTitle">YOU DIED</h2>
@@ -85,17 +96,7 @@
           <div class="run-perks" id="runPerks">No upgrades acquired</div>
           <p class="run-best" id="runBest"></p>
         </div>
-        <div class="run-next-actions">
-          <button type="button" class="main-button" id="restartBtn">↻ NEW GAME</button>
-          <section class="easy-retry hidden" id="easyRetryOffer" aria-labelledby="easyRetryTitle">
-            <h3 id="easyRetryTitle">🎀 EASY MODE FOR YOUR NEXT RUN?</h3>
-            <p class="easy-retry-description">You died before 05:00. Easy Mode makes enemies 50% weaker in health, damage and speed, reduces spawns and aggression, and adds a pink ribbon to your hunter. The Reaper is still unavoidable at 30:00. <strong>This choice affects the next run only.</strong></p>
-            <div class="easy-retry-buttons">
-              <button type="button" id="easyYes" class="easy-retry-yes">YES · EASY MODE</button>
-              <button type="button" id="easyNo" class="easy-retry-no">NO · HARDCORE</button>
-            </div>
-          </section>
-        </div>
+
       </section>
 
       <section class="pause-card hidden" id="pauseOverlay"><span>Ⅱ</span><h2>PAUSED</h2><p>Press P or click resume.</p><button class="main-button" id="resumeBtn">▶ RESUME</button></section>
@@ -133,7 +134,7 @@
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="assets.js?v=0.19.1" defer></script>
-  <script src="game.js?v=0.19.1" defer></script>
+  <script src="assets.js?v=0.20.0" defer></script>
+  <script src="game.js?v=0.20.0" defer></script>
 </body>
 </html>

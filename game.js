@@ -17,6 +17,9 @@
   const fountainArt = new Image();
   fountainArt.decoding = 'async';
   fountainArt.src = 'assets/blood-fountain-v014.png';
+  const magnetArt = new Image();
+  magnetArt.decoding = 'async';
+  magnetArt.src = 'assets/magnet-shrine-v020.webp';
   const deathArt=new Image();deathArt.decoding='async';deathArt.src='assets/death-reaper-v019.webp';
   const ribbonArt=new Image();ribbonArt.decoding='async';ribbonArt.src='assets/easy-ribbon-v019.webp';
 
@@ -28,7 +31,7 @@
     inventoryElementIcon:$('inventoryElementIcon'), inventoryElementName:$('inventoryElementName'),
     inventoryElementDesc:$('inventoryElementDesc'), inventoryElementRank:$('inventoryElementRank'),
     inventoryPerks:$('inventoryPerks'), inventoryStats:$('inventoryStats'), inventoryPerkCount:$('inventoryPerkCount'),
-    start:$('startBtn'), restart:$('restartBtn'), resume:$('resumeBtn'), hud:$('hud'), fountainBuff:$('fountainBuff'),
+    start:$('startBtn'), restart:$('restartBtn'), resume:$('resumeBtn'), hud:$('hud'), fountainBuff:$('fountainBuff'), magnetBuff:$('magnetBuff'),
     hp:$('hpFill'), hpText:$('hpText'), xp:$('xpFill'), level:$('levelText'), kills:$('killText'), time:$('timeText'),
     sound:$('soundBtn'), musicVolume:$('musicVolume'), sfxVolume:$('sfxVolume'),
     musicVolumeValue:$('musicVolumeValue'), sfxVolumeValue:$('sfxVolumeValue'), xpStrip:$('xpStrip'),
@@ -179,8 +182,8 @@
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,
       perkRanks:Object.create(null),perkOrder:[],
-      player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,fountainRegenTime:0,fountainRegenTick:0},
-      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], nextFountainAt:rand(44,60), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
+      player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
+      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:rand(240,360), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
     spawnFountain(true);
@@ -205,12 +208,40 @@
       const a=rand(0,TAU), d=rand(initial?570:480,initial?1000:1120);
       const x=p.x+Math.cos(a)*d, y=p.y+Math.sin(a)*d;
       if(game.fountains.some(f=>dist2(x,y,f.x,f.y)<720*720))continue;
-      game.fountains.push({x,y,heal:20});
+      game.fountains.push({x,y});
       return true;
     }
     return false;
   }
 
+  // A magnetic shrine is much rarer than a healing shrine: the first can
+  // spawn after four to six minutes; subsequent attempts every 5–8 minutes.
+  // At most one exists at a time, far from active life shrines.
+  function spawnMagnetShrine(){
+    const g=game;if(!g||g.magnetShrines.length)return false;
+    const p=g.player;
+    for(let i=0;i<45;i++){
+      const angle=rand(0,TAU),radius=rand(540,1030);
+      const x=p.x+Math.cos(angle)*radius,y=p.y+Math.sin(angle)*radius;
+      if(g.fountains.some(f=>dist2(x,y,f.x,f.y)<300*300))continue;
+      g.magnetShrines.push({x,y});
+      return true;
+    }
+    return false;
+  }
+  // Transfer all live XP from the entire world in one pickup, not only
+  // the viewport or the usual player magnet radius.
+  function collectAllXP(){
+    const g=game;
+    if(!g||!g.drops.length)return 0;
+    const value=g.drops.reduce((sum,d)=>sum+d.value,0);
+    g.drops.length=0;
+    if(value>0){
+      addParticles(g.player.x,g.player.y,'#6edaff',20,110,2,4);
+      gainXP(value);
+    }
+    return value;
+  }
   function updateFountains(dt){
     const g=game, p=g.player;
     if(g.time>=g.nextFountainAt){
@@ -219,18 +250,34 @@
       spawnFountain();
       g.nextFountainAt=g.time+rand(42,64);
     }
+    if(g.time>=g.nextMagnetAt){
+      g.magnetShrines=g.magnetShrines.filter(s=>dist2(p.x,p.y,s.x,s.y)<2500*2500);
+      spawnMagnetShrine();
+      g.nextMagnetAt=g.time+rand(300,480);
+    }
+    for(let i=g.magnetShrines.length-1;i>=0;i--){
+      const shrine=g.magnetShrines[i];
+      if(dist2(p.x,p.y,shrine.x,shrine.y)>40*40)continue;
+      g.magnetShrines.splice(i,1);
+      p.magnetBuffTime=15; // Refresh, never stack.
+      addParticles(shrine.x,shrine.y,'#8deaff',35,130,2,4);
+      addImpact(shrine.x,shrine.y,60,'#62cfff');
+      playSound('level');
+      flashMessage('✦ MAGNET SHRINE · ALL XP COLLECTED · 15s GLOBAL XP',2300);
+      collectAllXP();
+    }
     for(let i=g.fountains.length-1;i>=0;i--){
       const f=g.fountains[i];
       if(dist2(p.x,p.y,f.x,f.y)>36*36)continue;
-      const healed=Math.min(f.heal,p.maxHp-p.hp);
-      p.hp+=healed;g.totalHealing+=healed;
-      p.fountainRegenTime=10; p.fountainRegenTick=0;
+      // Life shrine gives no instant HP; only 1 HP/s for 30s.
+      p.fountainRegenTime=30;
+      p.fountainRegenTick=0;
       g.fountains.splice(i,1);
-      floatText(p.x,p.y-36,`+${Math.round(healed)} HP · REGEN`,'#ffb0c3',13);
+      floatText(p.x,p.y-36,'REGEN · 30s','#ffb0c3',13);
       addParticles(f.x,f.y,'#ff4769',25,100,2,4);
       addImpact(f.x,f.y,35,'#ff5c82');
       playSound('level');
-      flashMessage(`♥ BLOOD FOUNTAIN · +${Math.round(healed)} HP · REGEN 10s`,1900);
+      flashMessage('♥ LIFE SHRINE · +1 HP/s FOR 30s',1900);
     }
   }
 
@@ -509,7 +556,11 @@
     game.perkRanks[choice.id]=(game.perkRanks[choice.id]||0)+1;
     addParticles(game.player.x,game.player.y,'#ff8ba0',28,105,2,4);
     state='playing';el.upgrade.classList.add('hidden');el.status.textContent='HUNT IN PROGRESS';
-    flashMessage(`✦ ${choice.name}`,1800);updateHUD();
+    flashMessage(`✦ ${choice.name}`,1800);
+    // The magnet shrine may collect enough XP for multiple levels at once:
+    // present every earned upgrade in sequence instead of losing levels.
+    if(game.player.xp>=game.player.next)gainXP(0);
+    updateHUD();
   }
   function flashMessage(text,ms=1750){ el.msg.textContent=text; clearTimeout(flashMessage.timer); flashMessage.timer=setTimeout(()=>el.msg.textContent='',ms); }
 
@@ -633,7 +684,8 @@
       ['XP BONUS','×'+fmt(p.xpBonus,2)],
       ['PICKUP RANGE',fmt(84*p.magnet,0)],
       ['REGEN',fmt(p.regen,2)+' HP/s'],
-      ['FOUNTAIN REGEN',p.fountainRegenTime>0?`${Math.ceil(p.fountainRegenTime)}s · +1/3s`:'—'],
+      ['LIFE SHRINE REGEN',p.fountainRegenTime>0?`${Math.ceil(p.fountainRegenTime)}s · +1 HP/s`:'—'],
+      ['MAGNET SHRINE',p.magnetBuffTime>0?`${Math.ceil(p.magnetBuffTime)}s · GLOBAL XP`:'—'],
       ['MAX HEALTH',String(p.maxHp)],
       ['BLEED CAP',p.element==='blood'?'8':'—']
     ];
@@ -845,17 +897,24 @@
     p.moveX=mag?mx:0;p.moveY=mag?my:0;
 
     updateFountains(dt);
-    // Continuous perk regeneration plus nonstacking 10s Fountain Regen.
+    if(state!=='playing'){updateHUD();return;}
+    // Continuous perk regeneration plus nonstacking 30s Life Shrine.
     if(p.regen>0){const old=p.hp;p.hp=Math.min(p.maxHp,p.hp+p.regen*dt);g.totalHealing+=p.hp-old;}
     if(p.fountainRegenTime>0){
       const elapsed=Math.min(dt,p.fountainRegenTime);
       p.fountainRegenTime=Math.max(0,p.fountainRegenTime-dt);
       p.fountainRegenTick+=elapsed;
-      while(p.fountainRegenTick>=3){
-        p.fountainRegenTick-=3;
+      while(p.fountainRegenTick>=1){
+        p.fountainRegenTick-=1;
         const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+1);g.totalHealing+=p.hp-before;
       }
       if(p.fountainRegenTime<=0)p.fountainRegenTick=0;
+    }
+    // Magnet Shrine buff: all XP spawned for 15s is collected globally.
+    if(p.magnetBuffTime>0){
+      collectAllXP();
+      p.magnetBuffTime=Math.max(0,p.magnetBuffTime-dt);
+      if(state!=='playing'){updateHUD();return;}
     }
     p.orbitCd=Math.max(0,p.orbitCd-dt);
     if(p.orbits>0 && p.orbitCd<=0){
@@ -964,6 +1023,11 @@
       g.slashBursts[i].life-=dt;
       if(g.slashBursts[i].life<=0)g.slashBursts.splice(i,1);
     }
+    // Absorb newly dropped XP on the same frame while the shrine is active.
+    if(p.magnetBuffTime>0){
+      collectAllXP();
+      if(state!=='playing'){updateHUD();return;}
+    }
     for(let i=g.drops.length-1;i>=0;i--){
       const d=g.drops[i]; d.phase+=dt*5; d.life-=dt;
       const dd=Math.hypot(p.x-d.x,p.y-d.y);
@@ -1002,7 +1066,13 @@
     if(p.fountainRegenTime>0){
       const remaining=Math.ceil(p.fountainRegenTime);
       el.fountainBuff.textContent=`✚ ${remaining}s`;
-      el.fountainBuff.title=`Fountain Regen: +1 HP every 3 seconds (${remaining}s left)`;
+      el.fountainBuff.title=`Life Shrine: +1 HP per second (${remaining}s left)`;
+    }
+    el.magnetBuff.hidden=p.magnetBuffTime<=0;
+    if(p.magnetBuffTime>0){
+      const remaining=Math.ceil(p.magnetBuffTime);
+      el.magnetBuff.textContent=`🧲 ${remaining}s`;
+      el.magnetBuff.title=`Magnet Shrine: all map XP automatically collected (${remaining}s left)`;
     }
     const xpPct=clamp(100*p.xp/p.next,0,100);
     el.xp.style.width=`${xpPct}%`; el.xpStrip.setAttribute('aria-valuenow',String(Math.round(xpPct)));
@@ -1036,6 +1106,28 @@
     }
   }
 
+  function drawMagnetShrines(camX,camY,t){
+    for(const s of game.magnetShrines){
+      const x=s.x-camX,y=s.y-camY;
+      if(x<-100||x>W+100||y<-110||y>H+100)continue;
+      const pulse=.5+.5*Math.sin(t*3+s.x*.014);
+      ctx.save();
+      ctx.fillStyle=`rgba(39,147,255,${.08+pulse*.07})`;
+      ctx.beginPath();ctx.ellipse(x,y+12,43,23,0,0,TAU);ctx.fill();
+      ctx.strokeStyle=`rgba(96,208,255,${.7+pulse*.3})`;
+      ctx.shadowColor='#4acfff';ctx.shadowBlur=10+8*pulse;ctx.lineWidth=2.4;
+      ctx.beginPath();ctx.arc(x,y,40,0,TAU);ctx.stroke();ctx.shadowBlur=0;
+      shadowAt(x,y+15,31,.32);
+      if(magnetArt.complete&&magnetArt.naturalWidth){
+        ctx.imageSmoothingEnabled=true;
+        ctx.drawImage(magnetArt,x-34,y-77,68,98);
+      }else{
+        ctx.fillStyle='#12263f';ctx.fillRect(x-22,y-4,44,23);
+        ctx.font='32px sans-serif';ctx.fillText('🧲',x-18,y-16);
+      }
+      ctx.restore();
+    }
+  }
   // Off-screen compass arrows only within roughly three screen widths.
   function drawFountainArrows(camX,camY){
     if(!game || state!=='playing')return;
@@ -1334,6 +1426,7 @@
       drawCorpses(camX,camY);
       drawFragments(camX,camY);
       drawFountains(camX,camY,t);
+      drawMagnetShrines(camX,camY,t);
       drawDrops(camX,camY,t);
       const objects=[...game.enemies.map(e=>({y:e.y,e})),{y:p.y,p}]; objects.sort((a,b)=>a.y-b.y);
       for(const item of objects){ if(item.e) drawEnemy(item.e,camX,camY,t); else drawPlayer(p,camX,camY,t); }

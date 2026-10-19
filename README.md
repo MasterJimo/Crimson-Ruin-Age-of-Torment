@@ -6,7 +6,7 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.19.1
+## Current gameplay — v0.20
 
 Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
@@ -23,9 +23,11 @@ Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the R
 
 Power upgrades remain useful: **Blood Power** increases the direct hit and resulting Bleed damage by 25% per rank; **Fire Power** boosts its direct hit by 25% and Burn potency by 20%; **Lightning Power** boosts its random hit range by 25% and chain chance by 10 percentage points; **Poison Power** increases the base Poison stack DPS by an additive 20% per rank; this updates both active and future stacks. Normal global perks, projectile modifiers and critical hits still work as documented in game.
 
-### Blood Fountains
+### Life Shrines and rare Magnet Shrines
 
-Two separated Blood Fountains spawn at the start, with more appearing during exploration. Enter a fountain's **red interaction circle** to consume it automatically. It restores **20 flat HP**, up to maximum HP, and gives **10 seconds of Fountain Regeneration**: +1 HP at the 3rd, 6th and 9th second. A buff timer appears beside the HP bar. Picking up another fountain refreshes (rather than stacks) the buff. A fountain is still usable at full HP for its regen. Filling the XP bar and leveling up also grants 20 HP.
+Two separated **Life Shrines** spawn at the start, with more appearing roughly every 42–64 seconds. Enter a Life Shrine's **red interaction circle** to consume it automatically. There is **no instant healing** from the shrine; instead it grants **30 seconds of +1 HP per second**, capped by the player's max HP. Recollecting refreshes the duration rather than stacking. The remaining time is shown beside the HP bar. Leveling up still heals 20 HP.
+
+**Magnet Shrines** are much rarer: no starting spawn, first possible after 4–6 minutes, and subsequent spawns roughly every 5–8 minutes; at most one is active at a time. Enter its **blue interaction circle** to activate. The shrine **immediately absorbs all currently uncollected XP crystals anywhere on the map** and gives **15 seconds of global XP collection**, automatically collecting any new crystal drops regardless of distance. The blue magnet buff timer displays next to HP. Enough XP to earn multiple levels queues their upgrade choices one by one, without wasting XP.
 
 ## Desktop controls
 
@@ -47,6 +49,15 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 ---
 
 ## Patch notes — newest first
+
+### v0.20 — Visible scoreboard actions, Life Shrines and rare Magnet Shrines
+- Moved **NEW GAME** to the upper-left and the **Easy Mode YES / NO** panel to the upper-right of the death screen. Controls stay visible at the top while scrolling the more compact results screen.
+- Early defeat (before **05:00**) offers **Easy Mode** immediately; Yes starts the next run in Easy, No or New Game starts Hardcore. Choice never persists beyond that one run.
+- **Life Shrine:** removed the old flat +20 HP reward. Grants **+1 HP every second for 30 seconds**, capped at full HP, with a visible timer beside the health bar. Shrine pickups refresh the 30s buff.
+- Added the new rare **Magnet Shrine** using the supplied artwork. Appears much less often than Life Shrines. Pickup instantly collects all existing world XP, then grants **15 seconds of automatic map-wide XP collection**, including new enemy drops; buff visible beside HP.
+- Fixed bulk XP collection to properly offer each earned level-up in sequence.
+- No mobile controls added.
+
 
 ### v0.19.1 — Stable pause, New Game, one-run Easy Mode
 - Fixed the endlessly shaking screen while paused: the draw loop no longer rolls random camera offsets without running physics, and gameplay animations freeze while paused, in the Grimoire and on the score screen.
