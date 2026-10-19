@@ -1,6 +1,6 @@
 # Crimson Ruin: Age of Torment
 
-A dark-fantasy desktop arena-survival game, formerly **Noob Survivors**. Built in HTML, CSS, Canvas 2D and JavaScript.
+A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Survivors**. Built in HTML, CSS, Canvas 2D and JavaScript.
 
 [![▶ PLAY CRIMSON RUIN](https://img.shields.io/badge/%E2%96%B6_PLAY-Crimson_Ruin_%3A_Age_of_Torment-8b243b?style=for-the-badge)](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)
 
@@ -8,13 +8,13 @@ A dark-fantasy desktop arena-survival game, formerly **Noob Survivors**. Built i
 
 ## Current gameplay — v0.17
 
-Survive a three-minute run. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
+Survive up to a **30-minute run**; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
 | Element | Starting direct damage | DoT / special behavior |
 |---|---:|---|
 | **Blood** | **20** | Every hit applies Bleed equal to **50% of its hit** over 8 seconds. **8-stack cap** on each enemy; excess hits refresh the oldest stack. |
 | **Fire** | **40** | **One Burn** only: **20 extra damage over 2 seconds** (10 DPS), refreshed by further hits, never stacked. |
-| **Lightning** | **Random 10–100** per projectile | **50%** Shock chance for **4 seconds**. Direct hits against shocked enemies deal **×2** damage; a Chain Lightning proc can damage another nearby target. |
+| **Lightning** | **Random 10–100** per projectile | **50%** Shock chance for **4 seconds**. Direct hits against shocked enemies deal **×2** damage; a Chain Lightning can damage another nearby target **only after an appropriate upgrade** (no free chain at level 1). |
 | **Poison** | **0** | Every hit adds a **permanent, unlimited 13 DPS stack** (= 104 damage every 8 seconds). Each hit adds another stack; they never expire while the enemy lives. |
 
 ### Hemorrhagic Burst — legendary Blood perk (5%)
@@ -46,6 +46,14 @@ Art includes the supplied Veilwarden, arena, fountain and RPG icons. Music: [Anc
 ---
 
 ## Patch notes — newest first
+
+### v0.18 — Thirty-minute Reaper finale and scoreboard
+- Increased the run cap to **30:00**. At exactly 30 minutes the game clock stops; invulnerable Death rushes in at unavoidable speed and kills the hero.
+- Final scoreboard for every run: XP earned, kills, level, recovered HP, total damage, current combat stats, acquired perks and personal best (duration, kills, XP).
+- Fixed Lightning's start description to **“Damage 10–100 hit · 50% Shock for 4s; shocked targets take double damage”**.
+- Removed the accidental free 36% Chain Lightning chance at level 1; chain requires a relevant upgrade.
+- Death renderer prefers `assets/death-reaper-v018.png` for the latest selected Death artwork, with an original silhouette fallback if the binary artwork has not been uploaded yet.
+
 
 ### v0.17 — Rebalance, legendary Hemorrhagic Burst and Blood Fountain buffs
 - **Blood:** 20 direct damage, guaranteed 8-second Bleed and eight permanent maximum *slots* (individual Bleed stacks still expire after eight seconds).

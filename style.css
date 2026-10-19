@@ -315,3 +315,27 @@ body{padding:10px}
 #upgrade .upgrade-card.perk-legendary{border-color:#ffc66a;box-shadow:0 0 24px #f9af4555,inset 0 0 28px #b34d2328}
 #upgrade .upgrade-card.perk-legendary .perk-tier{color:#ffd37f}
 #upgrade .upgrade-card.perk-legendary .perk-tier::before{content:'✦ ';color:#ffe59e}
+
+/* v0.18 — 30-minute Reaper finale and scrolling results scoreboard. */
+#endScreen{box-sizing:border-box;display:flex;justify-content:flex-start;overflow:auto;overscroll-behavior:contain;padding:16px 18px 24px;gap:3px;background:linear-gradient(#0d0712ed,#080409f8)}
+#endScreen.hidden{display:none!important}
+#endScreen .end-crest{width:31px;height:31px;font-size:23px;min-height:31px}
+#endScreen h2{font-size:clamp(22px,3.4vw,32px);margin:3px 0}
+#endScreen .overlay-sub{font-size:12px;margin:3px 0}
+#endScreen .end-stats{margin:7px 0;gap:7px}
+#endScreen .end-stats div{padding:5px 12px;min-width:92px}
+#endScreen .end-stats span{font-size:9px}
+#endScreen .end-stats strong{font-size:14px}
+#endScreen .hunt-record{margin:5px 0;gap:8px}
+#endScreen .main-button{margin:10px 0 6px;padding:8px 26px;font-size:14px}
+.run-board{width:min(760px,100%);border:1px solid #734758;border-radius:13px;background:#140b16ed;padding:10px 13px;text-align:left;box-shadow:0 12px 30px #0008}
+.run-board h3{font-size:10px;letter-spacing:.19em;color:#f4b9c2;margin:7px 0 6px}
+.run-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.run-summary-tile,.run-stat-tile{display:flex;justify-content:space-between;gap:8px;padding:7px 9px;border:1px solid #5b3140;border-radius:7px;background:#24121c}
+.run-summary-tile{flex-direction:column}
+.run-summary-tile span,.run-stat-tile span{font-size:9px;color:#c39ca5;letter-spacing:.06em}
+.run-summary-tile strong{font-size:19px;color:#ffeddf;font-variant-numeric:tabular-nums}
+.run-stat-tile strong{font-size:11px;color:#ffe8ca;font-variant-numeric:tabular-nums}
+.run-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.run-perks{line-height:1.6;color:#ffcad4;font-size:11px;padding:6px 9px;border:1px solid #613747;border-radius:7px;max-height:70px;overflow-y:auto}
+.run-best{margin:7px 0 1px;font-size:11px;font-weight:700;text-align:center;color:#ffda9d}

@@ -9,7 +9,7 @@
   // Pixel art stays sharp; curves, particles and glow render at 2x resolution.
   ctx.setTransform(2, 0, 0, 2, 0, 0);
 
-  const W = 640, H = 360, TAU = Math.PI * 2, DURATION = 180;
+  const W = 640, H = 360, TAU = Math.PI * 2, DURATION = 1800;
   // User-supplied gothic courtyard. The existing floor remains a fallback while loading.
   const courtyard = new Image();
   courtyard.decoding = 'async';
@@ -17,6 +17,9 @@
   const fountainArt = new Image();
   fountainArt.decoding = 'async';
   fountainArt.src = 'assets/blood-fountain-v014.png';
+  const deathArt = new Image();
+  deathArt.decoding = 'async';
+  deathArt.src = 'assets/death-reaper-v018.png';
 
   const $ = id => document.getElementById(id);
   const el = {
@@ -56,7 +59,7 @@
     {id:'brutality',icon:'brutality',name:'BRUTALITY',desc:'+5 flat damage to direct hits (no Poison impact).',tier:'common',apply:p=>p.flatDamage+=5},
     {id:'rapid_fire',icon:'rapid_fire',name:'RAPID FIRE',desc:'+18% attack speed.',tier:'common',apply:p=>p.attackRate*=1.18},
     {id:'movement',icon:'movement',name:'SHADOW STRIDE',desc:'+16% movement speed.',tier:'common',apply:p=>p.speed*=1.16},
-    {id:'vitality',icon:'vitality',name:'VITALITY',desc:'+25 maximum HP. Heal 25 HP.',tier:'common',apply:p=>{p.maxHp+=25;p.hp=Math.min(p.maxHp,p.hp+25)}},
+    {id:'vitality',icon:'vitality',name:'VITALITY',desc:'+25 maximum HP. Heal 25 HP.',tier:'common',apply:p=>{p.maxHp+=25;const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+25);game.totalHealing+=p.hp-before}},
     {id:'regen',icon:'regen',name:'REGENERATION',desc:'Recover 1 HP every 4 seconds.',tier:'common',can:p=>p.regen<1.5,apply:p=>p.regen+=.25},
     {id:'armor',icon:'armor',name:'IRON WILL',desc:'Take 10% less incoming damage.',tier:'rare',can:p=>p.armor<.50,apply:p=>p.armor=1-(1-p.armor)*.90},
     {id:'knowledge',icon:'knowledge',name:'FORBIDDEN KNOWLEDGE',desc:'+25% XP from blue crystals.',tier:'rare',apply:p=>p.xpBonus*=1.25},
@@ -77,7 +80,7 @@
   const ELEMENT_CHOICES = [
     {id:'blood',element:'blood',name:'BLOOD',desc:'20 direct · Every hit Bleeds (50% over 8s), up to 8 stacks.',tier:'rare'},
     {id:'fire',element:'fire',name:'FIRE',desc:'40 direct · Single Burn deals 20 over 2s; hits refresh it.',tier:'rare'},
-    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'Random 10–100 hit · 50% Shock for 4s; shocked targets take double hits.',tier:'rare'},
+    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'Damage 10–100 hit · 50% Shock for 4s; shocked targets take double damage',tier:'rare'},
     {id:'poison',element:'poison',name:'POISON',desc:'0 direct · Permanent 13 DPS per hit (104/8s). Infinite stacks.',tier:'rare'}
   ];
   const ELEMENT_DAMAGE={blood:20,fire:40,lightning:10,poison:0};
@@ -138,7 +141,7 @@
 
   function startGame(){
     game = {
-      time:0,
+      time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,
       perkRanks:Object.create(null),perkOrder:[],
       player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,fountainRegenTime:0,fountainRegenTick:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], nextFountainAt:rand(44,60), kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
@@ -182,7 +185,7 @@
       const f=g.fountains[i];
       if(dist2(p.x,p.y,f.x,f.y)>36*36)continue;
       const healed=Math.min(f.heal,p.maxHp-p.hp);
-      p.hp+=healed;
+      p.hp+=healed;g.totalHealing+=healed;
       p.fountainRegenTime=10; p.fountainRegenTick=0;
       g.fountains.splice(i,1);
       floatText(p.x,p.y-36,`+${Math.round(healed)} HP · REGEN`,'#ffb0c3',13);
@@ -216,6 +219,73 @@
     shake=Math.max(shake,5); playSound('boss');
   }
 
+  // Exactly at 30:00 normal combat stops. An invulnerable Death rushes in,
+  // reaches the hero, and forces the end scoreboard. Running or damage cannot
+  // prevent the scripted finale.
+  function startDeathArrival(){
+    if(!game||state!=='playing'||game.death)return;
+    const p=game.player;
+    game.endingAt30=true;
+    game.death={x:p.x+320,y:p.y-80,age:0,hit:false};
+    game.time=DURATION;
+    state='death';
+    keys.clear();
+    el.inventoryBtn.hidden=true;
+    el.bossBar.hidden=true;
+    el.status.textContent='DEATH HAS COME · 30:00';
+    flashMessage('THE REAPER COMES FOR ALL',1800);
+    shake=Math.max(shake,8);
+    playSound('boss');
+    updateHUD();
+  }
+  function updateDeath(dt){
+    if(state!=='death'||!game?.death)return;
+    const d=game.death,p=game.player;
+    d.age+=dt;
+    const dx=p.x-d.x,dy=p.y-d.y,dist=Math.hypot(dx,dy);
+    const step=Math.min(dist,Math.max(1500,dist*6)*dt);
+    if(dist>.001){d.x+=dx/dist*step;d.y+=dy/dist*step;}
+    if(dist<=30||d.age>=1.25){
+      d.x=p.x;d.y=p.y;
+      p.hp=0;
+      shake=13;flash=.9;
+      addBloodBurst(p.x,p.y,55,'#d00840');
+      addImpact(p.x,p.y,105,'#ff244d');
+      die(true);
+    }
+  }
+  // Image-first sprite renderer. If the optional supplied Death image was not
+  // yet uploaded as assets/death-reaper-v018.png, draw an original silhouette
+  // rather than falling back to either previously rejected artwork.
+  function drawDeath(camX,camY,t){
+    const d=game?.death;if(!d)return;
+    const x=d.x-camX,y=d.y-camY,glow=.55+.45*Math.sin(t*11);
+    ctx.save();
+    ctx.globalAlpha=.28;ctx.fillStyle='#ed214b';
+    ctx.beginPath();ctx.ellipse(x,y+12,42,14,0,0,TAU);ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.shadowColor='#ff1744';ctx.shadowBlur=12+18*glow;
+    if(deathArt.complete&&deathArt.naturalWidth){
+      const aspect=deathArt.naturalWidth/deathArt.naturalHeight;
+      const h=154,w=Math.min(170,154*aspect);
+      ctx.drawImage(deathArt,x-w/2,y-h+23,w,h);
+    }else{
+      // Simple grim silhouette, intentionally not the previous artwork.
+      ctx.fillStyle='#150d19';ctx.strokeStyle='#ce254c';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(x,y-93);ctx.quadraticCurveTo(x-39,y-76,x-40,y-26);
+      ctx.lineTo(x-55,y+19);ctx.lineTo(x-15,y+4);ctx.lineTo(x+4,y+24);
+      ctx.lineTo(x+37,y+10);ctx.lineTo(x+46,y+20);
+      ctx.quadraticCurveTo(x+48,y-61,x+19,y-91);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle='#d3b5ad';ctx.beginPath();ctx.ellipse(x,y-59,15,18,0,0,TAU);ctx.fill();
+      ctx.fillStyle='#0b080f';ctx.fillRect(x-15,y-65,30,9);
+      ctx.fillStyle='#ff315d';ctx.fillRect(x-10,y-61,5,3);ctx.fillRect(x+5,y-61,5,3);
+      ctx.strokeStyle='#d9d3cb';ctx.lineWidth=5;
+      ctx.beginPath();ctx.moveTo(x+24,y+10);ctx.lineTo(x+66,y-113);ctx.stroke();
+      ctx.strokeStyle='#a2a2ac';ctx.lineWidth=8;ctx.beginPath();
+      ctx.arc(x+36,y-107,38,-1.5,0.3);ctx.stroke();
+    }
+    ctx.restore();
+  }
   function damagePlayer(value){
     const p=game.player;
     if(p.hitCd>0)return false;
@@ -272,7 +342,7 @@
   }
 
   function gainXP(value){
-    const p=game.player; p.xp += value*p.xpBonus;
+    const p=game.player; const earned=value*p.xpBonus;game.totalXP+=earned;p.xp+=earned;
     if(p.xp>=p.next){
       p.xp-=p.next;
       p.level++;
@@ -280,7 +350,7 @@
       // Only a completed EXP bar restores health; the starting element choice doesn't.
       const healed=Math.min(20,p.maxHp-p.hp);
       if(healed>0){
-        p.hp+=healed;
+        p.hp+=healed;game.totalHealing+=healed;
         floatText(p.x,p.y-33,`+${Math.round(healed)} HP`,'#98ffba',12);
         addParticles(p.x,p.y,'#74ffc2',12,52,2,3);
       }
@@ -374,19 +444,79 @@
   }
   function flashMessage(text,ms=1750){ el.msg.textContent=text; clearTimeout(flashMessage.timer); flashMessage.timer=setTimeout(()=>el.msg.textContent='',ms); }
 
+  function addScoreRows(parent,rows,kind){
+    parent.replaceChildren();
+    for(const [label,value] of rows){
+      const node=document.createElement('div');node.className=kind;
+      const caption=document.createElement('span');caption.textContent=label;
+      const strong=document.createElement('strong');strong.textContent=String(value);
+      node.append(caption,strong);parent.appendChild(node);
+    }
+  }
+  function renderRunBoard(survived,best){
+    const p=game.player;
+    const num=n=>Math.round(n||0).toLocaleString('en-US');
+    addScoreRows($('runSummary'),[
+      ['SURVIVAL',timeText(game.time)],
+      ['KILLS',num(game.kills)],
+      ['TOTAL XP',num(game.totalXP)],
+      ['LEVEL',p.level],
+      ['HP RESTORED',num(game.totalHealing)],
+      ['DAMAGE DEALT',num(game.totalDamage)]
+    ],'run-summary-tile');
+    addScoreRows($('runStats'),[
+      ['ELEMENT',(p.element||'NONE').toUpperCase()],
+      ['MAX HEALTH',p.maxHp],
+      ['ATTACK RATE',p.attackRate.toFixed(2)+'/s'],
+      ['MOVE SPEED',Math.round(p.speed)],
+      ['CRIT CHANCE',Math.round(p.critChance*100)+'%'],
+      ['ARMOR',Math.round(p.armor*100)+'%'],
+      ['XP MULTIPLIER','×'+p.xpBonus.toFixed(2)],
+      ['PROJECTILES',(1+p.forwardShots)*(1+2*p.spreadShots)],
+      ['PICKUP RADIUS',Math.round(84*p.magnet)]
+    ],'run-stat-tile');
+    const taken=game.perkOrder||[];
+    const perks=taken.map(id=>{
+      const perk=POWERS.find(x=>x.id===id);
+      return perk?`${perk.name} ×${game.perkRanks[id]||1}`:null;
+    }).filter(Boolean);
+    $('runPerks').textContent=perks.length?perks.join('  ·  '):'No upgrades acquired';
+    $('runBest').textContent=
+      `BEST: ${timeText(best.time)}  ·  ${num(best.kills)} KILLS  ·  ${num(best.xp)} XP${survived?'  ·  REAPER REACHED':''}`;
+  }
   function die(won){
-    state='end'; el.end.classList.remove('hidden'); el.inventoryBtn.hidden=true; el.bossBar.hidden=true;
-    $('endTitle').textContent = won ? 'YOU SURVIVED!' : 'YOU DIED';
-    $('endEyebrow').textContent = won ? 'THE DAWN REMEMBERS YOUR NAME' : 'THE NIGHT CLAIMS ANOTHER SOUL';
-    $('endSub').textContent = won ? 'Daybreak came. You lived through another massacre.' : 'The horde still hungers...';
-    $('finalTime').textContent = timeText(game.time); $('finalKills').textContent = game.kills; $('finalLevel').textContent = game.player.level;
-    const rank = game.kills >= 120 ? 'NIGHT REAPER' : game.kills >= 55 ? 'BLOOD HUNTER' : game.kills >= 20 ? 'CRYPT STALKER' : 'NOVICE HUNTER';
-    $('huntRank').textContent = won ? `DAWN SURVIVOR · ${rank}` : rank;
-    let best=game.kills;
-    try {best=Math.max(best,Number(localStorage.getItem('noob-survivors-best-kills')||0)||0);localStorage.setItem('noob-survivors-best-kills',String(best));} catch(_){}
-    $('bestKills').textContent = `BEST: ${best} KILLS`;
-    el.end.classList.toggle('victory',won);
-    el.status.textContent = won ? 'HUNT COMPLETE' : 'HUNT FAILED'; playSound('death');
+    if(state==='end')return;
+    const survived=Boolean(won&&game.endingAt30);
+    state='end';
+    el.end.classList.remove('hidden');
+    el.inventory.classList.add('hidden');
+    el.inventoryBtn.hidden=true;
+    el.bossBar.hidden=true;
+    $('endTitle').textContent=survived?'DEATH CLAIMS THE HUNTER':'YOU DIED';
+    $('endEyebrow').textContent=survived?'THIRTY MINUTES · THE REAPER ARRIVES':'THE NIGHT CLAIMS ANOTHER SOUL';
+    $('endSub').textContent=survived?
+      'You endured 30 minutes. No one escapes the Reaper.':
+      'The hunt ended before the Reaper appeared.';
+    $('finalTime').textContent=timeText(game.time);
+    $('finalKills').textContent=game.kills;
+    $('finalLevel').textContent=game.player.level;
+    const rank=game.kills>=1000?'CRIMSON LEGEND':game.kills>=300?'NIGHT REAPER':
+      game.kills>=100?'BLOOD HUNTER':game.kills>=20?'CRYPT STALKER':'NOVICE HUNTER';
+    $('huntRank').textContent=survived?`REAPER'S WITNESS · ${rank}`:rank;
+    const current={time:Math.floor(game.time),kills:game.kills,xp:Math.floor(game.totalXP)};
+    const best={...current};
+    try{
+      const prior=JSON.parse(localStorage.getItem('crimson-ruin-record-v018')||'{}');
+      best.time=Math.max(prior.time||0,current.time);
+      best.kills=Math.max(prior.kills||0,current.kills);
+      best.xp=Math.max(prior.xp||0,current.xp);
+      localStorage.setItem('crimson-ruin-record-v018',JSON.stringify(best));
+    }catch(_){}
+    $('bestKills').textContent=`BEST: ${best.kills} KILLS`;
+    renderRunBoard(survived,best);
+    el.end.classList.toggle('victory',survived);
+    el.status.textContent=survived?'30:00 · REAPER HAS CLAIMED YOU':'HUNT FAILED';
+    playSound('death');
   }
   // O opens a paused grimoire. Values and ranks come from the active run.
   function renderInventory(){
@@ -548,6 +678,7 @@
   function applyHitDamage(enemy, baseDamage){
     const finalDamage=baseDamage*(enemy.shockTime>0?2:1);
     enemy.hp-=finalDamage;
+    if(game)game.totalDamage+=finalDamage;
     return finalDamage;
   }
   // Bleed stacks are independent 8-second effects, each worth 50% of the hit.
@@ -558,7 +689,7 @@
     if(!stacks||!stacks.length)return;
     for(let i=stacks.length-1;i>=0;i--){
       const stack=stacks[i],elapsed=Math.min(dt,stack.time);
-      if(elapsed>0)enemy.hp-=stack.dps*elapsed;
+      if(elapsed>0){const dealt=stack.dps*elapsed;enemy.hp-=dealt;game.totalDamage+=dealt;}
       stack.time-=dt;
       if(stack.time<=0)stacks.splice(i,1);
     }
@@ -631,9 +762,9 @@
   function update(dt){
     if(!game || state!=='playing') return;
     const g=game, p=g.player; g.time+=dt; g.worldTime+=dt;
-    if(g.time>=DURATION){ die(true); return; }
+    if(g.time>=DURATION){g.time=DURATION;startDeathArrival();return;}
     if(g.time>=g.bossNext && !g.enemies.some(e=>e.type==='warden'))spawnWarden();
-    if(g.time>g.nextNotice){ flashMessage(g.time>=150?'FINAL MINUTE!':'THE HORDE THICKENS...',2000); g.nextNotice+=35; }
+    if(g.time>g.nextNotice){ flashMessage(g.time>=DURATION-60?'FINAL MINUTE!':'THE HORDE THICKENS...',2000); g.nextNotice+=35; }
 
     let mx=Number(keys.has('d')||keys.has('arrowright')) - Number(keys.has('a')||keys.has('arrowleft'));
     let my=Number(keys.has('s')||keys.has('arrowdown')) - Number(keys.has('w')||keys.has('arrowup'));
@@ -641,14 +772,14 @@
 
     updateFountains(dt);
     // Continuous perk regeneration plus nonstacking 10s Fountain Regen.
-    if(p.regen>0)p.hp=Math.min(p.maxHp,p.hp+p.regen*dt);
+    if(p.regen>0){const old=p.hp;p.hp=Math.min(p.maxHp,p.hp+p.regen*dt);g.totalHealing+=p.hp-old;}
     if(p.fountainRegenTime>0){
       const elapsed=Math.min(dt,p.fountainRegenTime);
       p.fountainRegenTime=Math.max(0,p.fountainRegenTime-dt);
       p.fountainRegenTick+=elapsed;
       while(p.fountainRegenTick>=3){
         p.fountainRegenTick-=3;
-        p.hp=Math.min(p.maxHp,p.hp+1);
+        const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+1);g.totalHealing+=p.hp-before;
       }
       if(p.fountainRegenTime<=0)p.fountainRegenTick=0;
     }
@@ -671,8 +802,8 @@
     for(const e of [...g.enemies]){
       const a=Math.atan2(p.y-e.y,p.x-e.x), d=Math.hypot(p.x-e.x,p.y-e.y); e.phase+=dt*6; e.hit=Math.max(0,e.hit-dt);
       tickBleedStacks(e,dt);
-      if(e.burnTime>0){const elapsed=Math.min(dt,e.burnTime);e.hp-=(e.burnDps||0)*elapsed;e.burnTime-=elapsed;}
-      if(e.poisonDps>0){e.hp-=e.poisonDps*dt;}
+      if(e.burnTime>0){const elapsed=Math.min(dt,e.burnTime),dealt=(e.burnDps||0)*elapsed;e.hp-=dealt;g.totalDamage+=dealt;e.burnTime-=elapsed;}
+      if(e.poisonDps>0){const dealt=e.poisonDps*dt;e.hp-=dealt;g.totalDamage+=dealt;}
       if(e.hp<=0){enemyDie(e);continue;}
       if(e.slowTime>0)e.slowTime=Math.max(0,e.slowTime-dt);
       if(e.shockTime>0)e.shockTime=Math.max(0,e.shockTime-dt);
@@ -728,7 +859,7 @@
           if(b.frost)e.slowTime=2.5;
           // Poison has no stack limit or expiry; every hit permanently increases DPS.
           if(b.poison)applyPoisonStack(e,p.poisonMultiplier);
-          if(Math.random()<Math.min(.95,p.chainChance+(b.lightning?.36+p.stormBonus:0)))chainLightning(e,dmg*.55,b.hit);
+          if(Math.random()<Math.min(.95,p.chainChance+(b.lightning?p.stormBonus:0)))chainLightning(e,dmg*.55,b.hit);
           if(b.orb){explodeAt(e.x,e.y,dmg*.7,e,b.hit);addMagicFx(e.x,e.y,'blood_orb_v11',70,.26);}
           else if(p.element==='blood'&&Math.random()<p.bloodSplashChance)explodeAt(e.x,e.y,dmg*.38,e,b.hit);
           if(Math.random()<p.blastChance)explodeAt(e.x,e.y,dmg*.48,e,b.hit);
@@ -1114,6 +1245,7 @@
       drawDrops(camX,camY,t);
       const objects=[...game.enemies.map(e=>({y:e.y,e})),{y:p.y,p}]; objects.sort((a,b)=>a.y-b.y);
       for(const item of objects){ if(item.e) drawEnemy(item.e,camX,camY,t); else drawPlayer(p,camX,camY,t); }
+      if(game.death)drawDeath(camX,camY,t);
       drawShots(camX,camY,t); drawMagic(camX,camY); drawSlashBursts(camX,camY); drawImpacts(camX,camY); drawFx(camX,camY);
     } else {
       shadowAt(W/2,H/2+55,22,.5);if(!window.NoobArt?.paint(ctx,'hero_idle',W/2-32,H/2-55,64,85))ctx.drawImage(sprite('hero'),W/2-29,H/2-22,58,70);
@@ -1125,7 +1257,7 @@
     if(flash>0){ ctx.fillStyle=`rgba(170,16,42,${flash*.55})`; ctx.fillRect(0,0,W,H); }
   }
 
-  function loop(ts){ if(!last) last=ts; const dt=Math.min((ts-last)/1000,.04); last=ts; animTime+=dt; update(dt); draw(animTime); raf=requestAnimationFrame(loop); }
+  function loop(ts){ if(!last) last=ts; const dt=Math.min((ts-last)/1000,.04); last=ts; animTime+=dt; if(state==='death')updateDeath(dt);else update(dt); draw(animTime); raf=requestAnimationFrame(loop); }
 
   document.addEventListener('keydown',e=>{
     const k=e.key.toLowerCase();
