@@ -491,3 +491,55 @@ body{padding:10px}
 #endScreen .end-mode.is-easy img{display:block;width:68px;height:68px;object-fit:contain;flex:0 0 68px;filter:drop-shadow(0 0 9px #fe71cb)}
 #endScreen .end-mode.is-easy .run-mode{font:1000 clamp(14px,1.35vw,20px)/1.2 system-ui,sans-serif;letter-spacing:.06em;color:#ffe5f8;text-shadow:0 0 15px #ff6dd3,0 1px 2px #000}
 #endScreen .end-mode img[hidden]{display:none!important}
+
+/* v0.23 — User-provided high-resolution ELEMENT / POWER icon atlas.
+   Each 256px cell already includes the new ornate gold frame and arrow, so
+   remove the old frame background everywhere to prevent double borders.
+   The old non-skill game icons (Other Icons) are deliberately untouched. */
+#upgrade .upgrade-card .perk-art-frame,
+#upgrade.element-select .upgrade-card .perk-art-frame{
+  display:grid;place-items:center;
+  width:103px;height:103px;min-width:103px;flex:0 0 103px;
+  background:none!important;overflow:visible;filter:none;
+}
+#upgrade .upgrade-card .skill-icon-v023,
+#upgrade .upgrade-card .perk-art-frame .skill-icon-v023{
+  display:block;flex:0 0 101px;
+  width:101px;height:101px;min-width:101px;
+  background-image:url('assets/skill-icons-v023.webp')!important;
+  background-size:500% 500%!important;
+  background-repeat:no-repeat!important;
+  image-rendering:auto;filter:none!important;
+}
+.inventory-gold-frame,
+.inventory-perk-icon{
+  background:none!important;
+}
+.inventory-gold-frame{
+  flex:0 0 97px;width:97px;height:97px;
+}
+.inventory-gold-frame .skill-icon-v023{
+  display:block;flex:0 0 94px;width:94px;height:94px;min-width:94px;
+  background-image:url('assets/skill-icons-v023.webp')!important;
+  background-size:500% 500%!important;background-repeat:no-repeat!important;
+  filter:none!important;
+}
+.inventory-perk-icon{
+  flex:0 0 59px;width:59px;height:59px;
+}
+.inventory-perk-icon .skill-icon-v023{
+  display:block;flex:0 0 57px;width:57px;height:57px;min-width:57px;
+  background-image:url('assets/skill-icons-v023.webp')!important;
+  background-size:500% 500%!important;background-repeat:no-repeat!important;
+  filter:none!important;
+}
+@media(max-height:720px){
+  #upgrade .upgrade-card .perk-art-frame,
+  #upgrade.element-select .upgrade-card .perk-art-frame{
+    width:83px;height:83px;min-width:83px;flex-basis:83px;
+  }
+  #upgrade .upgrade-card .skill-icon-v023,
+  #upgrade .upgrade-card .perk-art-frame .skill-icon-v023{
+    flex-basis:81px;width:81px;height:81px;min-width:81px;
+  }
+}

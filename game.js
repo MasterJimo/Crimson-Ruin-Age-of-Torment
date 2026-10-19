@@ -147,22 +147,10 @@
     {id:'poison',element:'poison',name:'POISON',desc:'13 Damage over time for 8s. Infinite scaling',tier:'rare'}
   ];
   const ELEMENT_DAMAGE={blood:20,fire:40,lightning:10,poison:0};
-  // Icons are uniformly trimmed, without a second inset frame.
-  const ABILITY_ICON_CELLS = {"blood": [0, 0], "fire": [1, 0], "lightning": [2, 0], "poison": [3, 0], "blood_power": [0, 1], "fire_power": [1, 1], "lightning_power": [2, 1], "poison_power": [3, 1], "brutality": [0, 2], "rapid_fire": [1, 2], "movement": [2, 2], "vitality": [3, 2], "regen": [0, 3], "armor": [1, 3], "knowledge": [2, 3], "magnet": [3, 3], "forward": [0, 4], "spread": [1, 4], "pierce": [2, 4], "crit": [3, 4]};
-  // Original, unframed SVG Blood icons: a red droplet and an upgraded droplet.
-  const BLOOD_ICON_KEYS={blood:'blood_drop',blood_power:'blood_drop_up',hemorrhagic_burst:'blood_drop_up'};
-  function bloodGlyph(kind){
-    const upgraded=kind==='blood_drop_up';
-    return `<span class="glyph blood-glyph" role="img" aria-label="${upgraded?'Blood upgrade':'Blood element'}">
-      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-        <path d="M32 5C24 17 14 29 14 40a18 18 0 0 0 36 0C50 29 40 17 32 5Z" fill="#620b23" stroke="#260714" stroke-width="3.5"/>
-        <path d="M32 10C24 23 18 32 18 41a14 14 0 0 0 28 0C46 32 39 21 32 10Z" fill="#d92248"/>
-        <path d="M26 24c-6 9-8 14-7 19 1 5 5 9 9 10-3-4-3-8-1-13 1-4 4-7 5-13Z" fill="#ff7990" opacity=".95"/>
-        <path d="M38 27c7 12 6 20-3 26 9-2 13-11 10-19Z" fill="#8a0929"/>
-        ${upgraded?`<path d="M44 5 57 18h-7v14H38V18h-7Z" fill="#ffcf70" stroke="#402410" stroke-width="3" stroke-linejoin="round"/>
-        <path d="M44 10 51 17h-5v10h-4V17h-4Z" fill="#fff1b2"/>`:''}
-      </svg></span>`;
-  }
+  // User-supplied v0.23 art: four starting elements without arrows, 18
+  // power-ups with upgrade arrows. Each cell already has the new gold frame.
+  // 5 x 5 atlas, row major; other non-power-up game icons are unchanged.
+  const SKILL_ICON_CELLS={"blood":[0,0],"fire":[1,0],"lightning":[2,0],"poison":[3,0],"blood_power":[4,0],"fire_power":[0,1],"lightning_power":[1,1],"poison_power":[2,1],"hemorrhagic_burst":[3,1],"brutality":[4,1],"rapid_fire":[0,2],"movement":[1,2],"vitality":[2,2],"regen":[3,2],"armor":[4,2],"knowledge":[0,3],"magnet":[1,3],"forward":[2,3],"spread":[3,3],"pierce":[4,3],"crit":[0,4],"crit_damage":[1,4]};
   // Element descriptions are shared by selection cards and the O-key Grimoire.
   // The visual emphasis is presentation only; element values come from gameplay.
   function elementDescriptionHTML(choice){
@@ -191,10 +179,10 @@
     return [['DIRECT HIT',fmt(direct)]];
   }
   function powerIcon(id){
-    if(BLOOD_ICON_KEYS[id])return bloodGlyph(BLOOD_ICON_KEYS[id]);
-    const xy=ABILITY_ICON_CELLS[id];
+    const xy=SKILL_ICON_CELLS[id];
     if(!xy)return '<span class="glyph">✦</span>';
-    return `<span class="glyph ability-icon" style="background-position:${xy[0]*100/3}% ${xy[1]*100/4}%" role="img" aria-label="${id.replaceAll('_',' ')}"></span>`;
+    // Fractions of the atlas extent; the CSS background-size is 500% 500%.
+    return `<span class="glyph ability-icon skill-icon-v023" style="background-position:${xy[0]*25}% ${xy[1]*25}%" role="img" aria-label="${id.replaceAll('_',' ')}"></span>`;
   }
 
   const MUSIC_TRACKS = {
@@ -748,7 +736,7 @@
       const tiers=game.perkTiers[id]||[];
       const latest=tiers[tiers.length-1]||'common';
       row.className='inventory-perk perk-'+latest;
-      row.innerHTML=`<span class="inventory-perk-icon">${powerIcon(perk.icon||id)}</span>
+      row.innerHTML=`<span class="inventory-perk-icon">${powerIcon(id)}</span>
         <div class="inventory-perk-copy"><div class="inventory-perk-heading"><strong>${perk.name}</strong><span class="inventory-rank">RANK ${rank}</span></div>
         <p>${tiers.map(v=>v.toUpperCase()).join(' · ')}</p>
         <p>Latest: ${perkDescription(id,latest)}</p></div>`;

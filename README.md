@@ -6,7 +6,7 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.22.2
+## Current gameplay — v0.23
 
 Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
@@ -48,6 +48,16 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 ---
 
 ## Patch notes — newest first
+
+### v0.23 — Remastered Element and Power-Up icons
+- Replaced **four starting element icons** (Blood, Fire, Lightning, Poison) with the supplied color-matched crystal projectiles.
+- Replaced **four Element Power icons** with matching crystals carrying the green upgrade arrow.
+- Replaced **13 standard perk icons** (Brutality through Critical Damage) with the supplied higher-resolution upgrade artwork; Critical Damage and Deadly Precision now have distinct icons.
+- Applied the **new ornate golden frame** to every Element and Power-Up icon, matching the approved Lightning Power visual. Frames and art are baked together into one optimized 5×5 WebP atlas to keep alignment consistent and avoid duplicate gold borders.
+- Kept Hemorrhagic Burst as the separate ninth skill entry, reusing the upgraded Blood artwork because the supplied elemental upgrade sheet contains four unique images.
+- Updated the same icons in **element selection, four-card level-ups and the Power-Up Grimoire**, without changing perk odds, effects, gameplay, controls or Other Icons.
+- Updated asset cache and page version to 0.23.
+
 
 ### v0.22.2 — Pure Element Power damage bonuses
 - Blood Power, Fire Power, Lightning Power and Poison Power now exclusively increase elemental damage by **+5% (Common), +10% (Magic), +20% (Rare), +40% (Legendary), +80% (Mythic)** per picked upgrade. The bonuses are additive against base elemental damage.
