@@ -620,8 +620,14 @@
     if(p.hitCd>0 && Math.floor(p.hitCd*13)%2===0) ctx.globalAlpha=.55;
     const walking = Math.sin(p.walk)>0 ? 1 : 2;
     const pose = p.attackAnim>0 ? (p.attackAnim>.22 ? 3 : p.attackAnim>.11 ? 4 : 5) : (p.moving ? walking : 0);
-    const art=pose===0?'hero_idle':pose===1||pose===2?'hero_walk':pose===3?'hero_cast':'hero_dash';
-    if(!window.NoobArt?.paint(ctx,art,-30,-47,60,61))ctx.drawImage(sprite('hero',pose),-20,-32,40,47); ctx.restore();
+    // Dedicated HD animation frames, anchored at the boots so the character never bounces in place.
+    const art=pose===0?'hero_idle':pose===1?'hero_walk1':pose===2?'hero_walk2':pose===3?'hero_cast':'hero_attack';
+    const dimensions=window.NoobArt?.dimension(art);
+    const height = pose>=3 ? 77 : 78;
+    const width = dimensions ? Math.min(110,Math.max(41,height*dimensions.w/dimensions.h)) : 55;
+    const played=window.NoobArt?.paint(ctx,art,-width/2,12-height,width,height);
+    if(!played)ctx.drawImage(sprite('hero',pose),-20,-32,40,47);
+    ctx.restore();
     for(let i=0;i<3;i++){ const a=t*1.8+i*TAU/3; ctx.fillStyle=i===0?'#ffc7d2':'#f1607f'; ctx.fillRect(Math.round(x+Math.cos(a)*20),Math.round(y-8+Math.sin(a)*11),2,2); }
   }
   function drawEnemy(e,camX,camY,t){
@@ -719,7 +725,7 @@
       for(const item of objects){ if(item.e) drawEnemy(item.e,camX,camY,t); else drawPlayer(p,camX,camY,t); }
       drawShots(camX,camY,t); drawMagic(camX,camY); drawSlashBursts(camX,camY); drawImpacts(camX,camY); drawFx(camX,camY);
     } else {
-      shadowAt(W/2,H/2+55,22,.5);if(!window.NoobArt?.paint(ctx,'hero_idle',W/2-32,H/2-48,64,78))ctx.drawImage(sprite('hero'),W/2-29,H/2-22,58,70);
+      shadowAt(W/2,H/2+55,22,.5);if(!window.NoobArt?.paint(ctx,'hero_idle',W/2-32,H/2-55,64,85))ctx.drawImage(sprite('hero'),W/2-29,H/2-22,58,70);
     }
     const vignette=ctx.createRadialGradient(W/2,H/2,80,W/2,H/2,405);
     vignette.addColorStop(0,'#0000'); vignette.addColorStop(.75,'#170f1a20'); vignette.addColorStop(1,'#050307a0'); ctx.fillStyle=vignette; ctx.fillRect(0,0,W,H);

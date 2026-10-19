@@ -28,3 +28,10 @@ Open `index.html` locally, or host these files from the repository root using Gi
 ## Arena background (0.9.1)
 
 Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of Ruins** (`assets/gothic-courtyard.png`). The map follows the camera and repeats with mirrored edges; the previous procedural drawing is retained as a loading fallback. Enemy sprites, perks, projectiles and balance are unchanged.
+
+
+## v0.9.2 Crimson Heir deployment
+
+- Playable hero uses user-provided reference sheet (idle, two walking frames, casting and attack).
+- New files: `assets/crimson-heir-v092.png`, `assets/crimson-heir-portrait-v092.png`.
+- Existing enemy art and mechanics unchanged.
