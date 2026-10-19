@@ -81,7 +81,7 @@
     {id:'blood',element:'blood',name:'BLOOD',desc:'20 direct · Every hit Bleeds (50% over 8s), up to 8 stacks.',tier:'rare'},
     {id:'fire',element:'fire',name:'FIRE',desc:'40 direct · Single Burn deals 20 over 2s; hits refresh it.',tier:'rare'},
     {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'Damage 10–100 hit · 50% Shock for 4s; shocked targets take double damage',tier:'rare'},
-    {id:'poison',element:'poison',name:'POISON',desc:'0 direct · Permanent 13 DPS per hit (104/8s). Infinite stacks.',tier:'rare'}
+    {id:'poison',element:'poison',name:'POISON',desc:'13 Damage over time for 8s. Infinite scaling',tier:'rare'}
   ];
   const ELEMENT_DAMAGE={blood:20,fire:40,lightning:10,poison:0};
   // Icons are uniformly trimmed, without a second inset frame.
@@ -99,6 +99,33 @@
         ${upgraded?`<path d="M44 5 57 18h-7v14H38V18h-7Z" fill="#ffcf70" stroke="#402410" stroke-width="3" stroke-linejoin="round"/>
         <path d="M44 10 51 17h-5v10h-4V17h-4Z" fill="#fff1b2"/>`:''}
       </svg></span>`;
+  }
+  // Element descriptions are shared by selection cards and the O-key Grimoire.
+  // The visual emphasis is presentation only; element values come from gameplay.
+  function elementDescriptionHTML(choice){
+    if(choice?.element==='poison')return '13 Damage over time for 8s. <strong>Infinite scaling</strong>';
+    return choice?.desc||'';
+  }
+  function damageStatRows(p){
+    const fmt=n=>String(Number(n.toFixed(2)));
+    const direct=p.damage+p.flatDamage;
+    // Show only applicable attack types. The DoT value is the BASE effect
+    // per application before crits; Blood's initial hit can scale the bleed.
+    if(p.element==='blood')return [
+      ['DIRECT HIT',fmt(direct)],
+      ['DAMAGE OVER TIME',`${fmt(direct*.5)} / 8s per stack`]
+    ];
+    if(p.element==='fire')return [
+      ['DIRECT HIT',fmt(direct)],
+      ['DAMAGE OVER TIME',`${fmt(20*p.burnMultiplier)} / 2s (1 stack)`]
+    ];
+    if(p.element==='lightning')return [
+      ['DIRECT HIT',`${fmt(p.damage+p.flatDamage)}–${fmt(p.damage*10+p.flatDamage)}`]
+    ];
+    if(p.element==='poison')return [
+      ['DAMAGE OVER TIME',`${fmt(13*p.poisonMultiplier)} DPS / stack`]
+    ];
+    return [['DIRECT HIT',fmt(direct)]];
   }
   function powerIcon(id){
     if(BLOOD_ICON_KEYS[id])return bloodGlyph(BLOOD_ICON_KEYS[id]);
@@ -379,7 +406,7 @@
     el.upgradeCards.replaceChildren();
     g.upgradeChoices.forEach((opt,index)=>{
       const b=document.createElement('button');b.type='button';b.className='upgrade-card perk-'+opt.tier;
-      b.innerHTML=`<span class="perk-tier">${opt.tier}</span><span class="perk-art-frame">${powerIcon(opt.id)}</span><strong>${opt.name}</strong><span class="detail">${opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
+      b.innerHTML=`<span class="perk-tier">${opt.tier}</span><span class="perk-art-frame">${powerIcon(opt.id)}</span><strong>${opt.name}</strong><span class="detail">${opt.element?elementDescriptionHTML(opt):opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
       b.addEventListener('click',()=>chooseUpgrade(index));el.upgradeCards.appendChild(b);
     });
     const choosingElement=!g.elementChosen;
@@ -525,7 +552,7 @@
     const chosen=ELEMENT_CHOICES.find(v=>v.element===p.element);
     el.inventoryElementIcon.innerHTML=powerIcon(p.element);
     el.inventoryElementName.textContent=chosen?.name || 'UNKNOWN';
-    el.inventoryElementDesc.textContent=chosen?.desc || '';
+    el.inventoryElementDesc.innerHTML=elementDescriptionHTML(chosen);
     el.inventoryElementRank.textContent='ELEMENT RANK '+(p.elementRank+1);
     el.inventoryPerks.replaceChildren();
     let perkTotal=0;
@@ -550,7 +577,7 @@
     const shots=(1+p.forwardShots)*(1+2*p.spreadShots);
     const fmt=(n,d=1)=>Number(n).toFixed(d);
     const stats=[
-      ['DIRECT HIT',p.element==='poison'?'0 (DoT only)':p.element==='lightning'?`${fmt(p.damage+p.flatDamage,0)}–${fmt(p.damage*10+p.flatDamage,0)}`:fmt(p.damage+p.flatDamage,1)],
+      ...damageStatRows(p),
       ['ATTACKS / SEC',fmt(p.attackRate,2)],
       ['MOVE SPEED',fmt(p.speed,0)],
       ['PROJECTILES',String(shots)],

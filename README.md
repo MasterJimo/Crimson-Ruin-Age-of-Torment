@@ -47,6 +47,14 @@ Art includes the supplied Veilwarden, arena, fountain and RPG icons. Music: [Anc
 
 ## Patch notes — newest first
 
+### v0.18.1 — Consistent damage types and elemental icons
+- Fixed missing Blood, Fire, Lightning and Poison icons in the Grimoire's **Your Element** gold frame. The same unframed icon atlas is used for selection, power-ups and inventory.
+- Standardized damage stats: **DIRECT HIT** for hit-only spells (Lightning), **DAMAGE OVER TIME** for DoT-only spells (Poison), and both fields for hybrid spells (Blood and Fire).
+- Poison's selection and Grimoire text is now exactly **“13 Damage over time for 8s. Infinite scaling”** with **Infinite scaling** emphasized visually.
+- Stats are derived from the character's currently selected element and upgrades: Blood Bleed = half the hit across 8s, Fire Burn = 20 × Burn multiplier across 2s, Poison = 13 × Poison multiplier DPS per permanent stack.
+- No damage values, status rules, timers or enemy mechanics were changed.
+
+
 ### v0.18 — Thirty-minute Reaper finale and scoreboard
 - Increased the run cap to **30:00**. At exactly 30 minutes the game clock stops; invulnerable Death rushes in at unavoidable speed and kills the hero.
 - Final scoreboard for every run: XP earned, kills, level, recovered HP, total damage, current combat stats, acquired perks and personal best (duration, kills, XP).

@@ -339,3 +339,20 @@ body{padding:10px}
 .run-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .run-perks{line-height:1.6;color:#ffcad4;font-size:11px;padding:6px 9px;border:1px solid #613747;border-radius:7px;max-height:70px;overflow-y:auto}
 .run-best{margin:7px 0 1px;font-size:11px;font-weight:700;text-align:center;color:#ffda9d}
+
+/* v0.18.1 — Grimoire: the starting element icon always shows inside its gold frame.
+   Earlier icon sizing rules only targeted #upgrade and the acquired-perks list. */
+.inventory-gold-frame .ability-icon{
+  display:block;width:59px;height:59px;min-width:59px;flex:0 0 59px;
+  background-image:url('assets/perk-icons-v013.png');
+  background-size:400% 500%;
+  background-repeat:no-repeat;
+  image-rendering:auto;
+  filter:drop-shadow(0 2px 4px #0009);
+}
+.inventory-gold-frame .blood-glyph{
+  display:grid;place-items:center;width:59px;height:59px;min-width:59px;flex:0 0 59px;
+}
+.inventory-element-copy p strong,
+#upgrade .upgrade-card .detail strong{color:#f4d59d;font-weight:900}
+.inventory-stat strong{overflow-wrap:anywhere}
