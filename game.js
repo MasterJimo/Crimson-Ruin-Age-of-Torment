@@ -1,4 +1,4 @@
-/* NOOB SURVIVORS — HUNTER'S NOCTURNE
+/* CRIMSON RUIN: AGE OF TORMENT — HUNTER'S NOCTURNE
    Dependency-free dark fantasy arena survival game.
    Internal canvas: 640 x 360. Round length: 3 minutes. */
 (() => {
@@ -30,7 +30,7 @@
     sound:$('soundBtn'), musicVolume:$('musicVolume'), sfxVolume:$('sfxVolume'),
     musicVolumeValue:$('musicVolumeValue'), sfxVolumeValue:$('sfxVolumeValue'), xpStrip:$('xpStrip'),
     msg:$('message'), status:$('statusText'), portrait:$('portrait'), bossBar:$('bossBar'), bossFill:$('bossFill'), bossName:$('bossName'),
-    stick:$('stick'), pad:$('mobilePad'), reroll:$('rerollBtn'), banish:$('banishBtn'), rerollCount:$('rerollCount'), banishCount:$('banishCount'), perkNotice:$('perkNotice')
+    reroll:$('rerollBtn'), banish:$('banishBtn'), rerollCount:$('rerollCount'), banishCount:$('banishCount'), perkNotice:$('perkNotice')
   };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const rand = (a, b) => a + Math.random() * (b - a);
@@ -116,7 +116,6 @@
 
   const keys = new Set();
   let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 10, sfxVolume = 5, sfx = null;
-  let touchVec = {x:0,y:0}, activePointer = null;
   let musicPlayer = null, currentTrack = 'caverns';
 
   function ensureMusicPlayer(){
@@ -434,7 +433,7 @@
   }
   function openInventory(){
     if(state!=='playing'||!game?.elementChosen)return;
-    touchVec={x:0,y:0};keys.clear();
+    keys.clear();
     renderInventory();
     state='inventory';
     el.inventory.classList.remove('hidden');
@@ -625,8 +624,8 @@
     if(g.time>=g.bossNext && !g.enemies.some(e=>e.type==='warden'))spawnWarden();
     if(g.time>g.nextNotice){ flashMessage(g.time>=150?'FINAL MINUTE!':'THE HORDE THICKENS...',2000); g.nextNotice+=35; }
 
-    let mx=Number(keys.has('d')||keys.has('arrowright')) - Number(keys.has('a')||keys.has('arrowleft')) + touchVec.x;
-    let my=Number(keys.has('s')||keys.has('arrowdown')) - Number(keys.has('w')||keys.has('arrowup')) + touchVec.y;
+    let mx=Number(keys.has('d')||keys.has('arrowright')) - Number(keys.has('a')||keys.has('arrowleft'));
+    let my=Number(keys.has('s')||keys.has('arrowdown')) - Number(keys.has('w')||keys.has('arrowup'));
     const mag=Math.hypot(mx,my); p.moving=mag>.02; if(mag>0){ mx/=mag; my/=mag; p.x+=mx*p.speed*dt; p.y+=my*p.speed*dt; p.walk+=dt*11; p.face=mx<-.05?-1:mx>.05?1:p.face; }
 
     updateFountains(dt);
@@ -1099,7 +1098,7 @@
 
   document.addEventListener('keydown',e=>{
     const k=e.key.toLowerCase();
-    if(k==='tab'&&(state==='playing'||state==='inventory')){e.preventDefault();if(!e.repeat)toggleInventory();return;}
+    if(k==='o'&&(state==='playing'||state==='inventory')){e.preventDefault();if(!e.repeat)toggleInventory();return;}
     if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
     if(state==='inventory'){
       if(k==='escape'||k==='p'){e.preventDefault();closeInventory();}
@@ -1113,7 +1112,7 @@
     if(state==='intro'&&(k==='enter'||k===' ')) startGame();
     if(state==='end'&&k==='enter') startGame();
   });
-  window.addEventListener('blur',()=>{ keys.clear(); touchVec={x:0,y:0}; if(state==='playing') togglePause(); });
+  window.addEventListener('blur',()=>{ keys.clear(); if(state==='playing') togglePause(); });
   document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);
@@ -1154,13 +1153,5 @@
     sfxVolume=clamp(Number(el.sfxVolume.value),0,100); updateAudioUI(); rememberAudio();
   });
 
-  const frame=$('frame'); let origin=null;
-  frame.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'||state!=='playing'||e.target.closest('button')||e.target.closest('select')||e.target.closest('label')) return; if(e.clientX>frame.getBoundingClientRect().left+frame.clientWidth*.66) return; activePointer=e.pointerId; origin={x:e.clientX,y:e.clientY}; try{ frame.setPointerCapture(e.pointerId); }catch(_){} moveStick(e); });
-  function moveStick(e){ if(e.pointerId!==activePointer||!origin) return; const dx=e.clientX-origin.x, dy=e.clientY-origin.y, d=Math.hypot(dx,dy)||1; touchVec={x:dx/Math.max(38,d),y:dy/Math.max(38,d)}; const a=Math.min(d,38); el.stick.style.transform=`translate(calc(-50% + ${dx/d*a}px),calc(-50% + ${dy/d*a}px))`; }
-  frame.addEventListener('pointermove',moveStick);
-  function releaseStick(e){ if(e.pointerId!==activePointer) return; activePointer=null; origin=null; touchVec={x:0,y:0}; el.stick.style.transform='translate(-50%,-50%)'; }
-  frame.addEventListener('pointerup',releaseStick); frame.addEventListener('pointercancel',releaseStick);
-
-  if(matchMedia('(pointer:coarse)').matches) el.pad.classList.add('playing');
   requestAnimationFrame(loop);
 })();

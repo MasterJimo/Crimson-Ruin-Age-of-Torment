@@ -26,11 +26,11 @@ body{padding:10px}
 .float-messages{position:absolute;left:50%;top:66px;transform:translateX(-50%);background:#12090d;border:1px solid #6e2540;border-radius:999px;padding:8px 16px;min-width:120px;text-align:center;font-weight:800;letter-spacing:.09em;color:#ffe5ea;box-shadow:0 14px 34px #000a}
 .screen-overlay,.pause-card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:linear-gradient(180deg,#060304cc,#090406ef);backdrop-filter:blur(5px)}
 .hidden{display:none!important}.eyebrow{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:#d7a7b2}.crest{width:88px;height:88px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle at 30% 30%,#2f1820,#12090d 70%);border:1px solid #622131;box-shadow:0 0 0 8px #ffffff06,0 15px 50px #000}.intro h1{font-size:clamp(44px,8vw,88px);line-height:.92;margin:14px 0 8px;font-weight:1000;letter-spacing:.03em;text-shadow:0 4px 0 #000,0 0 24px #e2486d33}.intro h1 em{font-style:normal;color:#ff90a6}.intro-rule{width:min(280px,45%);height:1px;background:linear-gradient(90deg,#0000,#7b3748,#0000);margin:10px 0 16px;position:relative}.intro-rule span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:0 10px;background:#090507;color:#ff8fa6}.description{max-width:540px;color:#ecd3d7;line-height:1.5;font-size:15px}.main-button{padding:14px 18px;border-radius:16px;background:linear-gradient(180deg,#7a1730,#4e0718);border:1px solid #b34962;color:#fff4f6;font-weight:900;letter-spacing:.08em;box-shadow:0 18px 44px #0009,inset 0 1px 0 #fff2}.main-button span{margin-right:8px}.intro-foot{margin-top:14px;font-size:11px;color:#c798a3;letter-spacing:.18em;text-transform:uppercase}.overlay-sub{margin:0 0 14px;color:#e0bcc4}.upgrade-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:800px;width:100%}.upgrade-card{padding:16px 10px;min-height:155px;border-radius:18px;background:linear-gradient(180deg,#180d12,#0d070a);border:1px solid #4a2330;color:#f8dfe4;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;box-shadow:0 18px 44px #0008,inset 0 1px 0 #ffffff12}.upgrade-card .glyph{font-size:30px;color:#ff8ca0}.upgrade-card strong{font-size:12px;letter-spacing:.08em}.upgrade-card .detail{font-size:13px;color:#e3cbd0}.upgrade-card .hotkey{font-size:11px;color:#b78993;margin-top:auto}.card-hint{font-size:12px;color:#b08991}.end-stats{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin:16px 0 22px}.end-stats div{min-width:120px;background:#0f080b;border:1px solid #482631;border-radius:16px;padding:12px 16px}.end-stats span{display:block;font-size:11px;color:#b48d97;letter-spacing:.18em}.end-stats strong{font-size:20px;color:#fff3f5}.pause-card{inset:auto 14px 14px auto;min-width:240px;border-radius:18px;border:1px solid #5e2435;background:linear-gradient(180deg,#140b0fcc,#090507ec);box-shadow:0 25px 54px #000c}.pause-card span:first-child{font-size:28px;color:#ff92a8}.pause-button{position:absolute;top:12px;right:12px;z-index:3;background:#12090d;border:1px solid #592536;color:#ffeef1;border-radius:12px;width:38px;height:38px;box-shadow:0 12px 28px #0008}
-.footer-help kbd{display:inline-grid;place-items:center;min-width:18px;padding:2px 5px;border-radius:5px;background:#1b0d11;border:1px solid #48212b;color:#f7dbe1;box-shadow:inset 0 -1px 0 #0006}.green-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff637e;box-shadow:0 0 12px #ff637e}.spacer{padding:0 7px}.mobile-pad{position:absolute;left:12px;bottom:14px;width:88px;height:88px;border-radius:50%;background:#170b10aa;border:1px solid #5b2232;display:none;box-shadow:0 10px 24px #0008}.mobile-pad .stick{position:absolute;left:50%;top:50%;width:38px;height:38px;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at 30% 30%,#ff7890,#6e1028);border:1px solid #f89ab0}
-@media(pointer:coarse){.mobile-pad.playing{display:block}}
-@media(max-width:920px){.topbar,.footer{flex-wrap:wrap}.topbar-right,.footer-help,.credit{width:100%;justify-content:center}.brand{width:100%;justify-content:center;text-align:center}.upgrade-cards{grid-template-columns:1fr}.hud-row{gap:6px}.hp-track{width:88px}#timeText{font-size:22px}.hp-zone,.hud-right,.hud-center{padding:7px 9px}.float-messages{top:58px;font-size:12px;padding:7px 12px}}
-@media(max-width:650px){body{padding:0}.site-shell{width:100%;border-radius:0;border-inline:none}.topbar,.footer{padding:10px}.game-frame{aspect-ratio:16/10}.brand{font-size:11px}.rating-badge,.version,.music-bar span{font-size:10px}.music-bar{padding:4px 8px}.music-bar select{max-width:145px}.intro h1{font-size:34px}.description{font-size:12px}.intro-foot,.footer-help,.credit{font-size:10px}.main-button{font-size:12px;padding:11px 14px}.end-stats div{min-width:92px;padding:10px}.hud-center{min-width:88px}.hp-num{display:none}}
-@media (max-width:650px) and (orientation:portrait){.intro{padding:8px}.intro .crest,.intro .eyebrow,.intro-rule,.intro-foot{display:none}.intro h1{font-size:23px;margin:4px 0}.intro>p:not(.description){font-size:12px;margin:6px 0}.description{font-size:10px;line-height:1.25;margin:6px 0 10px}.float-messages{top:56px}#upgrade{justify-content:center;padding:6px}#upgrade .eyebrow,#upgrade .card-hint,#endScreen .eyebrow{display:none}#upgrade h2,#endScreen h2{font-size:18px;margin:4px 0}#upgrade .overlay-sub,#endScreen .overlay-sub{font-size:11px;margin:0 0 8px}.upgrade-card{min-height:98px;padding:6px}.upgrade-card .glyph{font-size:21px}.upgrade-card strong{font-size:9px}.upgrade-card .detail{font-size:10px}.upgrade-card .hotkey{font-size:9px}.end-stats{gap:8px;margin:8px 0 12px}.end-stats span{font-size:9px}.end-stats strong{font-size:12px}}
+.footer-help kbd{display:inline-grid;place-items:center;min-width:18px;padding:2px 5px;border-radius:5px;background:#1b0d11;border:1px solid #48212b;color:#f7dbe1;box-shadow:inset 0 -1px 0 #0006}.green-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff637e;box-shadow:0 0 12px #ff637e}.spacer{padding:0 7px}
+
+
+
+
 
 /* Blood Moon v0.3 — high-definition particle render over deliberately crisp sprites. */
 .game-frame{box-shadow:inset 0 0 0 1px #66233b,0 18px 65px #0008;}
@@ -46,11 +46,11 @@ body{padding:10px}
 #timeText{font-variant-numeric:tabular-nums;font-size:clamp(25px,3.3vw,38px);}
 .hud-center{min-width:132px;padding:6px 17px;background:linear-gradient(180deg,#3c1020e5,#15050be8);border:1px solid #b14c66;box-shadow:0 0 18px #d62f4a32,inset 0 1px 0 #fff2,0 12px 28px #0008}
 .hud-center::before{content:'✦';font-size:8px;color:#ee7195;display:block;line-height:3px;}
-@media(max-width:650px){#timeText{font-size:23px}.hud-center{min-width:92px;padding:6px 8px}.intro::before{width:150px;right:2%;top:10%;}}
+
 /* Final contrast and HUD readability polish. */
 .intro h1 em{background:none;color:#ff91ac;-webkit-text-fill-color:#ff91ac;text-shadow:0 4px 0 #280711,0 0 30px #f36a8c77;}
 .pause-button{top:auto;bottom:12px;right:12px;}
-@media(max-width:650px){.pause-button{bottom:6px;right:6px;width:32px;height:32px;}}
+
 
 
 /* Alpha 0.4 — clear arena and compact audio mixing desk. */
@@ -61,7 +61,7 @@ body{padding:10px}
 .music-bar{margin:0;flex-shrink:0}
 .music-bar select{max-width:145px}
 .volume-control{display:flex;align-items:center;gap:8px;color:#efcad3;background:#100a0d;border:1px solid #342028;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap;letter-spacing:.025em}
-.volume-control input[type=range]{width:82px;min-width:50px;accent-color:#f16b87;cursor:pointer;height:16px;touch-action:none}
+.volume-control input[type=range]{width:82px;min-width:50px;accent-color:#f16b87;cursor:pointer;height:16px;}
 .volume-control output{width:37px;text-align:right;font-variant-numeric:tabular-nums;color:#ffdce5;font-weight:750}
 .sound-control{white-space:nowrap;min-width:91px}
 .sound-control.is-muted{background:linear-gradient(180deg,#682538,#3d1423);border-color:#bd5875;color:#fff2f5}
@@ -75,21 +75,10 @@ body{padding:10px}
 .game-frame{background:#211923}
 .hud{inset:9px 12px auto 12px}
 .float-messages{top:63px}
-@media(max-width:1100px){.topbar-right{justify-content:flex-end}}
-@media(max-width:900px){.audio-controls{flex:1 1 100%;justify-content:center}.topbar-right{justify-content:center}}
-@media(max-width:650px){
-  .topbar{padding:8px;gap:7px}
-  .audio-controls{width:100%;gap:6px;justify-content:center}
-  .music-bar{padding:4px 7px}
-  .music-bar select{max-width:120px;font-size:10px;padding:5px 7px}
-  .volume-control{gap:5px;font-size:10px;padding:4px 7px}
-  .volume-control input[type=range]{width:61px}
-  .volume-control output{width:31px}
-  .sound-control{font-size:10px;min-width:73px;padding:8px 9px}
-  .xp-strip{height:10px;padding:2px 0 1px}
-  .float-messages{top:57px}
-}
-@media(max-width:410px){.audio-controls{gap:5px}.volume-control input[type=range]{width:51px}.volume-control{gap:4px}.music-bar{padding:4px 6px}.music-bar select{max-width:110px}}
+
+
+
+
 /* Empty announcement containers must not cover the playfield. */
 .float-messages:empty{display:none}
 
@@ -102,8 +91,8 @@ body{padding:10px}
 .track-pill{display:flex;align-items:center;gap:8px;background:#120b0e;border:1px solid #3a242c;border-radius:999px;padding:6px 10px 6px 12px;color:#e8cfd5;font-size:11px;font-weight:800;letter-spacing:.03em;white-space:nowrap}
 .track-pill strong{color:#ffdfe6;font-size:11px;letter-spacing:.08em}
 .track-pill span{color:#c8a0aa}
-@media(max-width:900px){.topbar-right.solo-audio{justify-content:center}.audio-controls{justify-content:center}}
-@media(max-width:650px){.topbar{min-height:auto;padding:7px}.audio-controls{gap:6px}.track-pill{font-size:10px;padding:5px 8px}.track-pill strong{font-size:10px}}
+
+
 
 /* Alpha 0.6 · gothic hunter start and end panels */
 .intro,.screen-overlay#endScreen{overflow:hidden}
@@ -128,8 +117,8 @@ body{padding:10px}
 #endScreen .end-stats strong{font-size:clamp(14px,2.8vw,22px)}
 .hunt-record{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;margin:0 0 15px;font-size:11px;font-weight:900;letter-spacing:.12em;color:#ffd1a4}
 .hunt-record span+span{color:#caa9b0}
-@media(max-width:650px){.intro h1{font-size:clamp(25px,7vw,43px)}.hunter-traits{gap:4px;margin:3px 0 8px}.hunter-traits span{font-size:8px;padding:4px 7px}.end-crest{width:34px;height:34px;font-size:24px}#endScreen .end-stats{margin:6px 0}#endScreen .end-stats div{min-width:73px;padding:7px 9px}.hunt-record{font-size:8px;margin-bottom:9px}.intro .crest{width:60px;height:60px}}
-@media(max-width:650px) and (orientation:portrait){.hunter-traits{margin:2px 0 5px}.hunter-traits span{font-size:7px;padding:3px 5px}.intro h1{font-size:23px}.intro-kicker{font-size:9px}.end-crest{display:none}#endScreen .end-stats{gap:5px;margin:3px 0}.hunt-record{gap:5px;font-size:7px;margin:2px 0 6px}}
+
+
 
 /* v0.7 — gothic boss HUD, readable combat and richer metallic UI */
 .site-shell{border-color:#51303b;box-shadow:0 26px 85px #000b,inset 0 0 0 1px #66414b}
@@ -150,11 +139,11 @@ body{padding:10px}
 .upgrade-card{border-color:#624154;background:linear-gradient(165deg,#26131c,#100a10)}
 .upgrade-card .glyph{text-shadow:0 0 12px #f38ea87a}
 .end-stats div{border-color:#8b5468;background:#21121c}
-@media(max-width:650px){.boss-bar{top:57px;width:min(270px,67%)}.boss-heading{font-size:8px;padding:4px 6px;letter-spacing:.09em}.boss-track{height:9px}}
+
 
 /* Final readability pass: boss announcements never overlap the boss bar. */
 .game-frame:has(.boss-bar:not([hidden])) .float-messages{top:116px;max-width:85%;font-size:12px}
-@media(max-width:650px){.game-frame:has(.boss-bar:not([hidden])) .float-messages{top:99px;font-size:9px;padding:5px 8px}}
+
 
 /* v0.8 - pared-down start screen and legible controls. */
 .intro{gap:0}
@@ -170,25 +159,12 @@ body{padding:10px}
 .footer{padding:13px 16px;justify-content:center}
 .footer #statusText{font-size:12px}
 .footer>.credit{display:none}
-@media(max-width:650px){
-  .intro .crest{width:65px;height:65px;margin-bottom:7px}
-  .intro h1{font-size:clamp(32px,7.6vw,47px);margin:4px 0 13px}
-  #startBtn{min-width:0;font-size:13px;padding:10px 14px}
-  .intro-foot{gap:5px;font-size:clamp(9px,2.65vw,12px);letter-spacing:0;margin-top:9px}
-  .footer-help{font-size:12px}
-  .footer-help kbd{font-size:12px;padding:3px 4px}
-}
-@media(max-width:650px) and (orientation:portrait){
-  .intro .crest{display:grid}
-  .intro h1{font-size:clamp(26px,7.4vw,34px);margin:4px 0 10px}
-  .intro-foot{display:flex;line-height:1.3;gap:5px}
-  .footer-help{font-size:11px}
-  .footer-help kbd{font-size:11px;padding:2px 3px}
-}
+
+
 /* Keep status updates accessible without cluttering the cleaned-up footer. */
 .footer>div:first-child{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-@media(max-width:650px){.intro-foot{font-size:12px;letter-spacing:0}.footer-help{font-size:12px}.footer-help kbd{font-size:13px;padding:3px 4px}}
-@media(max-width:410px){.intro-foot{font-size:11px;letter-spacing:0}.footer-help{font-size:11.5px}}
+
+
 
 /* v0.9 · roguelite upgrade tools */
 .perk-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;margin:0 0 14px;width:min(740px,100%)}
@@ -198,7 +174,7 @@ body{padding:10px}
 .perk-notice{font-size:10px;letter-spacing:.06em;color:#e4b6bf;font-weight:750}
 .upgrade-card .perk-tier{text-transform:uppercase;font-size:10px;color:#b6a3b1;letter-spacing:.17em}.upgrade-card.perk-rare{border-color:#765d9c}.upgrade-card.perk-rare .perk-tier{color:#c4b4fa}
 .upgrade-card.perk-legendary{border-color:#b8874d;box-shadow:inset 0 0 28px #c8963410,0 18px 44px #0008}.upgrade-card.perk-legendary .perk-tier{color:#f7d18b}
-@media(max-width:650px){.perk-actions{gap:5px;margin-bottom:5px}.perk-tool{font-size:10px;padding:7px 10px}.perk-notice{font-size:9px;width:100%}#upgrade .upgrade-card .perk-tier{font-size:8px}}
+
 
 /* v0.9 — painted HD fantasy visuals and responsive level-up UI */
 #game{image-rendering:auto}
@@ -213,35 +189,11 @@ body{padding:10px}
 #upgrade .upgrade-card strong{font:900 13px system-ui,sans-serif;letter-spacing:.02em}
 #upgrade .upgrade-card .detail{font-size:13px}
 #upgrade .upgrade-card .glyph{font-size:31px}
-@media(max-width:650px){.intro .crest{width:87px;height:87px}.intro h1{font-size:clamp(30px,7.4vw,42px)}#upgrade{padding:5px}#upgrade .upgrade-cards{gap:5px}#upgrade .upgrade-card{min-height:92px;padding:5px}#upgrade .upgrade-card .glyph{font-size:19px}#upgrade .upgrade-card strong{font-size:10px}#upgrade .upgrade-card .detail{font-size:10px}#upgrade .upgrade-card .perk-tier{font-size:8px}#upgrade .overlay-sub{margin:0 0 2px}#upgrade .card-hint{display:none}}
-@media(max-width:650px) and (orientation:portrait){.intro .crest{height:61px;width:61px;margin-bottom:5px}#upgrade h2{font-size:19px}#upgrade .upgrade-card{min-height:78px}}
+
+
 /* Mobile level-up must never be clipped by the 16:10 gameplay viewport. */
-@media(max-width:650px){
-  #upgrade{position:fixed;inset:0;z-index:40;box-sizing:border-box;min-height:100dvh;height:100dvh;max-height:100dvh;overflow-y:auto;padding:22px 14px;justify-content:center;gap:8px;background:radial-gradient(ellipse at 50% 38%,#422b3c,#0d0812 76%);}
-  #upgrade .eyebrow{display:block;font-size:10px;letter-spacing:.18em;margin:0}
-  #upgrade h2{font-size:30px;letter-spacing:.04em;margin:0}
-  #upgrade .overlay-sub{font-size:13px;margin:0 0 8px}
-  #upgrade .perk-actions{max-width:410px;gap:8px;margin:0 0 7px}
-  #upgrade .perk-tool{font-size:12px;padding:9px 13px}
-  #upgrade .perk-notice{display:block;flex:1 1 100%;font-size:10px;line-height:1.3;min-height:13px}
-  #upgrade .upgrade-cards{display:grid;grid-template-columns:1fr;max-width:410px;gap:11px}
-  #upgrade .upgrade-card{position:relative;display:grid;grid-template-columns:64px 1fr;grid-template-rows:auto auto 1fr;gap:3px 10px;text-align:left;align-content:center;min-height:125px;padding:12px 15px;align-items:center;justify-items:start}
-  #upgrade .upgrade-card .perk-tier{grid-column:2;grid-row:1;font-size:10px}
-  #upgrade .upgrade-card .glyph{grid-column:1;grid-row:1/4;align-self:center;justify-self:center;font-size:33px}
-  #upgrade .upgrade-card strong{grid-column:2;grid-row:2;font-size:13px;min-height:unset}
-  #upgrade .upgrade-card .detail{grid-column:2;grid-row:3;font-size:12px;min-height:unset}
-  #upgrade .upgrade-card .hotkey{position:absolute;right:13px;bottom:10px;font-size:10px}
-  #upgrade .card-hint{display:block;margin:0;font-size:11px}
-}
-@media(max-width:650px) and (max-height:610px){
-  #upgrade{justify-content:flex-start;padding:12px 10px}
-  #upgrade .upgrade-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
-  #upgrade .upgrade-card{display:flex;flex-direction:column;text-align:center;align-items:center;justify-content:flex-start;gap:4px;min-height:130px;padding:8px 4px}
-  #upgrade .upgrade-card .glyph{font-size:21px;align-self:center}
-  #upgrade .upgrade-card strong{font-size:10px;line-height:1.1}
-  #upgrade .upgrade-card .detail{font-size:10px;line-height:1.1}
-  #upgrade .upgrade-card .hotkey{position:static;font-size:9px;margin:0}
-}
+
+
 
 /* 0.11 — Ability icons / school selection / luminous crystal XP */
 .xp-strip .xp-track{background:#091b37;border-top:1px solid #16406b}
@@ -258,20 +210,8 @@ body{padding:10px}
 #upgrade.element-select .perk-actions [hidden]{display:none!important}
 #upgrade.element-select .perk-actions{justify-content:center}
 #upgrade.element-select .perk-notice{flex:0 1 auto}
-@media(max-width:700px){
- #upgrade.element-select .upgrade-cards{grid-template-columns:repeat(2,minmax(0,1fr));max-width:440px;gap:8px}
- #upgrade.element-select .upgrade-card{display:flex;flex-direction:column;justify-content:center;min-height:140px;gap:2px;padding:7px}
- #upgrade.element-select .upgrade-card .perk-tier{font-size:9px}
- #upgrade.element-select .upgrade-card strong{font-size:13px}
- #upgrade.element-select .upgrade-card .detail{font-size:10px}
- #upgrade.element-select .upgrade-card .hotkey{position:static;font-size:9px}
- #upgrade .upgrade-card .ability-icon{width:54px;height:54px;min-width:54px;background-size:324px 324px;background-position:calc(var(--ic)*-54px) calc(var(--ir)*-54px);grid-column:1;grid-row:1/4}
-}
-@media(max-width:700px) and (max-height:660px){
- #upgrade.element-select{justify-content:flex-start}
- #upgrade.element-select .upgrade-card{min-height:105px}
- #upgrade.element-select .upgrade-card .ability-icon{height:42px;width:42px;min-width:42px;background-size:252px 252px;background-position:calc(var(--ic)*-42px) calc(var(--ir)*-42px)}
-}
+
+
 
 /* v0.12 — uncluttered player UI, gold frame fully visible around ability artwork. */
 .track-pill{display:none!important}
@@ -292,23 +232,8 @@ body{padding:10px}
 #upgrade .perk-art-frame .glyph:not(.ability-icon){font-size:36px}
 #upgrade.element-select .upgrade-card{padding:10px 6px;gap:6px}
 #upgrade.element-select .upgrade-card .detail{font-size:12px;line-height:1.35;max-width:210px}
-@media(max-width:700px){
-  .topbar{padding:6px}
-  .footer{padding:6px 8px}
-  .footer-help{gap:10px!important;font-size:11px!important}
-  .footer-help kbd{font-size:11px;padding:3px 4px}
-  #upgrade .upgrade-card .perk-art-frame{grid-column:1;grid-row:1/4;width:64px;height:64px;min-width:64px;flex-basis:64px}
-  #upgrade .perk-art-frame .ability-icon{width:40px;height:40px;min-width:40px;background-size:240px 240px;background-position:calc(var(--ic)*-40px) calc(var(--ir)*-40px)}
-  #upgrade.element-select .upgrade-cards{gap:10px}
-  #upgrade.element-select .upgrade-card{min-height:165px;gap:3px;padding:8px 6px}
-  #upgrade.element-select .upgrade-card .perk-art-frame{width:66px;height:66px;min-width:66px;flex-basis:66px}
-  #upgrade.element-select .upgrade-card .detail{font-size:10.5px;line-height:1.22}
-}
-@media(max-width:700px) and (max-height:660px){
- #upgrade.element-select .upgrade-card{min-height:130px}
- #upgrade.element-select .upgrade-card .perk-art-frame{width:53px;height:53px;min-width:53px;flex-basis:53px}
- #upgrade.element-select .upgrade-card .perk-art-frame .ability-icon{width:34px;height:34px;min-width:34px;background-size:204px 204px;background-position:calc(var(--ic)*-34px) calc(var(--ir)*-34px)}
-}
+
+
 
 /* v0.13 — ONE full gold frame, the user-supplied UNFRAMED icon centered inside. */
 #upgrade .upgrade-card .perk-art-frame{
@@ -324,17 +249,10 @@ body{padding:10px}
 }
 #upgrade.element-select .upgrade-card .perk-art-frame{width:96px;height:96px;min-width:96px;flex-basis:96px}
 #upgrade .upgrade-card .detail{line-height:1.3}
-@media(max-width:700px){
-  #upgrade .upgrade-card .perk-art-frame{width:65px;height:65px;min-width:65px;flex:0 0 65px}
-  #upgrade .perk-art-frame .ability-icon{width:45px;height:45px;min-width:45px;background-size:400% 500%}
-  #upgrade.element-select .upgrade-card .perk-art-frame{width:68px;height:68px;min-width:68px;flex:0 0 68px}
-}
-@media(max-width:700px) and (max-height:660px){
-  #upgrade.element-select .upgrade-card .perk-art-frame{width:53px;height:53px;min-width:53px;flex:0 0 53px}
-  #upgrade.element-select .perk-art-frame .ability-icon{width:37px;height:37px;min-width:37px;background-size:400% 500%}
-}
 
-/* v0.15 — Crimson Ruin identity and paused power-up grimoire. */
+
+
+/* v0.16 — desktop-only Crimson Ruin identity and paused power-up grimoire. */
 .intro h1{font-size:clamp(33px,5.15vw,66px);letter-spacing:.035em;line-height:1.02;text-wrap:balance}
 .intro h1 em{font-size:.72em;letter-spacing:.14em;font-weight:800}
 .blood-glyph{display:grid;place-items:center;aspect-ratio:1;width:100%;height:100%;min-width:0!important;filter:drop-shadow(0 2px 6px #000b)}
@@ -382,20 +300,9 @@ body{padding:10px}
 .inventory-stat strong{font-size:15px;color:#ffdbb4;font-variant-numeric:tabular-nums}
 .inventory-footer{text-align:center;padding:10px;border-top:1px solid #67434d;font-size:11px;letter-spacing:.07em;color:#d8b7ac}
 .inventory-footer kbd{padding:2px 5px;border:1px solid #795364;border-radius:4px;color:#ffe3ce}
-@media(max-width:700px){
- .intro h1{font-size:clamp(24px,6vw,43px)}
- .perk-art-frame .blood-glyph{width:44px;height:44px}
- .inventory-overlay{position:fixed;inset:0;padding:8px;z-index:90;align-items:stretch}
- .inventory-panel{width:100%;max-height:100%;height:100%;border-radius:12px}
- .inventory-heading{padding:11px 13px}
- .inventory-heading h2{font-size:23px}
- .inventory-scroll{padding:10px 10px 16px}
- .inventory-columns{grid-template-columns:1fr}
- .inventory-gold-frame{flex-basis:64px;height:64px}
- .inventory-gold-frame .blood-glyph{width:44px;height:44px}
- .inventory-element-title h3{font-size:18px}
- .inventory-element-copy p{font-size:11px}
- .inventory-footer{padding:8px 5px;font-size:10px}
- .inventory-button{top:9px;right:57px;width:33px;height:33px}
-}
-@media(max-width:380px){.inventory-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.inventory-stat{padding:6px}}
+
+
+
+/* Desktop-only controls: the keyboard (WASD/arrows) and O grimoire are the sole input scheme. */
+.inventory-panel{width:min(940px,calc(100% - 18px));}
+.inventory-button{right:58px;}

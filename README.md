@@ -18,7 +18,7 @@ Browser-based gothic survival game (HTML, CSS, Canvas 2D, vanilla JavaScript).
 - WASD / arrow keys — move
 - P / Escape — pause
 - 1, 2, 3 — choose upgrade
-- Mobile — on-screen joystick
+
 - Attacks are automatic
 
 ## Credits
@@ -69,7 +69,7 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - Poison: **5 hit**, then **100 damage every 8 seconds forever**, until enemy death (unlimited permanent stacks; each hit adds 12.5 DPS).
 - The soundtrack **name is no longer displayed**, but Music 10% / SFX 5% sliders and mute remain.
 - Footer controls are condensed into compact MOVE/PAUSE groups.
-- Perk icons appear inside the provided **golden transparent frame** without cropped edges, including on phones.
+- Perk icons appear inside the provided **golden transparent frame** without cropped edges.
 - Existing elemental projectile sprites and blue XP shards remain.
 
 [Exact status formulas and implementation order](ELEMENT_BALANCE.md)
@@ -111,10 +111,16 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - A crimson ×N indicator shows current Bleed stacks. Poison and Fire stacking rules remain unchanged.
 
 
-## v0.15 — Title, Blood icons and TAB grimoire
+## v0.15 — Title, Blood icons and O grimoire
 - Game renamed to **Crimson Ruin: Age of Torment** (UI, browser tab and documentation).
 - Blood's original heart icon is replaced by an original crimson droplet; Blood Power and Hemorrhagic Burst show a droplet with an upward gold arrow.
-- During a run press **TAB** or use the small **✧** button near Pause to open a read-only grimoire. Gameplay pauses until TAB, ESC, or Close.
+- During a run press **O** or use the small **✧** button near Pause to open a read-only grimoire. Gameplay pauses until O, ESC, or Close.
 - The grimoire lists the selected element, each acquired power-up and its rank, effect descriptions, and live stats (hit, fire rate, move speed, projectile count, pierce, crit, armor, XP bonus, pickup range, regen, health, Bleed cap).
 - Power-up ranks are tracked per run and reset correctly on restart. Perks you banish do not appear as acquired.
 - Game repository remains at its previous GitHub address until renamed manually in Settings; a repository rename also changes the GitHub Pages URL.
+
+## v0.16 — Desktop-only controls
+- Removed the touch joystick, touch/pointer controller, mobile markup, and mobile-specific CSS breakpoints. Crimson Ruin is now intentionally desktop-only.
+- **WASD / arrow keys**: movement. **P**: pause. **O**: toggle the power-up grimoire. **ESC**: close grimoire. Mouse buttons support menu, upgrades, and optional overlay controls.
+- The previous grimoire binding has been removed and Tab is available for normal browser keyboard focus.
+- Repository was renamed to `MasterJimo/Crimson-Ruin-Age-of-Torment` externally. Changes are committed to the renamed repository.
