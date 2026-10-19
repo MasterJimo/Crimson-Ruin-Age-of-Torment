@@ -85,12 +85,36 @@
       case 'pierce':return '+'+shotBonus(u)+' extra pierce.';
       case 'crit':return '+'+(3*u)+'% critical chance.';
       case 'crit_damage':return '+'+(10*u)+'% critical damage multiplier.';
-      case 'blood_power':return '+'+(10*u)+'% Blood hit and Bleed damage. Unlocks at element ranks 2–4.';
+      case 'blood_power':return '+'+(5*u)+'% Blood damage.';
       case 'hemorrhagic_burst':return '8-stack Blood detonation on every hit · +'+(10*(u-1))+'% burst potency.';
-      case 'fire_power':return '+'+(10*u)+'% Fire hit, +'+(6*u)+'% Burn strength.';
-      case 'lightning_power':return '+'+(10*u)+'% Lightning hit, +'+(3*u)+'% Chain chance.';
-      case 'poison_power':return '+'+(5*u)+'% of BASE 13 DPS to all permanent Poison stacks.';
+      case 'fire_power':return '+'+(5*u)+'% Fire damage.';
+      case 'lightning_power':return '+'+(5*u)+'% Lightning damage.';
+      case 'poison_power':return '+'+(5*u)+'% Poison damage.';
       default:return '';
+    }
+  }
+  // A single effect for every Element Power: additive % of base elemental damage.
+  // Common +5%, Magic +10%, Rare +20%, Legendary +40%, Mythic +80%.
+  // No added proc chances, extra projectiles, or separate Burn affix.
+  function increaseElementDamage(p,g,rarityUnits){
+    p.elementRank++;
+    p.elementDamageBonus=(p.elementDamageBonus||0)+.05*rarityUnits;
+    const multiplier=1+p.elementDamageBonus;
+    if(p.element!=='poison')p.damage=ELEMENT_DAMAGE[p.element]*multiplier;
+    // Existing elemental DoT scales by the same single damage modifier.
+    if(p.element==='fire'){
+      p.burnMultiplier=multiplier;
+      // Apply the damage increase to an already burning enemy immediately,
+      // without adding a Burn stack or changing its remaining duration.
+      for(const enemy of g.enemies){
+        if(enemy.burnTime>0)enemy.burnDps=10*multiplier;
+      }
+    }
+    if(p.element==='poison'){
+      p.poisonMultiplier=multiplier;
+      for(const enemy of g.enemies){
+        if(enemy.poisonStacks>0)enemy.poisonDps=enemy.poisonStacks*13*multiplier;
+      }
     }
   }
   const POWERS = [
@@ -107,14 +131,11 @@
     {id:'pierce',icon:'pierce',name:'PIERCING FANGS',can:p=>p.pierce<4,apply:(p,g,u)=>p.pierce=Math.min(4,p.pierce+shotBonus(u))},
     {id:'crit',icon:'crit',name:'DEADLY PRECISION',can:p=>p.critChance<.85,apply:(p,g,u)=>p.critChance=Math.min(.85,p.critChance+.03*u)},
     {id:'crit_damage',icon:'crit',name:'CRITICAL DAMAGE',apply:(p,g,u)=>{p.critDamage+=.10*u;}},
-    {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',can:p=>p.element==='blood'&&p.elementRank<5,apply:(p,g,u)=>{p.elementRank++;p.damage*=1+.10*u;if(p.elementRank===2)p.bloodLance++;if(p.elementRank===3)p.bloodOrbChance+=.20;if(p.elementRank===4)p.bloodSplashChance+=.20;}},
+    {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',can:p=>p.element==='blood'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
     {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC BURST',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:(p,g,u)=>{p.hemorrhagicBurst=true;p.hemorrhagicBurstBoost=1+.1*(u-1);}},
-    {id:'fire_power',icon:'fire_power',name:'FIRE POWER',can:p=>p.element==='fire'&&p.elementRank<5,apply:(p,g,u)=>{p.elementRank++;p.damage*=1+.10*u;p.burnMultiplier*=1+.06*u;}},
-    {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',can:p=>p.element==='lightning'&&p.elementRank<5,apply:(p,g,u)=>{p.elementRank++;p.damage*=1+.10*u;p.stormBonus=Math.min(.95,p.stormBonus+.03*u);}},
-    {id:'poison_power',icon:'poison_power',name:'POISON POWER',can:p=>p.element==='poison'&&p.elementRank<5,apply:(p,g,u)=>{
-      p.elementRank++;p.poisonPowerUnits+=u;p.poisonMultiplier=1+.05*p.poisonPowerUnits;
-      for(const e of g.enemies)if(e.poisonStacks>0)e.poisonDps=e.poisonStacks*13*p.poisonMultiplier;
-    }}
+    {id:'fire_power',icon:'fire_power',name:'FIRE POWER',can:p=>p.element==='fire'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
+    {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',can:p=>p.element==='lightning'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
+    {id:'poison_power',icon:'poison_power',name:'POISON POWER',can:p=>p.element==='poison'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)}
   ];
 
   // Initial choice occurs before any enemies spawn / game clock starts.
@@ -218,7 +239,7 @@
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
-      player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
+      player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:rand(240,360), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
@@ -1067,7 +1088,7 @@
           if(b.frost)e.slowTime=2.5;
           // Poison has no stack limit or expiry; every hit permanently increases DPS.
           if(b.poison)applyPoisonStack(e,p.poisonMultiplier);
-          if(Math.random()<Math.min(.95,p.chainChance+(b.lightning?p.stormBonus:0)))chainLightning(e,dmg*.55,b.hit);
+          if(p.chainChance>0&&Math.random()<Math.min(.95,p.chainChance))chainLightning(e,dmg*.55,b.hit);
           if(b.orb){explodeAt(e.x,e.y,dmg*.7,e,b.hit);addMagicFx(e.x,e.y,'blood_orb_v11',70,.26);}
           else if(p.element==='blood'&&Math.random()<p.bloodSplashChance)explodeAt(e.x,e.y,dmg*.38,e,b.hit);
           if(Math.random()<p.blastChance)explodeAt(e.x,e.y,dmg*.48,e,b.hit);

@@ -6,7 +6,7 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.22.1
+## Current gameplay — v0.22.2
 
 Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
@@ -21,7 +21,7 @@ Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the R
 
 **Hemorrhagic Burst appears with an independent 5% chance per complete four-card level-up offer, including Rerolls.** Only Blood players can roll it, and the perk appears at most once per run after acquisition. When selected, **every subsequent Blood hit instantly produces eight Bleed stacks and detonates all eight** in a short-range explosion for their full combined base damage. A 20-damage Blood hit therefore causes an **80-damage base AoE burst** (eight stacks × 50% of 20); rarity upgrades its burst potency before other modifiers. The stacks are consumed immediately and do not keep ticking. Existing Bleed stacks on that target are replaced; the burst does not apply new Bleed to nearby targets.
 
-**Element Power** perks scale according to the rarity of the specific card picked. At **Common / Magic / Rare / Legendary / Mythic** respectively: Blood and Fire increase their direct hit by **+10% / +20% / +40% / +80% / +160%**, Lightning similarly boosts its random hit range, and Poison increases its base stack DPS by **+5% / +10% / +20% / +40% / +80%** (additive across picks, updating existing and new stacks). Fire Power also scales Burn potency; Lightning Power increases chain chance. Element upgrade rank still controls special attack unlocks. Hemorrhagic Burst retains its separate 5% appearance chance but also receives a rolled rarity for its burst strength. Normal perks, projectile modifiers and critical hits continue to work as documented in game.
+**Blood Power, Fire Power, Lightning Power and Poison Power** now each have **one effect only: +5% / +10% / +20% / +40% / +80% elemental damage** for **Common / Magic / Rare / Legendary / Mythic** respectively. Multiple ranks add their bonuses together against the original elemental base damage (e.g. Common + Rare = +25%). That single elemental damage multiplier applies to Blood hits and their derived Bleed, Fire hits and existing Burn, the full Lightning hit range, and every Poison DoT stack (including stacks already on an enemy). Element Power upgrades do **not** add chances to Chain Lightning, new Blood projectiles/splashes or extra status effects. **Hemorrhagic Burst stays a separate rare Blood perk** with its own 5% appearance chance, not a Blood Power affix. Other perks retain their existing mechanics.
 
 ### Life Shrines and rare Magnet Shrines
 
@@ -48,6 +48,14 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 ---
 
 ## Patch notes — newest first
+
+### v0.22.2 — Pure Element Power damage bonuses
+- Blood Power, Fire Power, Lightning Power and Poison Power now exclusively increase elemental damage by **+5% (Common), +10% (Magic), +20% (Rare), +40% (Legendary), +80% (Mythic)** per picked upgrade. The bonuses are additive against base elemental damage.
+- Removed their extra affixes: **no Chain Lightning chance**, Blood lance/orb/splash unlocks or separate Burn-strength bonus. Existing elemental effects remain: Blood Bleed, one refreshing Fire Burn, Lightning Shock and permanent Poison stacks.
+- The same elemental damage multiplier applies to the active element's direct hit and damage-over-time, including existing Poison stacks. The Grimoire damage fields update accordingly.
+- Hemorrhagic Burst is an independent Blood-only perk and is not affected by this removal.
+- Updated level-up wording, README current values and asset-cache version.
+
 
 ### v0.22.1 — Prominent Easy Mode results, revised perk limits
 - Enlarged the pink **EASY MODE USED** badge and ribbon and placed them immediately beside **YOU DIED** on the final results screen. Hardcore still shows its mode unobtrusively.
