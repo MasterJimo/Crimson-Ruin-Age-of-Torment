@@ -36,14 +36,15 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - New files: `assets/crimson-heir-v092.png`, `assets/crimson-heir-portrait-v092.png`.
 - Existing enemy art and mechanics unchanged.
 
-## v0.10.0 — The Veilwarden
-- Playable character replaced with The Veilwarden (idle, walking, casting and arcane slash frames).
-- New hero sprites and menu portrait: `assets/veilwarden-v101.png` and `assets/veilwarden-portrait-v101.png`.
-- No changes to enemy models, combat balance or arena.
+
+## v0.10.0 notes
+- Replaced the playable hero with **The Veilwarden** using the supplied reference sheet.
+- Added dedicated gameplay frames for idle, walk, casting, and arcane slash attack.
+- Replaced the menu portrait to match the new hero.
 
 
-## v0.10.3 — Opaque Veilwarden / projectile-only attacks
-- Fixed missing character textures caused by an overly aggressive removal of dark colours from the sheet.
-- Opaque HD atlas with idle and 3 walking poses is used in the game.
-- Projectiles launch automatically; no attack animation is played.
-- The menu uses the Veilwarden portrait.
+## v0.10.3 — Opaque playable Veilwarden
+- Fixed transparent/patchy hero textures caused by erroneously removing dark clothes during mask extraction.
+- Built a new opaque idle + three-frame walk atlas from the original beige-background model poses.
+- Projectile auto-fire is unchanged and **does not trigger any casting/attack animation**.
+- Updated on-screen portrait to the existing Veilwarden portrait and cache-busted scripts.

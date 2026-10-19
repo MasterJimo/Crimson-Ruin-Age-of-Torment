@@ -58,7 +58,7 @@
     {id:'crit',icon:'✹',name:'DEADLY PRECISION',desc:'+12% crit chance',tier:'rare',can:p=>p.critChance<.6,apply:p=>p.critChance+=.12},
     {id:'critrage',icon:'✸',name:'EXECUTIONER',desc:'+40% critical damage',tier:'rare',apply:p=>p.critDamage+=.4},
     {id:'leech',icon:'♥',name:'VAMPIRIC TOUCH',desc:'8% chance to heal on hit',tier:'rare',can:p=>p.leechChance<.32,apply:p=>p.leechChance+=.08},
-    {id:'fire',icon:'♨',name:'HELLFIRE',desc:'+18% fire shot chance',tier:'legendary',can:p=>p.fireChance<.72,apply:p=>p.fireChance+=.18},
+    {id:'fire',icon:'♨',name:'HELLFIRE',desc:'+18% fire shot chance',tier:'legendary',can:p=>p.element!=='fire'&&p.fireChance<.72,apply:p=>p.fireChance+=.18},
     {id:'frost',icon:'❄',name:'FROSTBITE',desc:'+20% frost shot chance',tier:'rare',can:p=>p.frostChance<.8,apply:p=>p.frostChance+=.2},
     {id:'chain',icon:'ϟ',name:'STORMBRINGER',desc:'+16% chaining lightning',tier:'legendary',can:p=>p.chainChance<.64,apply:p=>p.chainChance+=.16},
     {id:'blast',icon:'✺',name:'BLOOD DETONATION',desc:'+18% explosive shot chance',tier:'legendary',can:p=>p.blastChance<.72,apply:p=>p.blastChance+=.18},
@@ -67,8 +67,29 @@
     {id:'regen',icon:'✚',name:'BLOOD MENDING',desc:'+1 HP every 4 seconds',tier:'rare',can:p=>p.regen<2.5,apply:p=>p.regen+=.25},
     {id:'reroll',icon:'↻',name:'FATE TWISTER',desc:'+1 Reroll charge',tier:'rare',apply:(_p,g)=>g.rerolls++},
     {id:'banishtoken',icon:'✕',name:'CURSE BREAKER',desc:'+1 Banish charge',tier:'rare',apply:(_p,g)=>g.banishes++},
-    {id:'orbits',icon:'☽',name:'HALO OF BLADES',desc:'+1 orbiting blade (max 4)',tier:'legendary',can:p=>p.orbits<4,apply:p=>p.orbits++}
+    {id:'orbits',icon:'☽',name:'HALO OF BLADES',desc:'+1 orbiting blade (max 4)',tier:'legendary',can:p=>p.orbits<4,apply:p=>p.orbits++},
+    {id:'blood_lance',name:'BLOOD LANCE',desc:'Blood bolts pierce +1 enemy',tier:'rare',can:p=>p.element==='blood'&&p.bloodLance<3,apply:p=>p.bloodLance++},
+    {id:'blood_orb',name:'SANGUINE ORB',desc:'+18% chance for a slow explosive blood orb',tier:'legendary',can:p=>p.element==='blood'&&p.bloodOrbChance<.7,apply:p=>p.bloodOrbChance+=.18},
+    {id:'blood_burst',name:'HEMORRHAGE',desc:'+20% chance of a blood splash explosion',tier:'rare',can:p=>p.element==='blood'&&p.bloodSplashChance<.7,apply:p=>p.bloodSplashChance+=.2},
+    {id:'flame_wave',name:'CINDER VEINS',desc:'Fire burns last 50% longer',tier:'rare',can:p=>p.element==='fire'&&p.burnMultiplier<3,apply:p=>p.burnMultiplier*=1.5},
+    {id:'storm_arc',name:'VOLT CASCADE',desc:'Lightning chains more often',tier:'rare',can:p=>p.element==='lightning'&&p.stormBonus<.75,apply:p=>p.stormBonus+=.2},
+    {id:'venom_pool',name:'VENOM HEART',desc:'Poison lasts longer and deals +35% damage',tier:'rare',can:p=>p.element==='poison'&&p.poisonMultiplier<3,apply:p=>p.poisonMultiplier*=1.35}
   ];
+
+
+  // Run starts with Blood Bolt. First level-up determines the primary school.
+  const ELEMENT_CHOICES = [
+    {id:'blood',element:'blood',name:'BLOOD',desc:'Blood Bolt · piercing and bursting upgrades',tier:'rare'},
+    {id:'fire',element:'fire',name:'FIRE',desc:'Burning shots · fiery detonation',tier:'rare'},
+    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'Faster bolts · chain between foes',tier:'rare'},
+    {id:'poison',element:'poison',name:'POISON',desc:'Venom shots · lingering damage',tier:'rare'}
+  ];
+  const ABILITY_ICON_CELLS = {'damage':[0,0],'speed':[1,0],'rate':[2,0],'multi':[3,0],'vitality':[4,0],'magnet':[5,0],'pierce':[0,1],'restore':[1,1],'velocity':[2,1],'swell':[3,1],'armor':[4,1],'crit':[5,1],'critrage':[0,2],'leech':[1,2],'fire':[2,2],'frost':[3,2],'chain':[4,2],'blast':[5,2],'souls':[0,3],'bane':[1,3],'regen':[2,3],'reroll':[3,3],'banishtoken':[4,3],'orbits':[5,3],'blood_lance':[0,4],'blood_orb':[1,4],'blood_burst':[2,4],'flame_wave':[3,4],'storm_arc':[4,4],'venom_pool':[5,4],'blood':[0,5],'lightning':[1,5],'poison':[2,5]};
+  function powerIcon(id){
+    const coords=ABILITY_ICON_CELLS[id];
+    if(!coords)return '<span class="glyph">✦</span>';
+    return `<span class="glyph ability-icon" style="--ic:${coords[0]};--ir:${coords[1]}" role="img" aria-label="${id.replaceAll('_',' ')}"></span>`;
+  }
 
   const MUSIC_TRACKS = {
     caverns:{label:'Ancient Caverns',src:'https://opengameart.org/sites/default/files/caverns.ogg'}
@@ -76,8 +97,9 @@
 
   const sprite = window.NoobSprites.get;
   const portrait = el.portrait.getContext('2d');
-  portrait.imageSmoothingEnabled = false;
-  portrait.drawImage(sprite('heroPortrait'), 5, 1, 54, 62);
+  portrait.clearRect(0,0,el.portrait.width,el.portrait.height);
+  portrait.imageSmoothingEnabled = true;
+  if(!window.NoobArt?.paint(portrait,'hero_portrait',4,2,56,60)) portrait.drawImage(sprite('heroPortrait'), 5, 1, 54, 62);
 
   const keys = new Set();
   let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 10, sfxVolume = 5, sfx = null;
@@ -105,8 +127,8 @@
   function startGame(){
     game = {
       time:0,
-      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,leechChance:0,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0},
-      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false
+      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,leechChance:0,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:'blood',bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
+      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
     state='playing';
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.upgrade.classList.add('hidden'); el.pause.classList.add('hidden');
@@ -212,34 +234,49 @@
     el.upgradeCards.replaceChildren();
     g.upgradeChoices.forEach((opt,index)=>{
       const b=document.createElement('button');b.type='button';b.className='upgrade-card perk-'+opt.tier;
-      b.innerHTML=`<span class="perk-tier">${opt.tier}</span><span class="glyph">${opt.icon}</span><strong>${opt.name}</strong><span class="detail">${opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
+      b.innerHTML=`<span class="perk-tier">${opt.tier}</span>${powerIcon(opt.id)}<strong>${opt.name}</strong><span class="detail">${opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
       b.addEventListener('click',()=>chooseUpgrade(index));el.upgradeCards.appendChild(b);
     });
+    const choosingElement=!g.elementChosen;
+    el.upgrade.classList.toggle('element-select',choosingElement);
+    el.reroll.hidden=choosingElement; el.banish.hidden=choosingElement;
     el.rerollCount.textContent=String(g.rerolls);el.banishCount.textContent=String(g.banishes);
     el.reroll.disabled=g.rerolls<=0;
     el.banish.disabled=g.banishes<=0 || eligiblePowers().length<=3;
     el.banish.classList.toggle('armed',g.banishMode);
-    el.perkNotice.textContent=g.banishMode?'SELECT A CARD TO BANISH · CLICK BANISH TO CANCEL':'CHOOSE AN UPGRADE · R TO REROLL · B TO BANISH';
+    el.perkNotice.textContent=choosingElement?'CHOOSE YOUR PRIMARY ELEMENT':g.banishMode?'SELECT A CARD TO BANISH · CLICK BANISH TO CANCEL':'CHOOSE AN UPGRADE · R TO REROLL · B TO BANISH';
+    el.upgrade.querySelector('h2').textContent=choosingElement?'CHOOSE AN ELEMENT':'NEW POWER';
+    el.upgrade.querySelector('.overlay-sub').textContent=choosingElement?'Your choice shapes this run':'Choose one upgrade';
+    el.upgrade.querySelector('.card-hint').textContent=choosingElement?'Choose 1–4 · Each element has unique upgrades':'Pick 1–3 · R to reroll · B to banish';
   }
   function openUpgrade(){
     game.banishMode=false;
-    game.upgradeChoices=rollChoices();
+    game.upgradeChoices=game.elementChosen?rollChoices():ELEMENT_CHOICES;
     renderUpgrade();el.upgrade.classList.remove('hidden');el.status.textContent='CHOOSE A NEW POWER';updateHUD();
   }
   function rerollUpgrades(){
-    if(state!=='upgrade'||game.rerolls<=0)return;
+    if(state!=='upgrade'||!game.elementChosen||game.rerolls<=0)return;
     const old=game.upgradeChoices.map(opt=>opt.id);
     game.rerolls--;game.banishMode=false;
     game.upgradeChoices=rollChoices(old);
     renderUpgrade();playSound('pickup');
   }
   function toggleBanish(){
-    if(state!=='upgrade'||game.banishes<=0)return;
+    if(state!=='upgrade'||!game.elementChosen||game.banishes<=0)return;
     game.banishMode=!game.banishMode;renderUpgrade();
   }
   function chooseUpgrade(index){
     if(state!=='upgrade')return;
     const choice=game.upgradeChoices[index];if(!choice)return;
+    if(!game.elementChosen){
+      if(!choice.element)return;
+      game.player.element=choice.element;game.elementChosen=true;
+      // Lightning gets speed; poison gets potency, fire inflicts burn. Blood maintains the starting bolt.
+      if(choice.element==='lightning')game.player.projectileSpeed*=1.25;
+      game.player.shotCd=0;
+      state='playing';el.upgrade.classList.add('hidden');el.status.textContent=`${choice.name} ATTUNED`;
+      flashMessage(`✦ ${choice.name} ATTUNED`,2200);playSound('level');updateHUD();return;
+    }
     if(game.banishMode){
       if(game.banishes<=0||eligiblePowers().length<=3)return;
       game.banned.add(choice.id);game.banishes--;game.banishMode=false;
@@ -291,11 +328,17 @@
     const speed=142*p.projectileSpeed;
     for(let i=0;i<p.multishot;i++){
       const angle=aim+(i-(p.multishot-1)/2)*.19;
-      const fire=Math.random()<p.fireChance, frost=Math.random()<p.frostChance;
-      const kind=fire?'fire_bolt':frost?'ice_bolt':'blood_bolt';
+      const element=p.element;
+      const fire=element==='fire'||Math.random()<p.fireChance;
+      const frost=!fire&&Math.random()<p.frostChance;
+      const poison=element==='poison';
+      const lightning=element==='lightning';
+      const orb=element==='blood'&&Math.random()<p.bloodOrbChance;
+      const kind=orb?'blood_orb_v11':fire?'fire_bolt_v11':lightning?'lightning_bolt_v11':poison?'poison_bolt_v11':frost?'ice_bolt':'blood_bolt_v11';
+      const shotSpeed=orb?Math.max(44,speed*.35):speed;
       game.shots.push({hostile:false,x:p.x+Math.cos(angle)*14,y:p.y+Math.sin(angle)*14,
-        vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,angle,life:Math.max(1.2,2.85/p.projectileSpeed),damage:p.damage,kind,fire,frost,size:p.projectileSize,
-        pierce:p.pierce,hit:new Set()});
+        vx:Math.cos(angle)*shotSpeed,vy:Math.sin(angle)*shotSpeed,angle,life:Math.max(1.5,orb?3.5:2.85/p.projectileSpeed),damage:p.damage,kind,fire,frost,poison,lightning,orb,size:p.projectileSize*(orb?1.55:1),
+        pierce:orb?0:p.pierce+(element==='blood'?p.bloodLance:0),hit:new Set()});
     }
     addParticles(p.x+Math.cos(aim)*13,p.y+Math.sin(aim)*13,'#e8c3d0',4,25,2,3);
     playSound('shot');
@@ -391,7 +434,9 @@
 
     for(const e of g.enemies){
       const a=Math.atan2(p.y-e.y,p.x-e.x), d=Math.hypot(p.x-e.x,p.y-e.y); e.phase+=dt*6; e.hit=Math.max(0,e.hit-dt);
-      if(e.burnTime>0){e.burnTime-=dt;e.hp-=(e.burnDps||0)*dt;if(e.hp<=0){enemyDie(e);continue;}}
+      if(e.burnTime>0){e.burnTime-=dt;e.hp-=(e.burnDps||0)*dt;}
+      if(e.poisonTime>0){e.poisonTime-=dt;e.hp-=(e.poisonDps||0)*dt;}
+      if(e.hp<=0){enemyDie(e);continue;}
       if(e.slowTime>0)e.slowTime=Math.max(0,e.slowTime-dt);
       const slowed=e.slowTime>0?.58:1;
       if(e.knockX||e.knockY){e.x+=e.knockX*dt;e.y+=e.knockY*dt;e.knockX*=Math.exp(-10*dt);e.knockY*=Math.exp(-10*dt);}
@@ -438,9 +483,12 @@
           if(b.hit.has(e))continue;
           if(dist2(b.x,b.y,e.x,e.y-4)>Math.pow(e.r+5*(b.size||1),2))continue;
           b.hit.add(e);const crit=Math.random()<p.critChance;const dmg=b.damage*(e.type==='warden'?p.bossDamage:1)*(crit?p.critDamage:1);e.hp-=dmg;e.hit=.18;
-          if(b.fire){e.burnTime=2.4;e.burnDps=dmg*.13;}if(b.frost)e.slowTime=2.5;
+          if(b.fire){e.burnTime=2.4*p.burnMultiplier;e.burnDps=dmg*.13;}if(b.frost)e.slowTime=2.5;
+          if(b.poison){e.poisonTime=3.6*p.poisonMultiplier;e.poisonDps=dmg*.14*p.poisonMultiplier;}
           if(Math.random()<p.leechChance)p.hp=Math.min(p.maxHp,p.hp+2);
-          if(Math.random()<p.chainChance)chainLightning(e,dmg*.55,b.hit);
+          if(Math.random()<Math.min(.95,p.chainChance+(b.lightning?.36+p.stormBonus:0)))chainLightning(e,dmg*.55,b.hit);
+          if(b.orb){explodeAt(e.x,e.y,dmg*.7,e,b.hit);addMagicFx(e.x,e.y,'blood_orb_v11',70,.26);}
+          else if(p.element==='blood'&&Math.random()<p.bloodSplashChance)explodeAt(e.x,e.y,dmg*.38,e,b.hit);
           if(Math.random()<p.blastChance)explodeAt(e.x,e.y,dmg*.48,e,b.hit);
           const a=b.angle;
           const push=e.type==='warden'?3.5:8;
@@ -469,7 +517,7 @@
       const d=g.drops[i]; d.phase+=dt*5; d.life-=dt;
       const dd=Math.hypot(p.x-d.x,p.y-d.y);
       if(dd<84*p.magnet){ const a=Math.atan2(p.y-d.y,p.x-d.x), v=150+Math.max(0,90-dd)*2; d.x+=Math.cos(a)*v*dt; d.y+=Math.sin(a)*v*dt; }
-      if(dd<17){ g.drops.splice(i,1); addParticles(d.x,d.y,'#ff8eb7',4,32,2,3); playSound('pickup'); gainXP(d.value); if(state!=='playing') break; }
+      if(dd<17){ g.drops.splice(i,1); addParticles(d.x,d.y,'#46caff',4,32,2,3); playSound('pickup'); gainXP(d.value); if(state!=='playing') break; }
       else if(d.life<0) g.drops.splice(i,1);
     }
 
@@ -617,13 +665,13 @@
     shadowAt(x,y+11,19,.52);
     ctx.save(); ctx.translate(Math.round(x),Math.round(y+Math.sin(p.walk)*1)); ctx.scale(p.face,1);
     if(p.hitCd>0 && Math.floor(p.hitCd*13)%2===0) ctx.globalAlpha=.55;
-    // Projectile-only attacks: no casting/attack animation while auto-firing.
-    // Opaque art retains the complete coat, armour and hair textures.
+    // Projectile-only attacks: the Veilwarden keeps walking/idle poses while firing.
+    // Three opaque, painted side-view frames preserve the armour and cloak textures.
     const walkIndex=Math.floor(p.walk*0.55)%3;
     const art=p.moving ? ['hero_walk1','hero_walk2','hero_walk3'][walkIndex] : 'hero_idle';
     const dimensions=window.NoobArt?.dimension(art);
     const height=78;
-    const width=dimensions ? Math.max(40,Math.min(65,height*dimensions.w/dimensions.h)) : 43;
+    const width=dimensions ? Math.max(40,Math.min(65, height*dimensions.w/dimensions.h)) : 43;
     if(!window.NoobArt?.paint(ctx,art,-width/2,12-height,width,height))
       ctx.drawImage(sprite('hero',p.moving?1:0),-20,-32,40,47);
     ctx.restore();
@@ -669,7 +717,7 @@
         ctx.fillStyle='#a02f4b';ctx.fillRect(-5,-3,11,6);
         ctx.fillStyle='#ffc1cd';ctx.fillRect(-2,-2,5,4);
       }else{
-        const width=45*(b.size||1),height=25*(b.size||1);
+        const width=(b.orb?31:45)*(b.size||1),height=(b.orb?31:25)*(b.size||1);
         if(!window.NoobArt?.paint(ctx,b.kind||'blood_bolt',-width*.5,-height*.5,width,height)){
           ctx.fillStyle='#fda0ae';ctx.fillRect(-9,-3,18,6);
         }
@@ -689,7 +737,13 @@
     }
   }
   function drawDrops(camX,camY){
-    for(const d of game.drops){ const x=Math.round(d.x-camX), y=Math.round(d.y-camY+Math.sin(d.phase)*2); ctx.fillStyle='#f9639a22'; ctx.fillRect(x-7,y-9,14,17); ctx.fillStyle='#8d234a'; ctx.fillRect(x-4,y-5,8,9); ctx.fillStyle='#ff89bb'; ctx.fillRect(x-2,y-8,4,11); ctx.fillStyle='#fff0fb'; ctx.fillRect(x-1,y-5,2,5); }
+    for(const d of game.drops){
+      const x=Math.round(d.x-camX), y=Math.round(d.y-camY+Math.sin(d.phase)*2);
+      ctx.save();ctx.translate(x,y);ctx.shadowColor='#1699ff';ctx.shadowBlur=10;
+      ctx.fillStyle='#0c63b8';ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(6,-3);ctx.lineTo(4,6);ctx.lineTo(0,9);ctx.lineTo(-5,3);ctx.lineTo(-6,-3);ctx.closePath();ctx.fill();
+      ctx.shadowBlur=0;ctx.fillStyle='#29b7ff';ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(0,7);ctx.lineTo(-5,2);ctx.lineTo(-5,-2);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#b9efff';ctx.beginPath();ctx.moveTo(-1,-6);ctx.lineTo(4,-3);ctx.lineTo(0,1);ctx.closePath();ctx.fill();ctx.restore();
+    }
   }
   function drawMagic(camX,camY){
     for(const f of game.magicFx){
@@ -739,7 +793,7 @@
     if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
     keys.add(k);
     if(k==='p'||k==='escape'){ if(state==='playing'||state==='paused') togglePause(); }
-    if(state==='upgrade'&&['1','2','3'].includes(k)) chooseUpgrade(Number(k)-1);
+    if(state==='upgrade'&&['1','2','3','4'].includes(k)) chooseUpgrade(Number(k)-1);
     if(state==='upgrade'&&k==='r')rerollUpgrades();
     if(state==='upgrade'&&k==='b')toggleBanish();
     if(state==='intro'&&(k==='enter'||k===' ')) startGame();
