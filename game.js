@@ -20,6 +20,7 @@
   const magnetArt = new Image();
   magnetArt.decoding = 'async';
   magnetArt.src = 'assets/magnet-shrine-v020.webp';
+  const powerShrineArt=new Image();powerShrineArt.decoding='async';powerShrineArt.src='assets/power-shrine-v025.png';
   const deathArt=new Image();deathArt.decoding='async';deathArt.src='assets/death-reaper-v019.webp';
   const ribbonArt=new Image();ribbonArt.decoding='async';ribbonArt.src='assets/easy-ribbon-v019.webp';
 
@@ -230,7 +231,7 @@
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
       player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
-      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:45, magnetSpawned:false, kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
+      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], powerShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:45, magnetSpawned:false, nextPowerShrineAt:120, powerShrineSpawned:false, kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
     spawnFountain(true);
@@ -286,6 +287,25 @@
     // Absolute fallback: never miss a scheduled shrine.
     g.magnetShrines.push({x:p.x+320,y:p.y});return true;
   }
+  // Guaranteed at 02:00, later 4–6 minutes after each collected shrine.
+  function spawnPowerShrine(first=false){
+    const g=game;if(!g||g.powerShrines.length)return false;
+    const p=g.player;
+    const place=(x,y)=>{
+      if(g.fountains.some(f=>dist2(x,y,f.x,f.y)<220*220))return false;
+      if(g.magnetShrines.some(m=>dist2(x,y,m.x,m.y)<200*200))return false;
+      g.powerShrines.push({x,y});return true;
+    };
+    for(let i=0;i<48;i++){
+      const a=rand(0,TAU),d=rand(first?270:350,first?450:660);
+      if(place(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d))return true;
+    }
+    for(const d of [320,440,560,720,900])for(let i=0;i<24;i++){
+      const a=TAU*i/24;
+      if(place(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d))return true;
+    }
+    g.powerShrines.push({x:p.x+320,y:p.y});return true;
+  }
   // Transfer all live XP from the entire world in one pickup, not only
   // the viewport or the usual player magnet radius.
   function collectAllXP(){
@@ -318,6 +338,33 @@
         g.magnetSpawned=true;
         g.nextMagnetAt=Infinity; // Await pickup before scheduling the next one.
       }else g.nextMagnetAt=g.time+10;
+    }
+    // Only one active shrine; if lost far offscreen, replace it soon.
+    if(g.powerShrines.length){
+      g.powerShrines=g.powerShrines.filter(s=>dist2(p.x,p.y,s.x,s.y)<2600*2600);
+      if(!g.powerShrines.length&&g.nextPowerShrineAt===Infinity)
+        g.nextPowerShrineAt=g.time+rand(40,65);
+    }
+    if(g.time>=g.nextPowerShrineAt){
+      if(spawnPowerShrine(!g.powerShrineSpawned)){
+        g.powerShrineSpawned=true;
+        g.nextPowerShrineAt=Infinity;
+      }else g.nextPowerShrineAt=g.time+10;
+    }
+    for(let i=g.powerShrines.length-1;i>=0;i--){
+      const shrine=g.powerShrines[i];
+      if(dist2(p.x,p.y,shrine.x,shrine.y)>39*39)continue;
+      const perk=rollPowerShrineReward();
+      if(!perk)continue;
+      const tier=Math.random()<.25?'mythic':'legendary';
+      g.powerShrines.splice(i,1);
+      g.nextPowerShrineAt=g.time+rand(240,360);
+      grantPowerUp({...perk,tier});
+      addParticles(shrine.x,shrine.y,'#ffb76b',40,110,2,4);
+      addImpact(shrine.x,shrine.y,65,'#ff673f');
+      floatText(p.x,p.y-45,tier.toUpperCase()+' POWER!','#ffe9b4',12);
+      flashMessage('✦ '+tier.toUpperCase()+' '+perk.name+' · POWER SHRINE',3300);
+      playSound('level');
     }
     for(let i=g.magnetShrines.length-1;i>=0;i--){
       const shrine=g.magnetShrines[i];
@@ -582,6 +629,28 @@
     }
   }
   function eligiblePowers(){return POWERS.filter(opt=>!game.banned.has(opt.id) && (!opt.can||opt.can(game.player)));}
+  // Rare skills are weighted; Blood gets exclusive 40% Hemorrhagic Burst
+  // as long as it is eligible. Everything respects bans and max ranks.
+  function rollPowerShrineReward(){
+    const eligible=eligiblePowers();
+    const special=eligible.find(p=>p.id==='hemorrhagic_burst');
+    if(special&&Math.random()<.40)return special;
+    const pool=eligible.filter(p=>p!==special);
+    if(!pool.length)return special||null;
+    const weight=p=>p.id.endsWith('_power')?5:p.id==='crit_damage'?3:
+      ['forward','spread','pierce','crit','rapid_fire'].includes(p.id)?2:1;
+    let roll=Math.random()*pool.reduce((sum,p)=>sum+weight(p),0);
+    for(const perk of pool){roll-=weight(perk);if(roll<0)return perk;}
+    return pool[pool.length-1];
+  }
+  // Shared bookkeeping for level-ups and instant Shrine rewards.
+  function grantPowerUp(choice){
+    const magnitude=rarityScale(choice.tier);
+    choice.apply(game.player,game,magnitude);
+    if(!game.perkRanks[choice.id])game.perkOrder.push(choice.id);
+    game.perkRanks[choice.id]=(game.perkRanks[choice.id]||0)+1;
+    (game.perkTiers[choice.id]||(game.perkTiers[choice.id]=[])).push(choice.tier);
+  }
   const DAMAGE_POWER_IDS=new Set(["brutality","rapid_fire","forward","spread","pierce","crit","crit_damage","blood_power","fire_power","lightning_power","poison_power","hemorrhagic_burst"]);
   const DEFENSE_POWER_IDS=new Set(["movement","vitality","regen","armor"]);
   // Four unique cards: guaranteed offensive, guaranteed defensive, 2 RNG.
@@ -678,11 +747,7 @@
       game.upgradeChoices=rollChoices(game.upgradeChoices.map(p=>p.id));
       renderUpgrade();playSound('hit');return;
     }
-    const magnitude=rarityScale(choice.tier);
-    choice.apply(game.player,game,magnitude);
-    if(!game.perkRanks[choice.id])game.perkOrder.push(choice.id);
-    game.perkRanks[choice.id]=(game.perkRanks[choice.id]||0)+1;
-    (game.perkTiers[choice.id]||(game.perkTiers[choice.id]=[])).push(choice.tier);
+    grantPowerUp(choice);
     addParticles(game.player.x,game.player.y,'#ff8ba0',28,105,2,4);
     state='playing';el.upgrade.classList.add('hidden');el.status.textContent='HUNT IN PROGRESS';
     flashMessage(`✦ ${choice.tier.toUpperCase()} ${choice.name}`,1800);
@@ -1276,6 +1341,40 @@
       ctx.restore();
     }
   }
+  function drawPowerShrines(camX,camY,t){
+    for(const s of game.powerShrines){
+      const x=s.x-camX,y=s.y-camY;
+      if(x<-105||x>W+105||y<-115||y>H+115)continue;
+      const glow=.55+.45*Math.sin(t*3+s.x*.008);
+      ctx.save();shadowAt(x,y+12,32,.5);
+      ctx.strokeStyle='rgba(255,190,79,'+(.62+.3*glow)+')';
+      ctx.shadowColor='#ff4d25';ctx.shadowBlur=12;ctx.lineWidth=2.4;
+      ctx.beginPath();ctx.arc(x,y,39,0,TAU);ctx.stroke();
+      ctx.shadowBlur=0;
+      if(powerShrineArt.complete&&powerShrineArt.naturalWidth){
+        ctx.imageSmoothingEnabled=true;ctx.drawImage(powerShrineArt,x-51,y-99,102,105);
+      }else{
+        ctx.fillStyle='#ad271b';ctx.fillRect(x-25,y-45,50,55);
+        ctx.fillStyle='#ffdc7f';ctx.font='bold 32px serif';ctx.textAlign='center';ctx.fillText('✝',x,y-14);
+      }
+      ctx.restore();
+    }
+  }
+  function drawPowerShrineArrow(camX,camY){
+    if(state!=='playing'||!game.powerShrines.length)return;
+    const s=game.powerShrines[0],x=s.x-camX,y=s.y-camY;
+    if(x>=35&&x<=W-35&&y>=45&&y<=H-35)return;
+    const a=Math.atan2(s.y-game.player.y,s.x-game.player.x);
+    const nx=Math.cos(a),ny=Math.sin(a);
+    const edge=Math.min((W/2-27)/Math.max(.001,Math.abs(nx)),(H/2-70)/Math.max(.001,Math.abs(ny)));
+    const sx=W/2+nx*edge,sy=H/2+ny*edge;
+    ctx.save();ctx.translate(sx,sy);ctx.rotate(a);
+    ctx.fillStyle='#290c08';ctx.strokeStyle='#ffb764';ctx.lineWidth=2;
+    ctx.shadowColor='#ff5325';ctx.shadowBlur=9;
+    ctx.beginPath();ctx.arc(0,0,14,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#ffebbe';ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-5,-7);ctx.lineTo(-2,0);ctx.lineTo(-5,7);ctx.closePath();ctx.fill();
+    ctx.restore();
+  }
   // Off-screen compass arrows only within roughly three screen widths.
   function drawFountainArrows(camX,camY){
     if(!game || state!=='playing')return;
@@ -1575,6 +1674,7 @@
       drawFragments(camX,camY);
       drawFountains(camX,camY,t);
       drawMagnetShrines(camX,camY,t);
+      drawPowerShrines(camX,camY,t);
       drawDrops(camX,camY,t);
       const objects=[...game.enemies.map(e=>({y:e.y,e})),{y:p.y,p}]; objects.sort((a,b)=>a.y-b.y);
       for(const item of objects){ if(item.e) drawEnemy(item.e,camX,camY,t); else drawPlayer(p,camX,camY,t); }
@@ -1587,6 +1687,7 @@
     vignette.addColorStop(0,'#0000'); vignette.addColorStop(.75,'#170f1a20'); vignette.addColorStop(1,'#050307a0'); ctx.fillStyle=vignette; ctx.fillRect(0,0,W,H);
     ctx.fillStyle='rgba(123,20,52,0.025)'; ctx.fillRect(0,0,W,H);
     drawFountainArrows(camX,camY);
+    if(game)drawPowerShrineArrow(camX,camY);
     if(flash>0){ ctx.fillStyle=`rgba(170,16,42,${flash*.55})`; ctx.fillRect(0,0,W,H); }
   }
 
