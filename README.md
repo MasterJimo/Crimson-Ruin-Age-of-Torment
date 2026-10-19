@@ -62,7 +62,7 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - **Choose Blood / Fire / Lightning / Poison immediately after Begin the Hunt, before combat**.
 - Blood: **16 hit**, bleeding equal to **50% of hit** over **8 seconds**.
 - Fire: **20 hit**, burns for an additional **100% of hit** over **2 seconds**.
-- Lightning: **20 hit**, **50% chance to freeze** for 1.5 seconds (no movement/attacks).
+- Lightning: **20 hit**, **50% chance to shock** for 4 seconds; follow-up direct hits deal **+100% damage (2×)**. Shock does not immobilize or amplify damage-over-time.
 - Poison: **5 hit**, then **100 damage every 8 seconds forever**, until enemy death (does not stack; reapplied poison retains strongest DPS).
 - The soundtrack **name is no longer displayed**, but Music 10% / SFX 5% sliders and mute remain.
 - Footer controls are condensed into compact MOVE/PAUSE groups.
@@ -70,3 +70,8 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - Existing elemental projectile sprites and blue XP shards remain.
 
 [Exact status formulas and implementation order](ELEMENT_BALANCE.md)
+
+## v0.12.1 — Lightning Shock correction
+- Lightning now applies **Shock** for 4 seconds on a 50% proc, rather than Freeze.
+- Hits against a shocked enemy are multiplied by 2 while the effect is active. The hit that first applies Shock does not receive the bonus. Shock refreshes on reapplication.
+- Shock does not slow enemies, and does not amplify ticking damage-over-time.

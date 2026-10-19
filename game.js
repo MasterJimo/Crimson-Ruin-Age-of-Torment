@@ -82,7 +82,7 @@
   const ELEMENT_CHOICES = [
     {id:'blood',element:'blood',name:'BLOOD',desc:'16 hit · Bleed for 8s: +50% of the hit over time. Lowest upfront damage.',tier:'rare'},
     {id:'fire',element:'fire',name:'FIRE',desc:'20 hit · Burn for 2s: +100% of the hit over time.',tier:'rare'},
-    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'20 hit · 50% chance to FREEZE an enemy for 1.5s.',tier:'rare'},
+    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'20 hit · 50% chance to SHOCK for 4s. Hits deal +100% damage while shocked.',tier:'rare'},
     {id:'poison',element:'poison',name:'POISON',desc:'5 hit · Poison deals 100 damage per 8s and NEVER expires.',tier:'rare'}
   ];
   const ELEMENT_DAMAGE={blood:16,fire:20,lightning:20,poison:5};
@@ -391,10 +391,16 @@
     game.magicFx.push({x,y,kind,size,life,max:life});
     if(game.magicFx.length>64)game.magicFx.shift();
   }
+  // Direct hits on a shocked enemy deal double damage. Damage-over-time does not count as a hit.
+  function applyHitDamage(enemy, baseDamage){
+    const finalDamage=baseDamage*(enemy.shockTime>0?2:1);
+    enemy.hp-=finalDamage;
+    return finalDamage;
+  }
   function chainLightning(origin,damage,hitSet){
     const other=game.enemies.find(e=>e!==origin&&!hitSet.has(e)&&dist2(e.x,e.y,origin.x,origin.y)<115*115);
     if(!other)return;
-    hitSet.add(other);other.hp-=damage;other.hit=.2;
+    hitSet.add(other);damage=applyHitDamage(other,damage);other.hit=.2;
     game.bolts.push({x:origin.x,y:origin.y,toX:other.x,toY:other.y,life:.22,max:.22});
     addMagicFx(other.x,other.y,'lightning',45,.2);
     floatText(other.x,other.y-16,String(Math.ceil(damage)),'#d6b6ff');
@@ -404,7 +410,7 @@
     addMagicFx(x,y,'impact',70,.35);
     for(const e of game.enemies.slice()){
       if(e===primary||hitSet.has(e)||dist2(e.x,e.y,x,y)>48*48)continue;
-      hitSet.add(e);e.hp-=damage;e.hit=.16;
+      hitSet.add(e);applyHitDamage(e,damage);e.hit=.16;
       if(e.hp<=0)enemyDie(e);
     }
   }
@@ -425,7 +431,7 @@
     if(p.orbits>0 && p.orbitCd<=0){
       p.orbitCd=.4;
       for(let j=0;j<p.orbits;j++){const a=g.worldTime*2.7+j*TAU/p.orbits,xx=p.x+Math.cos(a)*42,yy=p.y+Math.sin(a)*42;
-        for(const e of g.enemies.slice())if(dist2(e.x,e.y,xx,yy)<(e.r+11)**2){e.hp-=p.damage*.35;e.hit=.12;if(e.hp<=0)enemyDie(e);} }
+        for(const e of g.enemies.slice())if(dist2(e.x,e.y,xx,yy)<(e.r+11)**2){applyHitDamage(e,p.damage*.35);e.hit=.12;if(e.hp<=0)enemyDie(e);} }
     }
     p.shotCd -= dt; p.hitCd = Math.max(0,p.hitCd-dt); p.attackAnim=Math.max(0,p.attackAnim-dt);
     if(p.shotCd<=0){shoot(); p.shotCd=1/p.attackRate;}
@@ -444,10 +450,9 @@
       if(e.poisonDps>0){e.hp-=e.poisonDps*dt;}
       if(e.hp<=0){enemyDie(e);continue;}
       if(e.slowTime>0)e.slowTime=Math.max(0,e.slowTime-dt);
-      if(e.freezeTime>0)e.freezeTime=Math.max(0,e.freezeTime-dt);
-      const slowed=e.freezeTime>0?0:e.slowTime>0?.58:1;
+      if(e.shockTime>0)e.shockTime=Math.max(0,e.shockTime-dt);
+      const slowed=e.slowTime>0?.58:1;
       if(e.knockX||e.knockY){e.x+=e.knockX*dt;e.y+=e.knockY*dt;e.knockX*=Math.exp(-10*dt);e.knockY*=Math.exp(-10*dt);}
-      if(e.freezeTime>0)continue; // Frozen enemies cannot walk or attack (including boss skills).
       if(e.type==='warden'){
         if(e.windup>0){
           e.windup-=dt;
@@ -490,13 +495,13 @@
         for(const e of g.enemies.slice()){
           if(b.hit.has(e))continue;
           if(dist2(b.x,b.y,e.x,e.y-4)>Math.pow(e.r+5*(b.size||1),2))continue;
-          b.hit.add(e);const crit=Math.random()<p.critChance;const dmg=b.damage*(e.type==='warden'?p.bossDamage:1)*(crit?p.critDamage:1);e.hp-=dmg;e.hit=.18;
+          b.hit.add(e);const crit=Math.random()<p.critChance;const dmg=applyHitDamage(e,b.damage*(e.type==='warden'?p.bossDamage:1)*(crit?p.critDamage:1));e.hit=.18;
           // Damage-over-time uses real seconds and the damage of the actual hit.
           if(p.element==='blood'&&!b.orb){
             e.bleedTime=8;e.bleedDps=dmg*.5/8;
           }
           if(b.fire){e.burnTime=2*p.burnMultiplier;e.burnDps=dmg*1.0/(2*p.burnMultiplier);}
-          if(b.lightning && Math.random()<.5){e.freezeTime=Math.max(e.freezeTime||0,1.5);}
+          if(b.lightning && Math.random()<.5){e.shockTime=4;floatText(e.x,e.y-35,'SHOCK!','#86d8ff');addMagicFx(e.x,e.y,'lightning',33,.19);}
           if(b.frost)e.slowTime=2.5;
           // Poison persists until the enemy dies. Reapplication refreshes potency;
           // do not stack infinite instances, which would break long-run balance.
@@ -722,6 +727,12 @@
     const bodyH=size*(e.type==='bat'||e.type==='ghoul'||e.type==='spider'?.8:1.08);
     if(!window.NoobArt?.paint(ctx,e.type,-size/2,-bodyH+14,size,bodyH))ctx.drawImage(sprite(e.type==='spider'?'bat':e.type,Math.floor(e.phase/3)%2),-Math.round(12*sc),-Math.round(18*sc),Math.round(24*sc),Math.round(28*sc));ctx.restore();
     if(e.type==='warden'&&e.hit>0){ctx.fillStyle='#ffe7db55';ctx.fillRect(x-23,y-41,46,36);}
+    if(e.shockTime>0){
+      ctx.save();ctx.shadowColor='#6dbdff';ctx.shadowBlur=8;
+      ctx.strokeStyle='#67c8ff';ctx.lineWidth=1.3;
+      ctx.globalAlpha=.65+.2*Math.sin(t*13+e.phase);
+      ctx.beginPath();ctx.arc(x,y-14,e.r+5,0,TAU);ctx.stroke();ctx.restore();
+    }
     if(e.hit>0 && e.type!=='warden'){ ctx.fillStyle='#45111d'; ctx.fillRect(x-12,y-29,24,3); ctx.fillStyle='#d8506d'; ctx.fillRect(x-12,y-29,24*e.hp/e.maxHp,3); }
   }
   function drawShots(camX,camY){

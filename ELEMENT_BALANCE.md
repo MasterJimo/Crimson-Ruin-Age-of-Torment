@@ -6,7 +6,7 @@ The player chooses a primary element **before gameplay begins** (after clicking 
 |---|---:|---|---|
 | Blood Bolt | 16 | Bleeding totaling **50% of hit** (8 base damage) | 8 seconds (1 DPS for an unmodified 16 hit) |
 | Fire Bolt | 20 | Burning totaling **100% of hit** (20 base damage) | 2 seconds (10 DPS) |
-| Lightning Bolt | 20 | **50% chance** to freeze for **1.5 seconds** | Freeze stops movement (not damage); lightning can also chain from perk effects |
+| Lightning Bolt | 20 | **50% chance** to apply Shock for **4 seconds** | Direct hits against shocked enemies deal **+100% damage (2×)**; Shock does not stop movement and can be refreshed. Chain effects also benefit from Shock. |
 | Poison Bolt | 5 | Poison deals **100 damage every 8 seconds** | Permanent until enemy death (12.5 DPS, does not stack; reapplication keeps the highest DPS) |
 
 ## Upgrade paths
@@ -26,3 +26,8 @@ Bleed/burn refresh on reapplication with their damage based on the latest hit; p
 - Compact footer: `MOVE WASD / arrows` and `PAUSE P`.
 - `REROLL` and `BANISH` continue working on normal level-ups.
 - XP drops stay bright blue crystals.
+
+## v0.12.1 — Lightning Shock correction
+- Lightning now applies **Shock** for 4 seconds on a 50% proc, rather than Freeze.
+- Hits against a shocked enemy are multiplied by 2 while the effect is active. The hit that first applies Shock does not receive the bonus. Shock refreshes on reapplication.
+- Shock does not slow enemies, and does not amplify ticking damage-over-time.
