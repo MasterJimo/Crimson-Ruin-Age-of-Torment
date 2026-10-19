@@ -101,3 +101,8 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - Walk within **34 world units** to consume one for up to **40 HP**, but a full-health player will not consume it.
 - A small ruby pointer near the edge of the screen leads to the nearest off-screen fountain when within **1,760 world units** (around two to three screen widths).
 - The visual uses the supplied *HP Pool* PNG, resampled to a compact transparent PNG in `assets/blood-fountain-v014.png`.
+## v0.14.1 — Blood Bleed stacks & Hemorrhagic Burst
+- Blood stacks Bleed independently, up to **4** stacks per enemy (8 seconds per stack; 50% of the applying hit over the duration). More Blood hits refresh the oldest stack at the normal cap.
+- **Hemorrhagic Burst** (Blood-only perk with a heart-up icon) upgrades the stack limit to 8, then consumes all eight in a close-range explosion. Damage = sum of all eight stacks' full original Bleed totals, delivered immediately to enemies around the target.
+- **Blood Power** continues to scale the hit and therefore its associated Bleed stack proportionally.
+- A crimson ×N indicator shows current Bleed stacks. Poison and Fire stacking rules remain unchanged.

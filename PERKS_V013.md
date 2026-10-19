@@ -29,3 +29,9 @@ Bleed = crimson pulse. Burn = orange flame flicker. Shock = blue sparks (4 s, di
 
 ## Control
 First selection: 1–4. Standard perk cards: 1–3, R = Reroll, B = Banish.
+## v0.14.1 — New Blood-exclusive upgrade
+| Perk | Icon | Effect |
+|---|---|---|
+| **Hemorrhagic Burst** | Heart + up arrow | Raises Bleed limit from 4 to 8; reaching 8 consumes all stacks and deals their combined **full original DoT damage** as a short-range explosion to nearby enemies (including the target). |
+
+**Blood Power** (Heart + up arrow) increases both direct Blood hit damage and the damage of each *new* Bleed stack by 25% per rank. Bleed stack damage is 50% of the applying hit over 8 seconds, not an additional flat multiplier. At cap 4, another hit refreshes the oldest stack; after Hemorrhagic Burst is unlocked, the eighth stack triggers the explosion.

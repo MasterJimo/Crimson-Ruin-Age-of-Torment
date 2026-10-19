@@ -61,7 +61,8 @@
     {id:'spread',icon:'spread',name:'SPREAD SHOT',desc:'+2 projectiles angled outward.',tier:'rare',can:p=>p.spreadShots<2,apply:p=>p.spreadShots++},
     {id:'pierce',icon:'pierce',name:'PIERCING FANGS',desc:'Each projectile pierces +1 enemy.',tier:'rare',can:p=>p.pierce<4,apply:p=>p.pierce++},
     {id:'crit',icon:'crit',name:'DEADLY PRECISION',desc:'+12% critical hit chance.',tier:'rare',can:p=>p.critChance<.60,apply:p=>p.critChance+=.12},
-    {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',desc:'+25% Blood hit power. Unlock Blood Lance and Orb.',tier:'rare',can:p=>p.element==='blood'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;if(p.elementRank===2)p.bloodLance++;if(p.elementRank===3)p.bloodOrbChance+=.20;if(p.elementRank===4)p.bloodSplashChance+=.20;}},
+    {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',desc:'+25% Blood hit and Bleed damage. Unlock Lance and Orb.',tier:'rare',can:p=>p.element==='blood'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;if(p.elementRank===2)p.bloodLance++;if(p.elementRank===3)p.bloodOrbChance+=.20;if(p.elementRank===4)p.bloodSplashChance+=.20;}},
+    {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC BURST',desc:'Bleed cap 8. At 8 stacks, explode for their full Bleed damage in an area.',tier:'rare',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:p=>{p.hemorrhagicBurst=true;}},
     {id:'fire_power',icon:'fire_power',name:'FIRE POWER',desc:'+25% Fire hit damage and stronger burns.',tier:'rare',can:p=>p.element==='fire'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.burnMultiplier*=1.2;}},
     {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',desc:'+25% Lightning damage and chain chance.',tier:'rare',can:p=>p.element==='lightning'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.stormBonus+=.10;}},
     {id:'poison_power',icon:'poison_power',name:'POISON POWER',desc:'+35% DPS per newly applied Poison stack.',tier:'rare',can:p=>p.element==='poison'&&p.elementRank<5,apply:p=>{p.elementRank++;p.poisonMultiplier*=1.35;}}
@@ -70,7 +71,7 @@
   // Initial choice occurs before any enemies spawn / game clock starts.
   // Every DOT damage number means *total damage over the stated duration*.
   const ELEMENT_CHOICES = [
-    {id:'blood',element:'blood',name:'BLOOD',desc:'16 hit · Bleed for 8s: +50% of the hit over time. Lowest upfront damage.',tier:'rare'},
+    {id:'blood',element:'blood',name:'BLOOD',desc:'16 hit · Bleed: 50% hit over 8s per stack. Max 4 stacks.',tier:'rare'},
     {id:'fire',element:'fire',name:'FIRE',desc:'20 hit · Burn for 2s: +100% of the hit over time.',tier:'rare'},
     {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'20 hit · 50% chance to SHOCK for 4s. Hits deal +100% damage while shocked.',tier:'rare'},
     {id:'poison',element:'poison',name:'POISON',desc:'5 hit · Each hit adds 12.5 poison DPS forever. Unlimited stacks.',tier:'rare'}
@@ -120,7 +121,7 @@
   function startGame(){
     game = {
       time:0,
-      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
+      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], nextFountainAt:rand(44,60), kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
@@ -442,6 +443,53 @@
     enemy.hp-=finalDamage;
     return finalDamage;
   }
+  // Bleed stacks are independent 8-second effects, each worth 50% of the hit.
+  // Four stacks normally; Hemorrhagic Burst raises the cap to eight.
+  // A fifth normal hit renews the oldest stack without increasing the cap.
+  function tickBleedStacks(enemy,dt){
+    const stacks=enemy.bleedStacks;
+    if(!stacks||!stacks.length)return;
+    for(let i=stacks.length-1;i>=0;i--){
+      const stack=stacks[i],elapsed=Math.min(dt,stack.time);
+      if(elapsed>0)enemy.hp-=stack.dps*elapsed;
+      stack.time-=dt;
+      if(stack.time<=0)stacks.splice(i,1);
+    }
+  }
+  function burstHemorrhage(origin,totalBleedDamage){
+    const x=origin.x,y=origin.y;
+    addMagicFx(x,y,'blood_orb_v11',102,.42);
+    addImpact(x,y,82,'#fa3765');
+    addBloodBurst(x,y,34,'#d80c3d');
+    addParticles(x,y,'#fb6b8b',26,110,2,4);
+    floatText(x,y-48,`BURST! ${Math.ceil(totalBleedDamage)}`,'#ffc0d0',12);
+    // One direct area hit (including the triggering target), no chained Bleed.
+    // Sum of all eight stacks' FULL original DoT totals, not just their
+    // remaining lifetime; Shock still follows the normal direct-hit rule.
+    for(const target of game.enemies.slice()){
+      if(dist2(x,y,target.x,target.y)>(76+target.r)*(76+target.r))continue;
+      applyHitDamage(target,totalBleedDamage);
+      target.hit=.32;
+      if(target.hp<=0)enemyDie(target);
+    }
+  }
+  function applyBleedStack(enemy,hitDamage){
+    const stacks=enemy.bleedStacks||(enemy.bleedStacks=[]);
+    const stack={time:8,dps:hitDamage*.5/8,total:hitDamage*.5};
+    const cap=game.player.hemorrhagicBurst?8:4;
+    if(stacks.length<cap)stacks.push(stack);
+    else{
+      // Replace the oldest (least remaining duration) when already capped.
+      let oldest=0;
+      for(let i=1;i<stacks.length;i++)if(stacks[i].time<stacks[oldest].time)oldest=i;
+      stacks[oldest]=stack;
+    }
+    if(game.player.hemorrhagicBurst&&stacks.length===8){
+      const total=stacks.reduce((sum,s)=>sum+s.total,0);
+      stacks.length=0;
+      burstHemorrhage(enemy,total);
+    }
+  }
   // One persistent Poison stack per hit: 100 damage / 8 seconds = 12.5 DPS.
   // Aggregate DPS and count instead of allocating an object per stack, so even
   // hundreds or thousands of stacks stay cheap to simulate.
@@ -505,7 +553,7 @@
 
     for(const e of [...g.enemies]){
       const a=Math.atan2(p.y-e.y,p.x-e.x), d=Math.hypot(p.x-e.x,p.y-e.y); e.phase+=dt*6; e.hit=Math.max(0,e.hit-dt);
-      if(e.bleedTime>0){const elapsed=Math.min(dt,e.bleedTime);e.hp-=(e.bleedDps||0)*elapsed;e.bleedTime-=elapsed;}
+      tickBleedStacks(e,dt);
       if(e.burnTime>0){const elapsed=Math.min(dt,e.burnTime);e.hp-=(e.burnDps||0)*elapsed;e.burnTime-=elapsed;}
       if(e.poisonDps>0){e.hp-=e.poisonDps*dt;}
       if(e.hp<=0){enemyDie(e);continue;}
@@ -557,9 +605,7 @@
           if(dist2(b.x,b.y,e.x,e.y-4)>Math.pow(e.r+5*(b.size||1),2))continue;
           b.hit.add(e);const crit=Math.random()<p.critChance;const dmg=applyHitDamage(e,b.damage*(e.type==='warden'?p.bossDamage:1)*(crit?p.critDamage:1));e.hit=.18;
           // Damage-over-time uses real seconds and the damage of the actual hit.
-          if(p.element==='blood'&&!b.orb){
-            e.bleedTime=8;e.bleedDps=dmg*.5/8;
-          }
+          if(p.element==='blood')applyBleedStack(e,dmg);
           if(b.fire)refreshBurn(e,dmg,p.burnMultiplier);
           if(b.lightning && Math.random()<.5){e.shockTime=4;floatText(e.x,e.y-35,'SHOCK!','#86d8ff');addMagicFx(e.x,e.y,'lightning',33,.19);}
           if(b.frost)e.slowTime=2.5;
@@ -846,7 +892,12 @@
       ctx.strokeText(stacks,x,y-43);ctx.fillText(stacks,x,y-43);
       ctx.restore();
     }
-    if(e.bleedTime>0){
+    if(e.bleedStacks?.length){
+      ctx.save();ctx.textAlign='center';ctx.font='bold 10px sans-serif';
+      ctx.lineWidth=3;ctx.strokeStyle='#300d1d';ctx.fillStyle='#ff9fb6';
+      const stackLabel=`×${e.bleedStacks.length}`;
+      ctx.strokeText(stackLabel,x,y-52);ctx.fillText(stackLabel,x,y-52);
+      ctx.restore();
       ctx.save();ctx.globalAlpha=.31+.17*Math.sin(t*9+e.phase);
       ctx.fillStyle='#ef214a';ctx.shadowColor='#ff174c';ctx.shadowBlur=9;
       ctx.beginPath();ctx.ellipse(x,y-14,statusSize*.75,statusSize*.95,0,0,TAU);ctx.fill();ctx.restore();
