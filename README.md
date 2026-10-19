@@ -24,3 +24,7 @@ Browser-based gothic survival game (HTML, CSS, Canvas 2D, vanilla JavaScript).
 
 ## Run & deploy
 Open `index.html` locally, or host these files from the repository root using GitHub Pages (`main` branch, `/`). There is no build step.
+
+## Arena background (0.9.1)
+
+Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of Ruins** (`assets/gothic-courtyard.png`). The map follows the camera and repeats with mirrored edges; the previous procedural drawing is retained as a loading fallback. Enemy sprites, perks, projectiles and balance are unchanged.

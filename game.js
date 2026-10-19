@@ -10,6 +10,11 @@
   ctx.setTransform(2, 0, 0, 2, 0, 0);
 
   const W = 640, H = 360, TAU = Math.PI * 2, DURATION = 180;
+  // User-supplied gothic courtyard. The existing floor remains a fallback while loading.
+  const courtyard = new Image();
+  courtyard.decoding = 'async';
+  courtyard.src = 'assets/gothic-courtyard.png';
+
   const $ = id => document.getElementById(id);
   const el = {
     intro:$('intro'), upgrade:$('upgrade'), upgradeCards:$('upgradeCards'), end:$('endScreen'), pause:$('pauseOverlay'),
@@ -504,6 +509,29 @@
   }
 
   function drawFloor(cameraX,cameraY,t){
+    if(courtyard.complete && courtyard.naturalWidth){
+      // Repeat the arena outside the starting tile so exploration stays endless.
+      // Alternate mirroring avoids a hard visual edge between repeat tiles.
+      const tile = 1254, origin = -tile/2;
+      const minX = Math.floor((cameraX-origin)/tile);
+      const minY = Math.floor((cameraY-origin)/tile);
+      const maxX = Math.floor((cameraX+W-origin)/tile);
+      const maxY = Math.floor((cameraY+H-origin)/tile);
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      for(let gy=minY;gy<=maxY;gy++)for(let gx=minX;gx<=maxX;gx++){
+        const x=Math.round(origin+gx*tile-cameraX), y=Math.round(origin+gy*tile-cameraY);
+        ctx.save();
+        ctx.translate(x+(gx%2!==0?tile:0),y+(gy%2!==0?tile:0));
+        ctx.scale(gx%2!==0?-1:1,gy%2!==0?-1:1);
+        ctx.drawImage(courtyard,0,0,tile,tile);
+        ctx.restore();
+      }
+      ctx.restore();
+      return;
+    }
+
     ctx.fillStyle='#211b23';ctx.fillRect(0,0,W,H);
     const size=52,left=Math.floor(cameraX/size)-1,top=Math.floor(cameraY/size)-1;
     for(let gy=top;gy<top+10;gy++)for(let gx=left;gx<left+15;gx++){
