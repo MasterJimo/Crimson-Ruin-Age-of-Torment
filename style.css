@@ -357,13 +357,18 @@ body{padding:10px}
 #upgrade .upgrade-card .detail strong{color:#f4d59d;font-weight:900}
 .inventory-stat strong{overflow-wrap:anywhere}
 
-/* v0.19 — optional Easy Mode offer after three consecutive early defeats. */
-.easy-offer{position:absolute;inset:0;z-index:55;display:grid;place-items:center;background:#060208ed;padding:18px;color:#ffe4ea;backdrop-filter:blur(6px)}
-.easy-offer.hidden{display:none!important}
-.easy-offer-panel{width:min(570px,100%);padding:26px 29px 28px;text-align:center;border:2px solid #a56b78;border-radius:18px;background:linear-gradient(160deg,#36152c,#160b18 70%);box-shadow:0 0 0 4px #120812,0 30px 80px #000c}
-.easy-offer h2{font:900 30px Georgia,serif;color:#ffcfdb;letter-spacing:.09em;margin:10px 0}
-.easy-offer p{color:#efd4de;line-height:1.5;font-size:14px}
-.easy-offer .easy-desc{color:#f6bcd0;font-size:12px}
-.easy-options{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;margin-top:17px}
-.easy-no{background:#15101b!important;color:#ead8e4!important}
-.run-mode{font-size:11px;font-weight:900;letter-spacing:.11em;color:#ffb4d4;margin:2px 0 6px}
+
+/* v0.19.1 — scoreboard-only Easy Mode choice; no prior failure streak. */
+.run-next-actions{display:flex;align-items:center;justify-content:center;gap:14px;width:min(760px,100%);margin:12px auto 4px;flex-wrap:wrap}
+#endScreen .run-next-actions>.main-button{flex:0 0 auto;margin:0;padding:12px 24px;white-space:nowrap;align-self:center}
+.easy-retry{box-sizing:border-box;flex:1 1 390px;min-width:260px;padding:13px 15px;border:1px solid #bd7490;border-radius:13px;background:linear-gradient(125deg,#421b35e8,#200d24f0);box-shadow:inset 0 1px #ffffff14,0 9px 25px #0007;color:#ffe2eb;text-align:left}
+.easy-retry.hidden{display:none!important}
+#endScreen .easy-retry h3{font:900 12px/1.4 system-ui,sans-serif;color:#ffd0e2;letter-spacing:.08em;margin:0 0 5px}
+.easy-retry-description{font:11px/1.5 system-ui,sans-serif;color:#f0cfde;margin:0 0 10px}
+.easy-retry-description strong{color:#ffe3a6}
+.easy-retry-buttons{display:flex;gap:9px;flex-wrap:wrap}
+.easy-retry-buttons button{flex:1 1 125px;cursor:pointer;padding:9px 10px;border-radius:8px;font:800 11px system-ui,sans-serif;letter-spacing:.02em;transition:background .15s,border-color .15s}
+.easy-retry-yes{border:1px solid #ef8dc2;background:#703050;color:#fff1f7}
+.easy-retry-no{border:1px solid #8c7888;background:#1a1621;color:#f5dfed}
+.easy-retry-yes:hover,.easy-retry-yes:focus-visible{background:#943d65;outline:2px solid #f5b7d6;outline-offset:2px}
+.easy-retry-no:hover,.easy-retry-no:focus-visible{background:#353042;outline:2px solid #c6b3c2;outline-offset:2px}

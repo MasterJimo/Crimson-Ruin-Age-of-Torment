@@ -6,7 +6,7 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.19
+## Current gameplay — v0.19.1
 
 Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
@@ -32,7 +32,7 @@ Two separated Blood Fountains spawn at the start, with more appearing during exp
 - **WASD / arrow keys** — movement; attacks fire automatically.
 - **P / Escape** — pause/resume.
 - **O** — open/close the Power-Up Grimoire; Escape closes it too.
-- If you suffer three consecutive deaths before 5:00, choose **YES** or **NO** on the optional Easy Mode offer before element selection.
+- **After your first death before 05:00**, the scoreboard offers **Easy Mode: YES / NO** beside **New Game**. YES immediately starts the next run in Easy Mode; NO immediately starts a normal run. New Game also starts normal mode. The choice applies **only to that next run**, not future runs.
 - **1–4** — initial element; **1–3** — level-up upgrade; **R** — reroll; **B** — banish.
 - Click the small **chest at the lower-left of the arena** to access the grimoire. The redundant on-screen Pause button was removed.
 
@@ -47,6 +47,15 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 ---
 
 ## Patch notes — newest first
+
+### v0.19.1 — Stable pause, New Game, one-run Easy Mode
+- Fixed the endlessly shaking screen while paused: the draw loop no longer rolls random camera offsets without running physics, and gameplay animations freeze while paused, in the Grimoire and on the score screen.
+- Added a **NEW GAME** button to the scoreboard for a fresh regular run.
+- **Easy Mode is now offered right on the results screen after any first death before 05:00**. No three-failure streak, no separate pre-element modal and no save-data requirement.
+- Results display an explicit choice beside New Game: **YES · EASY MODE** or **NO · HARDCORE**. Either choice immediately starts the **next** run at element selection, with the mode set for this run only.
+- The offer explains all next-run consequences: enemies have 50% HP, damage and speed, reduced aggression and spawn pressure, and the hunter wears the pink ribbon; the 30-minute Reaper is still unavoidable.
+- Easy Mode is reset on each other new game, including the regular **New Game** button.
+
 
 ### v0.19 — Hardcore escalation, Poison Power and optional Easy Mode
 - **Poison:** Brutality is no longer offered. Poison Power is now +20% of the base 13 DPS per rank, additive (13 → 15.6 → 18.2 → 20.8 DPS per stack). Both existing and new stacks use the upgraded base value.
@@ -138,4 +147,4 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 - Retained the Crimson Warden, enemies, XP, perk progression, music and blood effects.
 - Set Ancient Caverns as soundtrack with MUSIC 10% and SFX 5%.
 
-*Older notes describe the game as it existed then. For current damage numbers, use the v0.17 table above.*
+*Older notes describe the game as it existed then. For current damage numbers, use the current gameplay table above.*

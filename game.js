@@ -24,7 +24,7 @@
   const el = {
     intro:$('intro'), upgrade:$('upgrade'), upgradeCards:$('upgradeCards'), end:$('endScreen'), pause:$('pauseOverlay'),
     inventory:$('inventoryOverlay'), inventoryBtn:$('inventoryBtn'), inventoryClose:$('inventoryClose'),
-    easyOffer:$('easyOffer'),easyYes:$('easyYes'),easyNo:$('easyNo'),
+    easyRetryOffer:$('easyRetryOffer'),easyYes:$('easyYes'),easyNo:$('easyNo'),
     inventoryElementIcon:$('inventoryElementIcon'), inventoryElementName:$('inventoryElementName'),
     inventoryElementDesc:$('inventoryElementDesc'), inventoryElementRank:$('inventoryElementRank'),
     inventoryPerks:$('inventoryPerks'), inventoryStats:$('inventoryStats'), inventoryPerkCount:$('inventoryPerkCount'),
@@ -169,24 +169,15 @@
   }
   function changeTrack(id){ currentTrack = id in MUSIC_TRACKS ? id : 'caverns'; syncMusic(); }
 
-  const EARLY_LOSSES='crimson-ruin-early-losses-v019';
-  function getEarlyLosses(){
-    try{return Math.max(0,Number(localStorage.getItem(EARLY_LOSSES)||0)||0);}catch(_){return 0;}
-  }
-  function recordRunLoss(){
-    const count=!game.endingAt30&&game.time<300?getEarlyLosses()+1:0;
-    try{localStorage.setItem(EARLY_LOSSES,String(count));}catch(_){}
-  }
+  // Easy Mode is a one-run choice offered on the scoreboard when a hunter
+  // dies before 05:00. No failure streak, prompt on the next start, or storage.
   function chooseEasyMode(yes){
-    if(state!=='easy_offer')return;
-    game.easyMode=Boolean(yes);
-    el.easyOffer.classList.add('hidden');
-    state='upgrade';openUpgrade();
-    if(yes)el.status.textContent='EASY MODE · CHOOSE ELEMENT';
+    if(state!=='end'||!game||game.endingAt30||game.time>=300)return;
+    startGame(Boolean(yes));
   }
-  function startGame(){
+  function startGame(easyMode=false){
     game = {
-      time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:false,spawnCounter:0,
+      time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,
       perkRanks:Object.create(null),perkOrder:[],
       player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,fountainRegenTime:0,fountainRegenTick:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], nextFountainAt:rand(44,60), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
@@ -194,16 +185,13 @@
     spawnFountain(true);
     spawnFountain(true);
     state='upgrade';
+    shake=0;flash=0;keys.clear();
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.pause.classList.add('hidden');
-    el.inventory.classList.add('hidden');el.inventoryBtn.hidden=true;el.easyOffer.classList.add('hidden');
+    el.inventory.classList.add('hidden');el.inventoryBtn.hidden=true;el.easyRetryOffer.classList.add('hidden');
     el.hud.hidden = false; el.xpStrip.hidden = false; el.bossBar.hidden = true; el.msg.textContent = ''; el.status.textContent = 'CHOOSE YOUR STARTING ELEMENT';
     updateHUD();
-    if(getEarlyLosses()>=3){
-      state='easy_offer';
-      el.upgrade.classList.add('hidden');el.easyOffer.classList.remove('hidden');
-      el.status.textContent='EASY MODE AVAILABLE · YES / NO';
-      el.easyYes.focus();
-    }else openUpgrade();
+    openUpgrade();
+    if(game.easyMode)el.status.textContent='EASY MODE · CHOOSE ELEMENT';
     // Audio begins after the player chooses a school (browser gesture).
 
   }
@@ -578,7 +566,6 @@
     $('endSub').textContent=survived?
       'You endured 30 minutes. No one escapes the Reaper.':
       'The hunt ended before the Reaper appeared.';
-    if(!game.endingAt30)recordRunLoss();
     $('finalTime').textContent=timeText(game.time);
     $('finalKills').textContent=game.kills;
     $('finalLevel').textContent=game.player.level;
@@ -597,6 +584,9 @@
     $('bestKills').textContent=`BEST: ${best.kills} KILLS`;
     renderRunBoard(survived,best);
     $('runMode').textContent=game.easyMode?'EASY MODE · PINK RIBBON':'HARDCORE MODE';
+    // Offer Easy Mode immediately on the results screen of ANY loss below 5m.
+    // Yes and No both start the next run, with no lasting preference.
+    el.easyRetryOffer.classList.toggle('hidden',Boolean(game.endingAt30||game.time>=300));
     el.end.classList.toggle('victory',survived);
     el.status.textContent=survived?'30:00 · REAPER HAS CLAIMED YOU':'HUNT FAILED';
     playSound('death');
@@ -657,7 +647,7 @@
   }
   function openInventory(){
     if(state!=='playing'||!game?.elementChosen)return;
-    keys.clear();
+    keys.clear();shake=0;
     renderInventory();
     state='inventory';
     el.inventory.classList.remove('hidden');
@@ -676,7 +666,7 @@
     else if(state==='playing')openInventory();
   }
   function togglePause(){
-    if(state==='playing'){ state='paused'; el.pause.classList.remove('hidden'); el.status.textContent='PAUSED'; }
+    if(state==='playing'){ shake=0;state='paused'; el.pause.classList.remove('hidden'); el.status.textContent='PAUSED'; }
     else if(state==='paused'){ state='playing'; el.pause.classList.add('hidden'); el.status.textContent='HUNT IN PROGRESS'; }
   }
 
@@ -1332,7 +1322,12 @@
 
   function draw(t){
     const p=game?.player||{x:0,y:0,walk:0,face:1,hitCd:0};
-    const camX=p.x-W/2+(shake?rand(-shake,shake):0), camY=p.y-H/2+(shake?rand(-shake,shake):0);
+    // Never roll random camera offsets in any paused/overlay/end state.
+    // Previously shake only decayed in update(), but draw() continued to
+    // sample it forever while paused, causing the entire scene to jitter.
+    const liveShake=(state==='playing'||state==='death')?shake:0;
+    const camX=p.x-W/2+(liveShake?rand(-liveShake,liveShake):0),
+          camY=p.y-H/2+(liveShake?rand(-liveShake,liveShake):0);
     drawFloor(camX,camY,t);
     if(game){
       drawStains(camX,camY);
@@ -1354,7 +1349,14 @@
     if(flash>0){ ctx.fillStyle=`rgba(170,16,42,${flash*.55})`; ctx.fillRect(0,0,W,H); }
   }
 
-  function loop(ts){ if(!last) last=ts; const dt=Math.min((ts-last)/1000,.04); last=ts; animTime+=dt; if(state==='death')updateDeath(dt);else update(dt); draw(animTime); raf=requestAnimationFrame(loop); }
+  function loop(ts){
+    if(!last)last=ts;
+    const dt=Math.min((ts-last)/1000,.04);last=ts;
+    // Freeze scene animations and gameplay when paused/reading/results.
+    if(state==='playing'||state==='death')animTime+=dt;
+    if(state==='death')updateDeath(dt);else update(dt);
+    draw(animTime);raf=requestAnimationFrame(loop);
+  }
 
   document.addEventListener('keydown',e=>{
     const k=e.key.toLowerCase();
@@ -1370,13 +1372,13 @@
     if(state==='upgrade'&&k==='r')rerollUpgrades();
     if(state==='upgrade'&&k==='b')toggleBanish();
     if(state==='intro'&&(k==='enter'||k===' ')) startGame();
-    if(state==='end'&&k==='enter') startGame();
+    if(state==='end'&&k==='enter'&&e.target?.tagName!=='BUTTON') startGame(false);
   });
   window.addEventListener('blur',()=>{ keys.clear(); if(state==='playing') togglePause(); });
   document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);
-  el.start.addEventListener('click',startGame); el.restart.addEventListener('click',startGame); el.resume.addEventListener('click',togglePause);
+  el.start.addEventListener('click',()=>startGame(false)); el.restart.addEventListener('click',()=>startGame(false)); el.resume.addEventListener('click',togglePause);
   el.inventoryBtn.addEventListener('click',toggleInventory);el.inventoryClose.addEventListener('click',closeInventory);
   el.easyYes.addEventListener('click',()=>chooseEasyMode(true));
   el.easyNo.addEventListener('click',()=>chooseEasyMode(false));

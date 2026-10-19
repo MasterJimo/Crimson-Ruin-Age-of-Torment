@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.19.0">
+  <meta name="game-version" content="0.19.1">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.19.0">
+  <link rel="stylesheet" href="style.css?v=0.19.1">
 </head>
 <body>
   <div class="site-shell">
@@ -85,23 +85,21 @@
           <div class="run-perks" id="runPerks">No upgrades acquired</div>
           <p class="run-best" id="runBest"></p>
         </div>
-        <button class="main-button" id="restartBtn">↻ HUNT AGAIN</button>
+        <div class="run-next-actions">
+          <button type="button" class="main-button" id="restartBtn">↻ NEW GAME</button>
+          <section class="easy-retry hidden" id="easyRetryOffer" aria-labelledby="easyRetryTitle">
+            <h3 id="easyRetryTitle">🎀 EASY MODE FOR YOUR NEXT RUN?</h3>
+            <p class="easy-retry-description">You died before 05:00. Easy Mode makes enemies 50% weaker in health, damage and speed, reduces spawns and aggression, and adds a pink ribbon to your hunter. The Reaper is still unavoidable at 30:00. <strong>This choice affects the next run only.</strong></p>
+            <div class="easy-retry-buttons">
+              <button type="button" id="easyYes" class="easy-retry-yes">YES · EASY MODE</button>
+              <button type="button" id="easyNo" class="easy-retry-no">NO · HARDCORE</button>
+            </div>
+          </section>
+        </div>
       </section>
 
       <section class="pause-card hidden" id="pauseOverlay"><span>Ⅱ</span><h2>PAUSED</h2><p>Press P or click resume.</p><button class="main-button" id="resumeBtn">▶ RESUME</button></section>
       <button id="inventoryBtn" class="inventory-button" type="button" title="Power-ups (O)" aria-label="Open power-ups" hidden><svg aria-hidden="true" viewBox="0 0 32 32" width="29" height="29"><path d="M5 12 8 5h16l3 7v13H5Z" fill="#522633" stroke="#f8c879" stroke-width="2"/><path d="M5 12h22v5H5Z" fill="#a65836" stroke="#eaa66e" stroke-width="1.5"/><path d="M8 17h16v8H8Z" fill="#673144" stroke="#d39764"/><path d="M14 11h4v14h-4Z" fill="#eab867" stroke="#9b5a34"/><path d="M13 17h6v5h-6Z" fill="#fce2a1" stroke="#92613e"/></svg></button>
-      <section class="easy-offer hidden" id="easyOffer" role="dialog" aria-modal="true" aria-labelledby="easyTitle">
-        <div class="easy-offer-panel">
-          <div class="eyebrow">A MERCY FROM THE BLOOD MOON</div>
-          <h2 id="easyTitle">EASY MODE AVAILABLE</h2>
-          <p>Three hunts ended before 5 minutes. Would you like to try Easy Mode?</p>
-          <p class="easy-desc">Enemies have 50% health, attack damage and movement speed. Your hunter will wear a pink ribbon.</p>
-          <div class="easy-options">
-            <button type="button" id="easyYes" class="main-button">YES · EASY MODE</button>
-            <button type="button" id="easyNo" class="main-button easy-no">NO · HARDCORE</button>
-          </div>
-        </div>
-      </section>
       <section class="inventory-overlay hidden" id="inventoryOverlay" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
         <div class="inventory-panel">
           <header class="inventory-heading">
@@ -135,7 +133,7 @@
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="assets.js?v=0.19.0" defer></script>
-  <script src="game.js?v=0.19.0" defer></script>
+  <script src="assets.js?v=0.19.1" defer></script>
+  <script src="game.js?v=0.19.1" defer></script>
 </body>
 </html>
