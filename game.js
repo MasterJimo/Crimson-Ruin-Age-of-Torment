@@ -17,14 +17,14 @@
   const fountainArt = new Image();
   fountainArt.decoding = 'async';
   fountainArt.src = 'assets/blood-fountain-v014.png';
-  const deathArt = new Image();
-  deathArt.decoding = 'async';
-  deathArt.src = 'assets/death-reaper-v018.png';
+  const deathArt=new Image();deathArt.decoding='async';deathArt.src='assets/death-reaper-v019.webp';
+  const ribbonArt=new Image();ribbonArt.decoding='async';ribbonArt.src='assets/easy-ribbon-v019.webp';
 
   const $ = id => document.getElementById(id);
   const el = {
     intro:$('intro'), upgrade:$('upgrade'), upgradeCards:$('upgradeCards'), end:$('endScreen'), pause:$('pauseOverlay'),
     inventory:$('inventoryOverlay'), inventoryBtn:$('inventoryBtn'), inventoryClose:$('inventoryClose'),
+    easyOffer:$('easyOffer'),easyYes:$('easyYes'),easyNo:$('easyNo'),
     inventoryElementIcon:$('inventoryElementIcon'), inventoryElementName:$('inventoryElementName'),
     inventoryElementDesc:$('inventoryElementDesc'), inventoryElementRank:$('inventoryElementRank'),
     inventoryPerks:$('inventoryPerks'), inventoryStats:$('inventoryStats'), inventoryPerkCount:$('inventoryPerkCount'),
@@ -169,6 +169,21 @@
   }
   function changeTrack(id){ currentTrack = id in MUSIC_TRACKS ? id : 'caverns'; syncMusic(); }
 
+  const EARLY_LOSSES='crimson-ruin-early-losses-v019';
+  function getEarlyLosses(){
+    try{return Math.max(0,Number(localStorage.getItem(EARLY_LOSSES)||0)||0);}catch(_){return 0;}
+  }
+  function recordRunLoss(){
+    const count=!game.endingAt30&&game.time<300?getEarlyLosses()+1:0;
+    try{localStorage.setItem(EARLY_LOSSES,String(count));}catch(_){}
+  }
+  function chooseEasyMode(yes){
+    if(state!=='easy_offer')return;
+    game.easyMode=Boolean(yes);
+    el.easyOffer.classList.add('hidden');
+    state='upgrade';openUpgrade();
+    if(yes)el.status.textContent='EASY MODE · CHOOSE ELEMENT';
+  }
   function startGame(){
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:false,spawnCounter:0,
@@ -180,10 +195,15 @@
     spawnFountain(true);
     state='upgrade';
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.pause.classList.add('hidden');
-    el.inventory.classList.add('hidden'); el.inventoryBtn.hidden=true;
+    el.inventory.classList.add('hidden');el.inventoryBtn.hidden=true;el.easyOffer.classList.add('hidden');
     el.hud.hidden = false; el.xpStrip.hidden = false; el.bossBar.hidden = true; el.msg.textContent = ''; el.status.textContent = 'CHOOSE YOUR STARTING ELEMENT';
     updateHUD();
-    openUpgrade();
+    if(getEarlyLosses()>=3){
+      state='easy_offer';
+      el.upgrade.classList.add('hidden');el.easyOffer.classList.remove('hidden');
+      el.status.textContent='EASY MODE AVAILABLE · YES / NO';
+      el.easyYes.focus();
+    }else openUpgrade();
     // Audio begins after the player chooses a school (browser gesture).
 
   }
@@ -552,6 +572,7 @@
     $('endSub').textContent=survived?
       'You endured 30 minutes. No one escapes the Reaper.':
       'The hunt ended before the Reaper appeared.';
+    if(!game.endingAt30)recordRunLoss();
     $('finalTime').textContent=timeText(game.time);
     $('finalKills').textContent=game.kills;
     $('finalLevel').textContent=game.player.level;
@@ -569,6 +590,7 @@
     }catch(_){}
     $('bestKills').textContent=`BEST: ${best.kills} KILLS`;
     renderRunBoard(survived,best);
+    $('runMode').textContent=game.easyMode?'EASY MODE · PINK RIBBON':'HARDCORE MODE';
     el.end.classList.toggle('victory',survived);
     el.status.textContent=survived?'30:00 · REAPER HAS CLAIMED YOU':'HUNT FAILED';
     playSound('death');
@@ -1163,6 +1185,15 @@
     if(!window.NoobArt?.paint(ctx,art,-width/2,12-height,width,height))
       ctx.drawImage(sprite('hero',p.moving?1:0),-20,-32,40,47);
     ctx.restore();
+    if(game?.easyMode){
+      ctx.save();
+      if(ribbonArt.complete&&ribbonArt.naturalWidth){
+        ctx.drawImage(ribbonArt,x-14,y-52+Math.sin(t*3)*1.2,30,30);
+      }else{
+        ctx.textAlign='center';ctx.font='bold 19px serif';ctx.fillText('🎀',x,y-32);
+      }
+      ctx.restore();
+    }
     for(let i=0;i<3;i++){ const a=t*1.8+i*TAU/3; ctx.fillStyle=i===0?'#ffc7d2':'#f1607f'; ctx.fillRect(Math.round(x+Math.cos(a)*20),Math.round(y-8+Math.sin(a)*11),2,2); }
   }
   function drawEnemy(e,camX,camY,t){
@@ -1341,6 +1372,8 @@
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);
   el.start.addEventListener('click',startGame); el.restart.addEventListener('click',startGame); el.resume.addEventListener('click',togglePause);
   el.inventoryBtn.addEventListener('click',toggleInventory);el.inventoryClose.addEventListener('click',closeInventory);
+  el.easyYes.addEventListener('click',()=>chooseEasyMode(true));
+  el.easyNo.addEventListener('click',()=>chooseEasyMode(false));
   function updateAudioUI(){
     el.sound.textContent=muted?'MUTE ON':'MUTE OFF';
     el.sound.setAttribute('aria-pressed',String(muted));

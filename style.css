@@ -356,3 +356,14 @@ body{padding:10px}
 .inventory-element-copy p strong,
 #upgrade .upgrade-card .detail strong{color:#f4d59d;font-weight:900}
 .inventory-stat strong{overflow-wrap:anywhere}
+
+/* v0.19 — optional Easy Mode offer after three consecutive early defeats. */
+.easy-offer{position:absolute;inset:0;z-index:55;display:grid;place-items:center;background:#060208ed;padding:18px;color:#ffe4ea;backdrop-filter:blur(6px)}
+.easy-offer.hidden{display:none!important}
+.easy-offer-panel{width:min(570px,100%);padding:26px 29px 28px;text-align:center;border:2px solid #a56b78;border-radius:18px;background:linear-gradient(160deg,#36152c,#160b18 70%);box-shadow:0 0 0 4px #120812,0 30px 80px #000c}
+.easy-offer h2{font:900 30px Georgia,serif;color:#ffcfdb;letter-spacing:.09em;margin:10px 0}
+.easy-offer p{color:#efd4de;line-height:1.5;font-size:14px}
+.easy-offer .easy-desc{color:#f6bcd0;font-size:12px}
+.easy-options{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;margin-top:17px}
+.easy-no{background:#15101b!important;color:#ead8e4!important}
+.run-mode{font-size:11px;font-weight:900;letter-spacing:.11em;color:#ffb4d4;margin:2px 0 6px}
