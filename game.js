@@ -1,4 +1,4 @@
-/* NOOB SURVIVORS — BLOOD MOON BUILD
+/* NOOB SURVIVORS — HUNTER'S NOCTURNE
    Dependency-free dark fantasy arena survival game.
    Internal canvas: 640 x 360. Round length: 3 minutes. */
 (() => {
@@ -15,7 +15,7 @@
     intro:$('intro'), upgrade:$('upgrade'), upgradeCards:$('upgradeCards'), end:$('endScreen'), pause:$('pauseOverlay'),
     start:$('startBtn'), restart:$('restartBtn'), resume:$('resumeBtn'), pauseBtn:$('pauseBtn'), hud:$('hud'),
     hp:$('hpFill'), hpText:$('hpText'), xp:$('xpFill'), level:$('levelText'), kills:$('killText'), time:$('timeText'),
-    sound:$('soundBtn'), music:$('musicSelect'), musicVolume:$('musicVolume'), sfxVolume:$('sfxVolume'),
+    sound:$('soundBtn'), musicVolume:$('musicVolume'), sfxVolume:$('sfxVolume'),
     musicVolumeValue:$('musicVolumeValue'), sfxVolumeValue:$('sfxVolumeValue'), xpStrip:$('xpStrip'),
     msg:$('message'), status:$('statusText'), portrait:$('portrait'),
     stick:$('stick'), pad:$('mobilePad')
@@ -36,19 +36,17 @@
   };
 
   const POWERS = [
-    {id:'damage',icon:'✦',name:'BLOOD EDGE',desc:'+30% damage',apply:p=>p.damage*=1.3},
+    {id:'damage',icon:'✦',name:'HUNTER\'S EDGE',desc:'+30% whip damage',apply:p=>p.damage*=1.3},
     {id:'speed',icon:'➤',name:'SHADOW FEET',desc:'+18% move speed',apply:p=>p.speed*=1.18},
-    {id:'rate',icon:'✧',name:'HEXED RHYTHM',desc:'+20% attack speed',apply:p=>p.attackRate*=1.2},
-    {id:'multi',icon:'✹',name:'TWIN CURSE',desc:'+1 projectile (max 5)',can:p=>p.multishot<5,apply:p=>p.multishot++},
+    {id:'rate',icon:'✧',name:'WHIP FRENZY',desc:'+20% attack speed',apply:p=>p.attackRate*=1.2},
+    {id:'multi',icon:'✹',name:'CHAIN FURY',desc:'+1 lash (max 5)',can:p=>p.multishot<5,apply:p=>p.multishot++},
     {id:'vitality',icon:'♥',name:'BLOOD PACT',desc:'+25 max health and heal',apply:p=>{p.maxHp+=25;p.hp=Math.min(p.maxHp,p.hp+40)}},
     {id:'magnet',icon:'◇',name:'SOUL THIEF',desc:'+50% pickup range',apply:p=>p.magnet*=1.5},
-    {id:'pierce',icon:'✴',name:'GHOST LANCE',desc:'Projectiles pierce +1 enemy',can:p=>p.pierce<3,apply:p=>p.pierce++},
+    {id:'pierce',icon:'✴',name:'RAZOR LINKS',desc:'Each lash hits +1 foe',can:p=>p.pierce<3,apply:p=>p.pierce++},
     {id:'restore',icon:'✚',name:'LAST BREATH',desc:'Recover 45 health',can:p=>p.hp<p.maxHp-15,apply:p=>p.hp=Math.min(p.maxHp,p.hp+45)}
   ];
 
   const MUSIC_TRACKS = {
-    creepy:{label:'Creepy',src:'https://opengameart.org/sites/default/files/CrEEP.mp3'},
-    battle:{label:'Battle Theme',src:'https://opengameart.org/sites/default/files/Battle.mp3'},
     caverns:{label:'Ancient Caverns',src:'https://opengameart.org/sites/default/files/caverns.ogg'}
   };
 
@@ -60,7 +58,7 @@
   const keys = new Set();
   let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 45, sfxVolume = 55, sfx = null;
   let touchVec = {x:0,y:0}, activePointer = null;
-  let musicPlayer = null, currentTrack = el.music.value;
+  let musicPlayer = null, currentTrack = 'caverns';
 
   function ensureMusicPlayer(){
     if (musicPlayer) return musicPlayer;
@@ -78,13 +76,13 @@
     if(muted || musicVolume === 0){ player.pause(); return; }
     player.play().catch(()=>{});
   }
-  function changeTrack(id){ currentTrack = id in MUSIC_TRACKS ? id : 'creepy'; syncMusic(); flashMessage(`♫ ${MUSIC_TRACKS[currentTrack].label}`, 1400); }
+  function changeTrack(id){ currentTrack = id in MUSIC_TRACKS ? id : 'caverns'; syncMusic(); }
 
   function startGame(){
     game = {
       time:0,
-      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1},
-      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25
+      player:{x:0,y:0,hp:100,maxHp:100,speed:113,damage:30,attackRate:1.55,multishot:1,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0},
+      enemies:[], shots:[], lashes:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], kills:0, spawn:.6, worldTime:0, upgradeChoices:[], nextNotice:25
     };
     state='playing';
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.upgrade.classList.add('hidden'); el.pause.classList.add('hidden');
@@ -133,7 +131,7 @@
       sfx ||= new (window.AudioContext||window.webkitAudioContext)();
       if(sfx.state==='suspended') sfx.resume();
       const o=sfx.createOscillator(), g=sfx.createGain(), now=sfx.currentTime;
-      const tone={shot:[470,260,.08,.03],hit:[96,45,.15,.065],pickup:[740,1100,.11,.045],level:[520,980,.45,.08],start:[180,390,.24,.05],hurt:[170,70,.2,.09],death:[300,55,.7,.065]}[kind]||[280,180,.1,.03];
+      const tone={shot:[280,105,.12,.053],hit:[96,45,.15,.065],pickup:[740,1100,.11,.045],level:[520,980,.45,.08],start:[180,390,.24,.05],hurt:[170,70,.2,.09],death:[300,55,.7,.065]}[kind]||[280,180,.1,.03];
       o.type = kind==='hit'||kind==='hurt' ? 'sawtooth' : 'triangle';
       o.frequency.setValueAtTime(tone[0],now); o.frequency.exponentialRampToValueAtTime(tone[1],now+tone[2]);
       g.gain.setValueAtTime(tone[3] * sfxVolume / 100,now); g.gain.exponentialRampToValueAtTime(.0001,now+tone[2]);
@@ -171,6 +169,12 @@
     $('endEyebrow').textContent = won ? 'THE DAWN REMEMBERS YOUR NAME' : 'THE NIGHT CLAIMS ANOTHER SOUL';
     $('endSub').textContent = won ? 'Daybreak came. You lived through another massacre.' : 'The horde still hungers...';
     $('finalTime').textContent = timeText(game.time); $('finalKills').textContent = game.kills; $('finalLevel').textContent = game.player.level;
+    const rank = game.kills >= 120 ? 'NIGHT REAPER' : game.kills >= 55 ? 'BLOOD HUNTER' : game.kills >= 20 ? 'CRYPT STALKER' : 'NOVICE HUNTER';
+    $('huntRank').textContent = won ? `DAWN SURVIVOR · ${rank}` : rank;
+    let best=game.kills;
+    try {best=Math.max(best,Number(localStorage.getItem('noob-survivors-best-kills')||0)||0);localStorage.setItem('noob-survivors-best-kills',String(best));} catch(_){}
+    $('bestKills').textContent = `BEST: ${best} KILLS`;
+    el.end.classList.toggle('victory',won);
     el.status.textContent = won ? 'HUNT COMPLETE' : 'HUNT FAILED'; playSound('death');
   }
   function togglePause(){
@@ -178,16 +182,48 @@
     else if(state==='paused'){ state='playing'; el.pause.classList.add('hidden'); el.status.textContent='HUNT IN PROGRESS'; }
   }
 
+  // Auto-targeted leather whip. This is a short-range sweeping melee weapon,
+  // not a projectile: it damages enemies in a cone and creates a visible lash.
   function shoot(){
-    const p=game.player; let target=null, best=390*390;
-    for(const e of game.enemies){ const d=dist2(e.x,e.y,p.x,p.y); if(d<best){ best=d; target=e; } }
-    if(!target) return;
-    const a=Math.atan2(target.y-p.y,target.x-p.x), count=p.multishot;
-    for(let i=0;i<count;i++){
-      const angle=a + (i - (count - 1) / 2) * .22;
-      game.shots.push({x:p.x+Math.cos(angle)*13,y:p.y+Math.sin(angle)*13,vx:Math.cos(angle)*270,vy:Math.sin(angle)*270,life:1.45,damage:p.damage,pierce:p.pierce,hit:new Set(),angle});
+    const p=game.player;
+    let target=null, best=130*130;
+    for(const e of game.enemies){
+      const d=dist2(e.x,e.y,p.x,p.y);
+      if(d<best){best=d;target=e;}
     }
-    addParticles(p.x+Math.cos(a)*12,p.y+Math.sin(a)*12,'#ff8da1',4,26,2,3); playSound('shot');
+    if(!target) return;
+    const aim=Math.atan2(target.y-p.y,target.x-p.x);
+    const count=p.multishot;
+    p.face=Math.cos(aim)<0?-1:1;
+    p.attackAnim=.27;
+    p.attackDir=aim;
+    const baseDmg=p.damage;
+    for(let i=0;i<count;i++){
+      const angle=aim+(i-(count-1)/2)*.29;
+      const range=112 + Math.min(2,p.pierce)*7;
+      game.lashes.push({x:p.x,y:p.y,angle,range,life:.29,max:.29,shift:i,hit:false});
+      const eligible=game.enemies.filter(e=>{
+        const dx=e.x-p.x,dy=e.y-p.y,dd=Math.hypot(dx,dy);
+        const diff=Math.atan2(Math.sin(Math.atan2(dy,dx)-angle),Math.cos(Math.atan2(dy,dx)-angle));
+        return dd<range+e.r && dd>5 && Math.abs(diff)<.36;
+      }).sort((a,b)=>dist2(a.x,a.y,p.x,p.y)-dist2(b.x,b.y,p.x,p.y));
+      // Cleave scales with RAZOR LINKS. Avoid stacking damage from
+      // overlapping lashes onto the same target in a single attack.
+      for(const e of eligible.slice(0,2+p.pierce)){
+        if(e.lastWhip===game.whipSequence) continue;
+        e.lastWhip=game.whipSequence;
+        e.hp-=baseDmg; e.hit=.17;
+        const hx=e.x+Math.cos(angle)*2,hy=e.y+Math.sin(angle)*2;
+        addParticles(hx,hy,'#ffb47c',4,65,2,3);
+        floatText(e.x,e.y-20,String(Math.ceil(baseDmg)),'#ffe3cb');
+        if(e.hp<=0) enemyDie(e);
+        else {addBloodBurst(hx,hy,8,ENEMIES[e.type].blood);addImpact(hx,hy,14,'#e7ab88');}
+        shake=Math.max(shake,2.3);
+      }
+    }
+    if(game.lashes.length>24) game.lashes.splice(0,game.lashes.length-24);
+    addParticles(p.x+Math.cos(aim)*14,p.y+Math.sin(aim)*14,'#f0bb89',5,22,2,3);
+    playSound('shot');
   }
 
   function enemyDie(e){
@@ -229,10 +265,10 @@
 
     let mx=Number(keys.has('d')||keys.has('arrowright')) - Number(keys.has('a')||keys.has('arrowleft')) + touchVec.x;
     let my=Number(keys.has('s')||keys.has('arrowdown')) - Number(keys.has('w')||keys.has('arrowup')) + touchVec.y;
-    const mag=Math.hypot(mx,my); if(mag>0){ mx/=mag; my/=mag; p.x+=mx*p.speed*dt; p.y+=my*p.speed*dt; p.walk+=dt*11; p.face=mx<-.05?-1:mx>.05?1:p.face; }
+    const mag=Math.hypot(mx,my); p.moving=mag>.02; if(mag>0){ mx/=mag; my/=mag; p.x+=mx*p.speed*dt; p.y+=my*p.speed*dt; p.walk+=dt*11; p.face=mx<-.05?-1:mx>.05?1:p.face; }
 
-    p.shotCd -= dt; p.hitCd = Math.max(0,p.hitCd-dt);
-    if(p.shotCd<=0){ shoot(); p.shotCd = 1/p.attackRate; }
+    p.shotCd -= dt; p.hitCd = Math.max(0,p.hitCd-dt); p.attackAnim=Math.max(0,p.attackAnim-dt);
+    if(p.shotCd<=0){ g.whipSequence=(g.whipSequence||0)+1; shoot(); p.shotCd = 1/p.attackRate; }
 
     g.spawn -= dt;
     if(g.spawn<=0){
@@ -258,19 +294,15 @@
     for(let i=g.shots.length-1;i>=0;i--){
       const b=g.shots[i]; b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt;
       if(b.life<=0){ g.shots.splice(i,1); continue; }
-      if(b.hostile){
-        if(dist2(b.x,b.y,p.x,p.y)<12*12 && p.hitCd<=0){ p.hp=Math.max(0,p.hp-b.damage); p.hitCd=.65; shake=5; flash=.2; addBloodBurst(p.x,p.y,7,'#9c1832'); g.shots.splice(i,1); if(p.hp<=0){ die(false); return; } }
-        continue;
+      if(dist2(b.x,b.y,p.x,p.y)<12*12 && p.hitCd<=0){
+        p.hp=Math.max(0,p.hp-b.damage);p.hitCd=.65;shake=5;flash=.2;
+        addBloodBurst(p.x,p.y,7,'#9c1832');g.shots.splice(i,1);
+        if(p.hp<=0){die(false);return;}
       }
-      let consumed=false;
-      for(const e of g.enemies.slice()){
-        if(!b.hit.has(e) && dist2(b.x,b.y,e.x,e.y-4)<(e.r+4)**2){
-          b.hit.add(e); e.hp-=b.damage; e.hit=.15; addParticles(b.x,b.y,'#ff8ea2',5,55,2,3); floatText(e.x,e.y-20,String(Math.ceil(b.damage)),'#ffe0cf');
-          if(e.hp<=0) enemyDie(e); else {addBloodBurst(e.x,e.y,5,ENEMIES[e.type].blood);addImpact(b.x,b.y,11,'#ec6984');}
-          if(b.pierce<=0){ g.shots.splice(i,1); consumed=true; break; } b.pierce--;
-        }
-      }
-      if(consumed) continue;
+    }
+    for(let i=g.lashes.length-1;i>=0;i--){
+      g.lashes[i].life-=dt;
+      if(g.lashes[i].life<=0)g.lashes.splice(i,1);
     }
 
     for(let i=g.drops.length-1;i>=0;i--){
@@ -408,7 +440,9 @@
     shadowAt(x,y+11,19,.52);
     ctx.save(); ctx.translate(Math.round(x),Math.round(y+Math.sin(p.walk)*1)); ctx.scale(p.face,1);
     if(p.hitCd>0 && Math.floor(p.hitCd*13)%2===0) ctx.globalAlpha=.55;
-    ctx.drawImage(sprite('hero',Math.floor(p.walk*1.2)%2),-20,-32,40,47); ctx.restore();
+    const walking = Math.sin(p.walk)>0 ? 1 : 2;
+    const pose = p.attackAnim>0 ? (p.attackAnim>.14 ? 3 : 4) : (p.moving ? walking : 0);
+    ctx.drawImage(sprite('hero',pose),-20,-32,40,47); ctx.restore();
     for(let i=0;i<3;i++){ const a=t*1.8+i*TAU/3; ctx.fillStyle=i===0?'#ffc7d2':'#f1607f'; ctx.fillRect(Math.round(x+Math.cos(a)*20),Math.round(y-8+Math.sin(a)*11),2,2); }
   }
   function drawEnemy(e,camX,camY,t){
@@ -423,10 +457,45 @@
     if(e.hit>0){ ctx.fillStyle='#45111d'; ctx.fillRect(x-12,y-29,24,3); ctx.fillStyle='#d8506d'; ctx.fillRect(x-12,y-29,24*e.hp/e.maxHp,3); }
   }
   function drawShots(camX,camY){
-    for(const b of game.shots){ const x=b.x-camX, y=b.y-camY; ctx.save(); ctx.translate(x,y); ctx.rotate(b.angle);
-      if(b.hostile){ ctx.fillStyle='#7d233840'; ctx.fillRect(-12,-7,23,14); ctx.fillStyle='#a02f4b'; ctx.fillRect(-5,-3,11,6); ctx.fillStyle='#ffc1cd'; ctx.fillRect(-2,-2,5,4); }
-      else{ ctx.fillStyle='#ee567140'; ctx.fillRect(-10,-6,21,12); ctx.fillStyle='#7d2838'; ctx.fillRect(-10,-3,13,6); ctx.fillStyle='#f9b8bf'; ctx.fillRect(-5,-2,15,4); ctx.fillStyle='#fff3da'; ctx.fillRect(2,-1,7,2); }
-      ctx.restore(); }
+    // Cultists retain their hostile spell bolts; the hunter fires none.
+    for(const b of game.shots){
+      const x=b.x-camX,y=b.y-camY;
+      ctx.save();ctx.translate(x,y);ctx.rotate(b.angle);
+      ctx.fillStyle='#7d233840';ctx.fillRect(-12,-7,23,14);
+      ctx.fillStyle='#a02f4b';ctx.fillRect(-5,-3,11,6);
+      ctx.fillStyle='#ffc1cd';ctx.fillRect(-2,-2,5,4);
+      ctx.restore();
+    }
+  }
+  function drawLashes(camX,camY){
+    for(const lash of game.lashes){
+      const progress=1-lash.life/lash.max;
+      const extension=Math.sin(Math.min(progress,1)*Math.PI*.85);
+      const range=lash.range*extension;
+      if(range<2)continue;
+      const x=lash.x-camX,y=lash.y-camY-8,a=lash.angle;
+      const endX=x+Math.cos(a)*range,endY=y+Math.sin(a)*range;
+      const ctrlX=x+Math.cos(a)*range*.47-Math.sin(a)*range*.21;
+      const ctrlY=y+Math.sin(a)*range*.47+Math.cos(a)*range*.21;
+      ctx.save();ctx.globalAlpha=Math.min(1,lash.life/.10);
+      ctx.lineCap='round';ctx.lineJoin='round';
+      ctx.strokeStyle='rgba(255,156,111,.20)';ctx.lineWidth=8;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(ctrlX,ctrlY,endX,endY);ctx.stroke();
+      ctx.strokeStyle='#372128';ctx.lineWidth=5;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(ctrlX,ctrlY,endX,endY);ctx.stroke();
+      ctx.strokeStyle='#ca9871';ctx.lineWidth=2.3;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(ctrlX,ctrlY,endX,endY);ctx.stroke();
+      for(let j=1;j<=5;j++){
+        const u=j/6,omt=1-u;
+        const px=omt*omt*x+2*omt*u*ctrlX+u*u*endX;
+        const py=omt*omt*y+2*omt*u*ctrlY+u*u*endY;
+        ctx.fillStyle=j%2?'#f0be85':'#4a2622';
+        ctx.beginPath();ctx.arc(px,py,1.6,0,TAU);ctx.fill();
+      }
+      ctx.shadowColor='#ffd3a2';ctx.shadowBlur=10;
+      ctx.fillStyle='#fff4d4';ctx.beginPath();ctx.arc(endX,endY,3,0,TAU);ctx.fill();
+      ctx.restore();
+    }
   }
   function drawDrops(camX,camY){
     for(const d of game.drops){ const x=Math.round(d.x-camX), y=Math.round(d.y-camY+Math.sin(d.phase)*2); ctx.fillStyle='#f9639a22'; ctx.fillRect(x-7,y-9,14,17); ctx.fillStyle='#8d234a'; ctx.fillRect(x-4,y-5,8,9); ctx.fillStyle='#ff89bb'; ctx.fillRect(x-2,y-8,4,11); ctx.fillStyle='#fff0fb'; ctx.fillRect(x-1,y-5,2,5); }
@@ -449,7 +518,7 @@
       drawDrops(camX,camY,t);
       const objects=[...game.enemies.map(e=>({y:e.y,e})),{y:p.y,p}]; objects.sort((a,b)=>a.y-b.y);
       for(const item of objects){ if(item.e) drawEnemy(item.e,camX,camY,t); else drawPlayer(p,camX,camY,t); }
-      drawShots(camX,camY,t); drawImpacts(camX,camY); drawFx(camX,camY);
+      drawShots(camX,camY,t); drawLashes(camX,camY); drawImpacts(camX,camY); drawFx(camX,camY);
     } else {
       shadowAt(W/2,H/2+55,22,.5); ctx.drawImage(sprite('hero'),W/2-29,H/2-22,58,70);
     }
@@ -484,18 +553,18 @@
     el.sfxVolumeValue.textContent=`${sfxVolume}%`;
   }
   function rememberAudio(){
-    try { localStorage.setItem('noob-survivors-audio-v04',JSON.stringify({muted,musicVolume,sfxVolume,currentTrack})); } catch(_){}
+    try { localStorage.setItem('noob-survivors-audio-v05',JSON.stringify({muted,musicVolume,sfxVolume})); } catch(_){}
   }
   try {
-    const saved=JSON.parse(localStorage.getItem('noob-survivors-audio-v04') || 'null');
+    const saved=JSON.parse(localStorage.getItem('noob-survivors-audio-v05') || 'null');
     if(saved && typeof saved==='object'){
       muted=Boolean(saved.muted);
       if(Number.isFinite(saved.musicVolume)) musicVolume=clamp(Math.round(saved.musicVolume),0,100);
       if(Number.isFinite(saved.sfxVolume)) sfxVolume=clamp(Math.round(saved.sfxVolume),0,100);
-      if(saved.currentTrack in MUSIC_TRACKS){ currentTrack=saved.currentTrack; el.music.value=currentTrack; }
     }
   }catch(_){}
   updateAudioUI();
+  changeTrack('caverns');
   el.sound.addEventListener('click',()=>{
     muted=!muted; updateAudioUI(); rememberAudio();
     if(muted) ensureMusicPlayer().pause();
@@ -508,7 +577,6 @@
   el.sfxVolume.addEventListener('input',()=>{
     sfxVolume=clamp(Number(el.sfxVolume.value),0,100); updateAudioUI(); rememberAudio();
   });
-  el.music.addEventListener('change',e=>{changeTrack(e.target.value); rememberAudio();});
 
   const frame=$('frame'); let origin=null;
   frame.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'||state!=='playing'||e.target.closest('button')||e.target.closest('select')||e.target.closest('label')) return; if(e.clientX>frame.getBoundingClientRect().left+frame.clientWidth*.66) return; activePointer=e.pointerId; origin={x:e.clientX,y:e.clientY}; try{ frame.setPointerCapture(e.pointerId); }catch(_){} moveStick(e); });

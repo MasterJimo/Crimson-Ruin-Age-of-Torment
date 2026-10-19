@@ -9,17 +9,47 @@
     const p = (color, a,b,w=1,h=1) => { x.fillStyle=color; x.fillRect(a,b,w,h); };
 
     if (kind==='hero') {
-      p('#140d11',7,3,10,3); p('#0b0608',6,6,12,7); p('#22161c',5,9,14,12);
-      p('#2c1d24',7,3,9,3); p('#341f29',6,6,3,9); p('#4b2b36',7,8,2,6);
-      p('#080608',9,8,8,7); p('#ff8997',10,11,2,2); p('#ff8997',15,11,2,2);
-      p('#ffd6de',10,11,1); p('#ffd6de',15,11,1);
-      p('#1a0f15',6,15,12,9); p('#472330',7,14,3,7); p('#2b1820',10,14,7,9);
-      p('#7d4650',8,18,10,2); p('#e4ad93',14,18,2,2); p('#0d080a',8,23,4,3); p('#0d080a',14,23,4,3);
-      p('#8b4e5a',9,24,2,1); p('#8b4e5a',15,24,2,1);
-      p('#120a0f',4,15,3,7); p('#8e7278',4,20,2,3); p('#171014',18,14,3,8);
-      p('#e0c09d',19,18,2,3); p('#af8d6a',20,10,1,8); p('#65404e',19,8,3,4);
-      p('#d99fb0',20,7,1,2); p('#fff0f5',20,6,1,1);
-      if(frame===1){p('#251419',7,24,3,2); p('#723846',16,24,2,2);}
+      // Original gothic whip hunter: flowing auburn hair, crimson scarf,
+      // plated leather coat, brass buckle and an articulated whip grip.
+      const stride = frame===1 ? -2 : frame===2 ? 2 : 0;
+      const striking = frame>=3;
+      // Split coat tails; movement and attack have distinct silhouettes.
+      p('#160d14',6,17,12,10);
+      p('#2a1720',5+(stride>0?1:0),19,6,7);
+      p('#3c1e29',13+(stride<0?-1:0),19,6,7);
+      p('#6c2b3b',7,20,2,5); p('#9f4352',16,19,2,5);
+      p('#160c10',7+stride,24,4,4); p('#160c10',14-stride,24,4,4);
+      p('#bd986c',8+stride,26,3,1); p('#bd986c',15-stride,26,3,1);
+      // Broad shoulder cape and fitted midnight coat.
+      p('#180f16',5,12,14,10);
+      p('#562331',6,13,5,11);p('#341721',12,13,6,10);
+      p('#812b3b',7,14,3,8);p('#ad4050',7,14,2,6);
+      p('#9e7c58',10,16,7,2);p('#d5b482',13,16,3,2);
+      p('#321d23',11,18,4,5);p('#f0cc92',12,17,2,2);
+      // Pale face, determined expression and windswept hair.
+      p('#2e181d',7,3,11,11);p('#5a312c',7,1,10,9);
+      p('#875443',8,2,8,4);p('#be7a54',9,3,5,2);
+      p('#e2b28d',10,8,6,5);p('#ffdbaf',11,8,4,3);
+      p('#291b1d',11,10,2,1);p('#291b1d',15,10,1,1);
+      p('#a16461',12,12,3,1);
+      // Whipping hair strands change between strides.
+      p('#5d352a',6,6,3,9);p('#91583b',7,6,2,7);
+      if(frame===1){p('#5e332d',5,9,2,8);p('#a46b46',6,7,2,4);}
+      if(frame===2){p('#6a3932',5,8,3,9);p('#a36a49',7,8,2,5);}
+      // Brass clasp and wine-red scarf flutter.
+      p('#b7384d',7,13,8,3);p('#f0787b',8,13,6,1);
+      if(striking){p('#b7384d',4,14,4,2);p('#8e283e',2,15,4,2);}
+      else if(frame===1){p('#a92e43',4,15,4,2);}
+      else if(frame===2){p('#a92e43',3,13,5,2);}
+      // Leather bracer and whip arm: raised on attack frame.
+      p('#27171e',3,14,4,7);p('#be9975',4,19,3,3);
+      if(striking){
+        p('#a98b6d',18,9,4,3);p('#27171e',18,11,4,4);
+        p('#e0c188',20,7,2,4);p('#8b6748',21,5,2,3);
+      }else{
+        p('#28171e',18,14,4,6);p('#ba9875',19,18,3,3);
+        p('#d6ae76',21,17,2,4);p('#775333',21,12,2,6);
+      }
     }
     if(kind==='skeleton') {
       p('#1b1111',7,4,11,11); p('#c7baa1',8,3,10,10); p('#f1e5c8',9,4,8,7);
