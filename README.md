@@ -6,7 +6,7 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)** · [GitHub repository](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment)
 
-## Current gameplay — v0.21
+## Current gameplay — v0.22
 
 Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
@@ -17,11 +17,11 @@ Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the R
 | **Lightning** | **Random 10–100** per projectile | **50%** Shock chance for **4 seconds**. Direct hits against shocked enemies deal **×2** damage; a Chain Lightning can damage another nearby target **only after an appropriate upgrade** (no free chain at level 1). |
 | **Poison** | **0** | Every hit adds a **permanent, unlimited 13 DPS stack** (= 104 damage every 8 seconds). Each hit adds another stack; they never expire while the enemy lives. |
 
-### Hemorrhagic Burst — legendary Blood perk (5%)
+### Hemorrhagic Burst — unique Blood perk (5% appearance)
 
-**Hemorrhagic Burst appears with an independent 5% chance per complete four-card level-up offer, including Rerolls.** Only Blood players can roll it, and the perk appears at most once per run after acquisition. When selected, **every subsequent Blood hit instantly produces eight Bleed stacks and detonates all eight** in a short-range explosion for their full combined base damage. A 20-damage Blood hit therefore also causes an **80-damage AoE burst** (eight stacks × 50% of 20) before crits or other damage modifiers. The stacks are consumed immediately and do not keep ticking. Existing Bleed stacks on that target are replaced; the burst does not apply new Bleed to nearby targets.
+**Hemorrhagic Burst appears with an independent 5% chance per complete four-card level-up offer, including Rerolls.** Only Blood players can roll it, and the perk appears at most once per run after acquisition. When selected, **every subsequent Blood hit instantly produces eight Bleed stacks and detonates all eight** in a short-range explosion for their full combined base damage. A 20-damage Blood hit therefore causes an **80-damage base AoE burst** (eight stacks × 50% of 20); rarity upgrades its burst potency before other modifiers. The stacks are consumed immediately and do not keep ticking. Existing Bleed stacks on that target are replaced; the burst does not apply new Bleed to nearby targets.
 
-Power upgrades remain useful: **Blood Power** increases the direct hit and resulting Bleed damage by 25% per rank; **Fire Power** boosts its direct hit by 25% and Burn potency by 20%; **Lightning Power** boosts its random hit range by 25% and chain chance by 10 percentage points; **Poison Power** increases the base Poison stack DPS by an additive 20% per rank; this updates both active and future stacks. Normal global perks, projectile modifiers and critical hits still work as documented in game.
+**Element Power** perks scale according to the rarity of the specific card picked. At **Common / Magic / Rare / Legendary / Mythic** respectively: Blood and Fire increase their direct hit by **+10% / +20% / +40% / +80% / +160%**, Lightning similarly boosts its random hit range, and Poison increases its base stack DPS by **+5% / +10% / +20% / +40% / +80%** (additive across picks, updating existing and new stacks). Fire Power also scales Burn potency; Lightning Power increases chain chance. Element upgrade rank still controls special attack unlocks. Hemorrhagic Burst retains its separate 5% appearance chance but also receives a rolled rarity for its burst strength. Normal perks, projectile modifiers and critical hits continue to work as documented in game.
 
 ### Life Shrines and rare Magnet Shrines
 
@@ -32,11 +32,10 @@ Two separated **Life Shrines** spawn at the start, with more appearing roughly e
 ## Desktop controls
 
 - **WASD / arrow keys** — movement; attacks fire automatically.
-- **P / Escape** — pause/resume.
-- **O** — open/close the Power-Up Grimoire; Escape closes it too.
+- **P / O** — pause the game and open the **Power-Up Grimoire**; P, O or Escape closes it and resumes. Clicking the chest does the same.
 - **After your first death before 05:00**, the scoreboard offers **Easy Mode: YES / NO** beside **New Game**. YES immediately starts the next run in Easy Mode; NO immediately starts a normal run. New Game also starts normal mode. The choice applies **only to that next run**, not future runs.
 - **1–4** — initial element and level-up upgrade (four cards: Attack, Defense, two Random); **R** — reroll; **B** — banish.
-- Click the small **chest at the lower-left of the arena** to access the grimoire. The redundant on-screen Pause button was removed.
+- Click the **chest in the upper-left toolbar**, opposite the MUSIC / SFX / MUTE audio controls, to pause and open the Grimoire.
 
 ## Run and deploy
 
@@ -49,6 +48,16 @@ Art includes the supplied Veilwarden, arena, fountain, RPG icons, new Death boss
 ---
 
 ## Patch notes — newest first
+
+### v0.22 — Five rarity variants, shared pause/Grimoire, speed cap
+- Moved the inventory chest from the game arena's bottom-left to the **upper-left toolbar**, opposite audio controls.
+- **P and O are equivalent:** either pauses the hunt and opens the Grimoire. P/O/Escape or closing the Grimoire resumes. Switching away from the game also pauses and opens it, without stealing focus.
+- Each of the four level-up cards **independently rolls a rarity**, with color-coded borders: **Common** (white, 54%), **Magic** (light blue, 25%), **Rare** (yellow, 15%), **Legendary** (dark bronze, 5%), **Mythic** (bright glowing violet, **1%**). Rerolls use the same odds.
+- Every regular power-up now has an effect that scales with its selected rarity (multipliers 1× / 2× / 4× / 8× / 16× for baseline effects), with separate calculations for projectile perks and capped stats. The four-slot guarantee (Attack, Defense, two Random) remains.
+- **Shadow Stride** grants +5% / +10% / +20% / +40% / +80% of **base movement speed (100)** by rarity, **additively** and with a hard final cap of **200 speed**. Once capped, Shadow Stride is removed from the eligible level-up pool.
+- **Hemorrhagic Burst** remains Blood-only, with an **independent 5% appearance chance per complete four-card roll**; when offered it also rolls a rarity, affecting burst damage.
+- Inventory and final results now record the actual rarity of each power-up earned, including repeated selections of the same upgrade.
+
 
 ### v0.21 — Four upgrade choices, ribbon polish and one-screen end results
 - Every level-up and reroll now offers **four unique powers**: guaranteed **ATTACK**, guaranteed **DEFENSE**, then **two RNG** choices. Reroll and Banish preserve the offensive and defensive categories. Blood's legendary Hemorrhagic Burst retains one 5% chance per whole offer.

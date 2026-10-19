@@ -58,26 +58,60 @@
   // v0.13: sixteen curated perks. Twelve are universal and four are
   // element-specific; only the power corresponding to the chosen element rolls.
   // Descriptions match the exact mechanic rather than promising an unrelated stat.
+  // Rarity is rolled for EACH offered perk, not permanently assigned per perk.
+  // The fifth (Mythic) band covers exactly 1% of normal RNG draws.
+  const RARITY_TIERS=['common','magic','rare','legendary','mythic'];
+  const RARITY_SCALE={common:1,magic:2,rare:4,legendary:8,mythic:16};
+  function rollRarity(){
+    const r=Math.random();
+    return r<.54?'common':r<.79?'magic':r<.94?'rare':r<.99?'legendary':'mythic';
+  }
+  function rarityScale(tier){return RARITY_SCALE[tier]||1;}
+  function shotBonus(scale){return scale>=16?3:scale>=8?2:1;}
+  function spreadBonus(scale){return scale>=8?2:1;}
+  function perkDescription(id,tier){
+    const u=rarityScale(tier),percent=n=>Math.round(n*100)+'%';
+    switch(id){
+      case 'brutality':return '+'+(5*u)+' flat direct damage (Blood / Fire / Lightning).';
+      case 'rapid_fire':return '+'+(6*u)+'% attack speed.';
+      case 'movement':return '+'+(5*u)+'% BASE movement speed · hard cap 200.';
+      case 'vitality':return '+'+(10*u)+' maximum HP and heal '+(10*u)+' HP.';
+      case 'regen':return '+'+(0.1*u).toFixed(2)+' HP each second.';
+      case 'armor':return 'Reduce incoming damage by '+Math.min(75,3*u)+'% (max 75% total armor).';
+      case 'knowledge':return '+'+(8*u)+'% XP from crystals.';
+      case 'magnet':return '+'+(10*u)+'% crystal pickup radius.';
+      case 'forward':return '+'+shotBonus(u)+' parallel projectile(s) (max 3 extra).';
+      case 'spread':return '+'+(2*spreadBonus(u))+' angled projectile(s) (max 4 extra).';
+      case 'pierce':return '+'+shotBonus(u)+' extra pierce (max 4).';
+      case 'crit':return '+'+(3*u)+'% critical chance (max 75%).';
+      case 'blood_power':return '+'+(10*u)+'% Blood hit and Bleed damage. Unlocks at element ranks 2–4.';
+      case 'hemorrhagic_burst':return '8-stack Blood detonation on every hit · +'+(10*(u-1))+'% burst potency.';
+      case 'fire_power':return '+'+(10*u)+'% Fire hit, +'+(6*u)+'% Burn strength.';
+      case 'lightning_power':return '+'+(10*u)+'% Lightning hit, +'+(3*u)+'% Chain chance.';
+      case 'poison_power':return '+'+(5*u)+'% of BASE 13 DPS to all permanent Poison stacks.';
+      default:return '';
+    }
+  }
   const POWERS = [
-    {id:'brutality',icon:'brutality',name:'BRUTALITY',desc:'+5 flat direct damage (Blood / Fire / Lightning only).',tier:'common',can:p=>p.element!=='poison',apply:p=>p.flatDamage+=5},
-    {id:'rapid_fire',icon:'rapid_fire',name:'RAPID FIRE',desc:'+18% attack speed.',tier:'common',apply:p=>p.attackRate*=1.18},
-    {id:'movement',icon:'movement',name:'SHADOW STRIDE',desc:'+16% movement speed.',tier:'common',apply:p=>p.speed*=1.16},
-    {id:'vitality',icon:'vitality',name:'VITALITY',desc:'+25 maximum HP. Heal 25 HP.',tier:'common',apply:p=>{p.maxHp+=25;const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+25);game.totalHealing+=p.hp-before}},
-    {id:'regen',icon:'regen',name:'REGENERATION',desc:'Recover 1 HP every 4 seconds.',tier:'common',can:p=>p.regen<1.5,apply:p=>p.regen+=.25},
-    {id:'armor',icon:'armor',name:'IRON WILL',desc:'Take 10% less incoming damage.',tier:'rare',can:p=>p.armor<.50,apply:p=>p.armor=1-(1-p.armor)*.90},
-    {id:'knowledge',icon:'knowledge',name:'FORBIDDEN KNOWLEDGE',desc:'+25% XP from blue crystals.',tier:'rare',apply:p=>p.xpBonus*=1.25},
-    {id:'magnet',icon:'magnet',name:'SOUL MAGNET',desc:'+40% crystal pickup range.',tier:'common',apply:p=>p.magnet*=1.4},
-    {id:'forward',icon:'forward',name:'FORWARD SHOT',desc:'+1 parallel projectile in the same direction.',tier:'rare',can:p=>p.forwardShots<3,apply:p=>p.forwardShots++},
-    {id:'spread',icon:'spread',name:'SPREAD SHOT',desc:'+2 projectiles angled outward.',tier:'rare',can:p=>p.spreadShots<2,apply:p=>p.spreadShots++},
-    {id:'pierce',icon:'pierce',name:'PIERCING FANGS',desc:'Each projectile pierces +1 enemy.',tier:'rare',can:p=>p.pierce<4,apply:p=>p.pierce++},
-    {id:'crit',icon:'crit',name:'DEADLY PRECISION',desc:'+12% critical hit chance.',tier:'rare',can:p=>p.critChance<.60,apply:p=>p.critChance+=.12},
-    {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',desc:'+25% Blood hit and Bleed damage. Unlock Lance and Orb.',tier:'rare',can:p=>p.element==='blood'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;if(p.elementRank===2)p.bloodLance++;if(p.elementRank===3)p.bloodOrbChance+=.20;if(p.elementRank===4)p.bloodSplashChance+=.20;}},
-    {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC BURST',desc:'Every Blood hit immediately detonates 8 Bleed stacks. Only 5% chance to appear!',tier:'legendary',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:p=>{p.hemorrhagicBurst=true;}},
-    {id:'fire_power',icon:'fire_power',name:'FIRE POWER',desc:'+25% Fire direct damage and +20% Burn potency.',tier:'rare',can:p=>p.element==='fire'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.burnMultiplier*=1.2;}},
-    {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',desc:'+25% Lightning hit range and +10% chain chance.',tier:'rare',can:p=>p.element==='lightning'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.stormBonus+=.10;}},
-    {id:'poison_power',icon:'poison_power',name:'POISON POWER',desc:'+20% base Poison DPS per rank. Improves all Poison stacks.',tier:'rare',can:p=>p.element==='poison'&&p.elementRank<5,apply:p=>{
-      p.elementRank++;p.poisonMultiplier=1+.20*p.elementRank;
-      for(const e of game.enemies)if(e.poisonStacks>0)e.poisonDps=e.poisonStacks*13*p.poisonMultiplier;
+    {id:'brutality',icon:'brutality',name:'BRUTALITY',can:p=>p.element!=='poison',apply:(p,g,u)=>p.flatDamage+=5*u},
+    {id:'rapid_fire',icon:'rapid_fire',name:'RAPID FIRE',apply:(p,g,u)=>p.attackRate*=1+.06*u},
+    {id:'movement',icon:'movement',name:'SHADOW STRIDE',can:p=>p.speed<200,apply:(p,g,u)=>{p.speed=Math.min(200,p.speed+100*.05*u);}},
+    {id:'vitality',icon:'vitality',name:'VITALITY',apply:(p,g,u)=>{const amount=10*u;p.maxHp+=amount;const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+amount);g.totalHealing+=p.hp-before;}},
+    {id:'regen',icon:'regen',name:'REGENERATION',can:p=>p.regen<2,apply:(p,g,u)=>{p.regen=Math.min(2,p.regen+.1*u);}},
+    {id:'armor',icon:'armor',name:'IRON WILL',can:p=>p.armor<.75,apply:(p,g,u)=>{const reduction=Math.min(.75,.03*u);p.armor=Math.min(.75,1-(1-p.armor)*(1-reduction));}},
+    {id:'knowledge',icon:'knowledge',name:'FORBIDDEN KNOWLEDGE',apply:(p,g,u)=>p.xpBonus*=1+.08*u},
+    {id:'magnet',icon:'magnet',name:'SOUL MAGNET',apply:(p,g,u)=>p.magnet*=1+.1*u},
+    {id:'forward',icon:'forward',name:'FORWARD SHOT',can:p=>p.forwardShots<3,apply:(p,g,u)=>p.forwardShots=Math.min(3,p.forwardShots+shotBonus(u))},
+    {id:'spread',icon:'spread',name:'SPREAD SHOT',can:p=>p.spreadShots<2,apply:(p,g,u)=>p.spreadShots=Math.min(2,p.spreadShots+spreadBonus(u))},
+    {id:'pierce',icon:'pierce',name:'PIERCING FANGS',can:p=>p.pierce<4,apply:(p,g,u)=>p.pierce=Math.min(4,p.pierce+shotBonus(u))},
+    {id:'crit',icon:'crit',name:'DEADLY PRECISION',can:p=>p.critChance<.75,apply:(p,g,u)=>p.critChance=Math.min(.75,p.critChance+.03*u)},
+    {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',can:p=>p.element==='blood'&&p.elementRank<5,apply:(p,g,u)=>{p.elementRank++;p.damage*=1+.10*u;if(p.elementRank===2)p.bloodLance++;if(p.elementRank===3)p.bloodOrbChance+=.20;if(p.elementRank===4)p.bloodSplashChance+=.20;}},
+    {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC BURST',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:(p,g,u)=>{p.hemorrhagicBurst=true;p.hemorrhagicBurstBoost=1+.1*(u-1);}},
+    {id:'fire_power',icon:'fire_power',name:'FIRE POWER',can:p=>p.element==='fire'&&p.elementRank<5,apply:(p,g,u)=>{p.elementRank++;p.damage*=1+.10*u;p.burnMultiplier*=1+.06*u;}},
+    {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',can:p=>p.element==='lightning'&&p.elementRank<5,apply:(p,g,u)=>{p.elementRank++;p.damage*=1+.10*u;p.stormBonus=Math.min(.95,p.stormBonus+.03*u);}},
+    {id:'poison_power',icon:'poison_power',name:'POISON POWER',can:p=>p.element==='poison'&&p.elementRank<5,apply:(p,g,u)=>{
+      p.elementRank++;p.poisonPowerUnits+=u;p.poisonMultiplier=1+.05*p.poisonPowerUnits;
+      for(const e of g.enemies)if(e.poisonStacks>0)e.poisonDps=e.poisonStacks*13*p.poisonMultiplier;
     }}
   ];
 
@@ -181,8 +215,8 @@
   function startGame(easyMode=false){
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,
-      perkRanks:Object.create(null),perkOrder:[],
-      player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
+      perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
+      player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1.55,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,burnMultiplier:1,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:rand(240,360), kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:2,banishes:2,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
@@ -478,6 +512,10 @@
   const DEFENSE_POWER_IDS=new Set(["movement","vitality","regen","armor"]);
   // Four unique cards: guaranteed offensive, guaranteed defensive, 2 RNG.
   // Legendary Blood is rolled separately at 5% per entire offering.
+  function withRarity(perk){
+    const tier=rollRarity();
+    return {...perk,tier,desc:perkDescription(perk.id,tier)};
+  }
   function rollChoices(previous=[]){
     const eligible=eligiblePowers();
     const legendary=eligible.find(p=>p.id==='hemorrhagic_burst');
@@ -498,7 +536,7 @@
     }
     const random1=pick(pool),random2=pick(pool);
     if(!damage||!defense||!random1||!random2)throw new Error('Cannot build four-card offer.');
-    return [damage,defense,random1,random2];
+    return [damage,defense,random1,random2].map(withRarity);
   }
   function renderUpgrade(){
     const g=game;
@@ -518,7 +556,7 @@
     el.perkNotice.textContent=choosingElement?'SELECT ONE TO BEGIN YOUR HUNT':g.banishMode?'SELECT A CARD TO BANISH · CLICK BANISH TO CANCEL':'CHOOSE AN UPGRADE · R TO REROLL · B TO BANISH';
     el.upgrade.querySelector('h2').textContent=choosingElement?'CHOOSE YOUR ELEMENT':'NEW POWER';
     el.upgrade.querySelector('.overlay-sub').textContent=choosingElement?'Your starting weapon · You can upgrade it as you survive':'Choose one upgrade';
-    el.upgrade.querySelector('.card-hint').textContent=choosingElement?'Choose 1–4 to start the hunt':'Pick 1–3 · R to reroll · B to banish';
+    el.upgrade.querySelector('.card-hint').textContent=choosingElement?'Choose 1–4 to start the hunt':'Pick 1–4 · ATTACK / DEFENSE / 2 RANDOM · R / B';
   }
   function openUpgrade(){
     game.banishMode=false;
@@ -564,12 +602,14 @@
       game.upgradeChoices=rollChoices(game.upgradeChoices.map(p=>p.id));
       renderUpgrade();playSound('hit');return;
     }
-    choice.apply(game.player,game);
+    const magnitude=rarityScale(choice.tier);
+    choice.apply(game.player,game,magnitude);
     if(!game.perkRanks[choice.id])game.perkOrder.push(choice.id);
     game.perkRanks[choice.id]=(game.perkRanks[choice.id]||0)+1;
+    (game.perkTiers[choice.id]||(game.perkTiers[choice.id]=[])).push(choice.tier);
     addParticles(game.player.x,game.player.y,'#ff8ba0',28,105,2,4);
     state='playing';el.upgrade.classList.add('hidden');el.status.textContent='HUNT IN PROGRESS';
-    flashMessage(`✦ ${choice.name}`,1800);
+    flashMessage(`✦ ${choice.tier.toUpperCase()} ${choice.name}`,1800);
     // The magnet shrine may collect enough XP for multiple levels at once:
     // present every earned upgrade in sequence instead of losing levels.
     if(game.player.xp>=game.player.next)gainXP(0);
@@ -611,7 +651,8 @@
     const taken=game.perkOrder||[];
     const perks=taken.map(id=>{
       const perk=POWERS.find(x=>x.id===id);
-      return perk?`${perk.name} ×${game.perkRanks[id]||1}`:null;
+      const tiers=game.perkTiers[id]||[];
+      return perk?`${perk.name} ×${game.perkRanks[id]||1} [${tiers.map(t=>t.toUpperCase()).join(' / ')}]`:null;
     }).filter(Boolean);
     const list=$('runPerks');list.replaceChildren();
     if(!perks.length)list.textContent='No upgrades acquired';
@@ -679,10 +720,13 @@
       if(!perk||rank<1)continue;
       perkTotal+=rank;
       const row=document.createElement('article');
-      row.className='inventory-perk';
+      const tiers=game.perkTiers[id]||[];
+      const latest=tiers[tiers.length-1]||'common';
+      row.className='inventory-perk perk-'+latest;
       row.innerHTML=`<span class="inventory-perk-icon">${powerIcon(perk.icon||id)}</span>
         <div class="inventory-perk-copy"><div class="inventory-perk-heading"><strong>${perk.name}</strong><span class="inventory-rank">RANK ${rank}</span></div>
-        <p>${perk.desc}</p></div>`;
+        <p>${tiers.map(v=>v.toUpperCase()).join(' · ')}</p>
+        <p>Latest: ${perkDescription(id,latest)}</p></div>`;
       el.inventoryPerks.appendChild(row);
     }
     if(!game.perkOrder.length){
@@ -717,13 +761,13 @@
       tile.append(caption,number);el.inventoryStats.appendChild(tile);
     }
   }
-  function openInventory(){
+  function openInventory(shouldFocus=true){
     if(state!=='playing'||!game?.elementChosen)return;
     keys.clear();shake=0;
     renderInventory();
     state='inventory';
     el.inventory.classList.remove('hidden');
-    el.inventoryClose.focus();
+    if(shouldFocus)el.inventoryClose.focus();
     el.status.textContent='POWER-UPS · PAUSED';
   }
   function closeInventory(){
@@ -737,9 +781,11 @@
     if(state==='inventory')closeInventory();
     else if(state==='playing')openInventory();
   }
+  // P (pause) and O (inventory) are a single control: both toggle the same
+  // paused Grimoire. Closing either returns to the hunt.
   function togglePause(){
-    if(state==='playing'){ shake=0;state='paused'; el.pause.classList.remove('hidden'); el.status.textContent='PAUSED'; }
-    else if(state==='paused'){ state='playing'; el.pause.classList.add('hidden'); el.status.textContent='HUNT IN PROGRESS'; }
+    if(state==='inventory')closeInventory();
+    else if(state==='playing')openInventory();
   }
 
   // Restored classic slow projectile auto-fire. Each shot travels across the arena
@@ -860,7 +906,7 @@
     const stacks=enemy.bleedStacks||(enemy.bleedStacks=[]);
     if(game.player.hemorrhagicBurst){
       // Instant 8-stack detonation on EVERY hit, replacing existing Bleed.
-      const damage=8*hitDamage*.5;
+      const damage=8*hitDamage*.5*(game.player.hemorrhagicBurstBoost||1);
       stacks.length=0;
       burstHemorrhage(enemy,damage);
       return;
@@ -1473,26 +1519,25 @@
 
   document.addEventListener('keydown',e=>{
     const k=e.key.toLowerCase();
-    if(k==='o'&&(state==='playing'||state==='inventory')){e.preventDefault();if(!e.repeat)toggleInventory();return;}
-    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
-    if(state==='inventory'){
-      if(k==='escape'||k==='p'){e.preventDefault();closeInventory();}
+    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();
+    if((k==='o'||k==='p'||k==='escape')&&(state==='playing'||state==='inventory')){
+      e.preventDefault();if(!e.repeat)togglePause();
       return;
     }
+    if(state==='inventory')return;
     keys.add(k);
-    if(k==='p'||k==='escape'){ if(state==='playing'||state==='paused') togglePause(); }
-    if(state==='upgrade'&&['1','2','3','4'].includes(k)) chooseUpgrade(Number(k)-1);
+    if(state==='upgrade'&&['1','2','3','4'].includes(k))chooseUpgrade(Number(k)-1);
     if(state==='upgrade'&&k==='r')rerollUpgrades();
     if(state==='upgrade'&&k==='b')toggleBanish();
-    if(state==='intro'&&(k==='enter'||k===' ')) startGame();
-    if(state==='end'&&k==='enter'&&e.target?.tagName!=='BUTTON') startGame(false);
+    if(state==='intro'&&(k==='enter'||k===' '))startGame();
+    if(state==='end'&&k==='enter'&&e.target?.tagName!=='BUTTON')startGame(false);
   });
-  window.addEventListener('blur',()=>{ keys.clear(); if(state==='playing') togglePause(); });
+  window.addEventListener('blur',()=>{keys.clear();if(state==='playing')openInventory(false);});
   document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);
   el.start.addEventListener('click',()=>startGame(false)); el.restart.addEventListener('click',()=>startGame(false)); el.resume.addEventListener('click',togglePause);
-  el.inventoryBtn.addEventListener('click',toggleInventory);el.inventoryClose.addEventListener('click',closeInventory);
+  el.inventoryBtn.addEventListener('click',togglePause);el.inventoryClose.addEventListener('click',closeInventory);
   el.easyYes.addEventListener('click',()=>chooseEasyMode(true));
   el.easyNo.addEventListener('click',()=>chooseEasyMode(false));
   function updateAudioUI(){

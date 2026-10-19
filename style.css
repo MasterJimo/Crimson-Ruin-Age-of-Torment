@@ -452,3 +452,31 @@ body{padding:10px}
 #endScreen .run-perks{display:flex;flex-wrap:wrap;align-content:flex-start;gap:5px;min-height:0;max-height:none;overflow:auto;flex:1;padding:5px}
 #endScreen .run-perk-chip{display:inline-flex;align-items:center;min-width:0;flex:0 0 auto;padding:5px 6px;background:#391624;border:1px solid #965369;border-radius:6px;color:#ffe1eb;font-size:9px;font-weight:800;line-height:1.2}
 #endScreen .run-best{grid-column:1/-1;grid-row:2;margin:0;font-size:10px}
+
+/* v0.22 — shared pause + Grimoire, tier-specific borders for every perk. */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.topbar .inventory-button{position:static!important;top:auto!important;bottom:auto!important;right:auto!important;left:auto!important;display:grid;place-items:center;flex:0 0 48px;width:48px;height:42px;margin:0;background:#29121e;border:1px solid #ba805a;border-radius:11px;z-index:auto;box-shadow:0 0 10px #0006}
+.topbar .inventory-button[hidden]{display:none!important}
+.topbar .inventory-button:focus-visible{outline:2px solid #ffd68c;outline-offset:2px}
+.topbar .inventory-button svg{width:28px;height:28px}
+.topbar .topbar-right.solo-audio{flex:1 1 auto;width:auto;min-width:0;justify-content:flex-end}
+.topbar .audio-controls{width:auto;justify-content:flex-end}
+#upgrade .upgrade-card{border-width:2px!important;position:relative;isolation:isolate;overflow:hidden}
+#upgrade .upgrade-card.perk-common{border-color:#f5f4f7!important;box-shadow:inset 0 0 0 1px #ffffff28,0 14px 35px #000a}
+#upgrade .upgrade-card.perk-magic{border-color:#77ddff!important;box-shadow:0 0 17px #75cfff56,inset 0 0 18px #65cfff1b}
+#upgrade .upgrade-card.perk-rare{border-color:#f8d15a!important;box-shadow:0 0 20px #d1a93e50,inset 0 0 17px #eabb301c}
+#upgrade .upgrade-card.perk-legendary{border-color:#a05b29!important;box-shadow:0 0 22px #c0793970,inset 0 0 24px #a0522845}
+#upgrade .upgrade-card.perk-mythic{border-color:#d67bff!important;box-shadow:0 0 0 2px #f0b0ff94,0 0 30px #a149ffa8,0 0 52px #ce79ff87,inset 0 0 30px #ab5cff47;animation:mythicPulse 1.5s ease-in-out infinite alternate}
+@keyframes mythicPulse{from{box-shadow:0 0 0 2px #d79dff91,0 0 24px #923bff89,0 0 35px #a44bff70,inset 0 0 22px #a44bff30}to{box-shadow:0 0 0 2px #f4b7ff,0 0 30px #c784ffed,0 0 62px #b86bffb0,inset 0 0 34px #c260ff75}}
+#upgrade .upgrade-card.perk-common .perk-tier{color:#f8f8fc}
+#upgrade .upgrade-card.perk-magic .perk-tier{color:#93eaff}
+#upgrade .upgrade-card.perk-rare .perk-tier{color:#ffdd7c}
+#upgrade .upgrade-card.perk-legendary .perk-tier{color:#dfab7b}
+#upgrade .upgrade-card.perk-mythic .perk-tier{color:#f6baff;font-weight:1000;text-shadow:0 0 13px #c94cff}
+#upgrade .upgrade-card.perk-mythic::before{content:'✦';position:absolute;top:7px;right:10px;font-size:19px;color:#f5c0ff;text-shadow:0 0 12px #b650ff;animation:mythicPulse 1.5s ease-in-out infinite alternate}
+.inventory-perk.perk-mythic{border-color:#d67bff;box-shadow:inset 0 0 12px #983bff35}
+.inventory-perk.perk-legendary{border-color:#a05b29}
+.inventory-perk.perk-rare{border-color:#f8d15a}
+.inventory-perk.perk-magic{border-color:#77ddff}
+.inventory-perk.perk-common{border-color:#dddbe5}
+@media(prefers-reduced-motion:reduce){#upgrade .upgrade-card.perk-mythic,#upgrade .upgrade-card.perk-mythic::before{animation:none}}
