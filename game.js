@@ -398,8 +398,8 @@
   // Fire is explicitly single-stack: new hits refresh its two-second timer.
   // Keep the stronger burn if a weaker hit lands while one is active.
   function refreshBurn(enemy, hitDamage, potency){
+    enemy.burnDps=enemy.burnTime>0?Math.max(enemy.burnDps||0,hitDamage*potency/2):hitDamage*potency/2;
     enemy.burnTime=2;
-    enemy.burnDps=Math.max(enemy.burnDps||0,hitDamage*potency/2);
   }
   function chainLightning(origin,damage,hitSet){
     const other=game.enemies.find(e=>e!==origin&&!hitSet.has(e)&&dist2(e.x,e.y,origin.x,origin.y)<115*115);
