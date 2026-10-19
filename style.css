@@ -397,3 +397,58 @@ body{padding:10px}
 #endScreen .run-perks{max-height:62px}
 .magnet-buff{display:inline-flex;align-items:center;white-space:nowrap;border:1px solid #64baf4;border-radius:7px;padding:4px 7px;background:#153351eb;color:#c3edff;font:800 11px system-ui,sans-serif;box-shadow:0 0 12px #3182ca77}
 .magnet-buff[hidden]{display:none!important}
+
+/* v0.21 — fullscreen-style results dashboard, 4 power cards, cleaned intro */
+.intro-controls{display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:16px;color:#ffedf2;font:950 clamp(12px,1.6vw,18px)/1.4 system-ui,sans-serif;letter-spacing:.035em;text-shadow:0 2px 10px #000d}
+.intro-controls>span{white-space:nowrap}
+.intro-controls kbd{padding:4px 8px;border:1px solid #a4637b;border-radius:6px;background:#381722db;color:#ffe4e7;font:950 inherit;box-shadow:inset 0 -2px #10070e}
+.intro h1{margin-bottom:20px}
+.footer{display:none!important}
+#upgrade .upgrade-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));max-width:min(1170px,99%);gap:8px}
+#upgrade .upgrade-card{min-width:0;min-height:193px;padding:11px 7px;gap:7px}
+#upgrade .upgrade-card .perk-tier{font-size:10px}
+#upgrade .upgrade-card .perk-art-frame{width:70px;height:70px;min-width:70px;flex-basis:70px}
+#upgrade .upgrade-card .ability-icon{width:47px;height:47px;min-width:47px}
+#upgrade .upgrade-card .detail{font-size:11.5px;line-height:1.3}
+#upgrade .upgrade-card strong{font-size:12px;line-height:1.2}
+#upgrade .card-hint{font-size:10px;margin-top:3px}
+#upgrade .perk-actions{margin-bottom:6px}
+#upgrade h2{font-size:clamp(28px,3.8vw,40px)}
+#endScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px;box-sizing:border-box;padding:10px 13px;overflow:hidden!important;background:linear-gradient(#160913f8,#0a060dfb)}
+#endScreen::before,#endScreen::after{display:none!important}
+#endScreen .end-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(265px,1.15fr);align-items:center;gap:10px;flex:0 0 auto;padding:4px 6px;border-bottom:1px solid #623447}
+#endScreen .end-title-group{text-align:left}
+#endScreen .end-title-group .eyebrow{font-size:9px;letter-spacing:.12em}
+#endScreen .end-title-group h2{margin:3px 0;font:900 clamp(23px,3vw,35px)/1 Georgia,serif}
+#endScreen .end-title-group .overlay-sub{font-size:10px;margin:2px 0}
+#endScreen .end-highlights{display:flex;flex-direction:column;gap:4px;align-items:flex-end;text-align:right}
+#endScreen .end-stats{display:flex;gap:5px;margin:0}
+#endScreen .end-stats>div{min-width:0;box-sizing:border-box;width:76px;padding:4px 5px;border-radius:9px}
+#endScreen .end-stats span{font-size:8px}
+#endScreen .end-stats strong{font-size:15px}
+#endScreen .hunt-record{margin:0;gap:6px;font-size:9px;letter-spacing:.04em;justify-content:flex-end}
+#endScreen .end-mode{display:flex;align-items:center;gap:7px;min-height:22px}
+#endScreen .end-mode img{width:34px;height:29px;display:block;object-fit:contain;filter:drop-shadow(0 0 5px #fa58c6)}
+#endScreen .end-mode img[hidden]{display:none!important}
+#endScreen .run-mode{font:900 10px system-ui,sans-serif;letter-spacing:.10em;color:#ffd6e2;margin:0}
+#endScreen .end-actions{position:relative;top:auto;z-index:5;display:flex;align-items:center;gap:12px;justify-content:space-between;flex:0 0 auto;padding:7px 9px;border:1px solid #844c61;border-radius:9px;background:#261221d9;backdrop-filter:none}
+#endScreen .end-new-game{margin:0!important;min-width:140px;padding:11px 14px!important;font-size:12px!important;border-radius:9px}
+#endScreen .easy-retry{flex:1 1 auto;max-width:none;min-width:0;background:none;border:0;box-shadow:none;padding:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 9px;align-items:center;text-align:left}
+#endScreen .easy-retry h3{grid-column:1;font-size:11px;margin:0}
+#endScreen .easy-retry-description{grid-column:1;margin:0;font-size:9.5px;line-height:1.3}
+#endScreen .easy-retry-buttons{grid-column:2;grid-row:1/3;display:flex;gap:5px;flex-wrap:nowrap}
+#endScreen .easy-retry-buttons button{flex:0 0 auto;padding:9px 11px;white-space:nowrap;font-size:10px}
+#endScreen .run-board{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.30fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;gap:8px;width:100%;max-width:none;min-width:0;min-height:0;flex:1 1 auto;box-sizing:border-box;padding:8px;text-align:left;overflow:hidden}
+#endScreen .run-data-col{display:flex;flex-direction:column;gap:5px;min-height:0;min-width:0}
+#endScreen .run-board h3{font-size:10px;letter-spacing:.06em;margin:0;flex:0 0 auto}
+#endScreen .run-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:5px;flex:1;min-height:0}
+#endScreen .run-summary-tile{box-sizing:border-box;min-height:0;padding:5px 8px;gap:2px}
+#endScreen .run-summary-tile span{font-size:9px}
+#endScreen .run-summary-tile strong{font-size:clamp(13px,1.6vw,20px);line-height:1.15}
+#endScreen .run-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:4px;min-height:0;flex:1}
+#endScreen .run-stat-tile{gap:4px;align-items:center;padding:4px 7px;min-width:0}
+#endScreen .run-stat-tile span{font-size:8px}
+#endScreen .run-stat-tile strong{font-size:10px;white-space:nowrap}
+#endScreen .run-perks{display:flex;flex-wrap:wrap;align-content:flex-start;gap:5px;min-height:0;max-height:none;overflow:auto;flex:1;padding:5px}
+#endScreen .run-perk-chip{display:inline-flex;align-items:center;min-width:0;flex:0 0 auto;padding:5px 6px;background:#391624;border:1px solid #965369;border-radius:6px;color:#ffe1eb;font-size:9px;font-weight:800;line-height:1.2}
+#endScreen .run-best{grid-column:1/-1;grid-row:2;margin:0;font-size:10px}

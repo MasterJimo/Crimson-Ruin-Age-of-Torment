@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.20.0">
+  <meta name="game-version" content="0.21.0">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.20.0">
+  <link rel="stylesheet" href="style.css?v=0.21.0">
 </head>
 <body>
   <div class="site-shell">
@@ -52,7 +52,11 @@
         <div class="crest"><img src="assets/veilwarden-portrait-v101.png?v=0.10.3" alt="Silver-haired vampire hunter" class="hero-art-portrait"/><canvas id="portrait" width="64" height="64" aria-hidden="true" hidden></canvas></div>
         <h1>CRIMSON RUIN<br><em>AGE OF TORMENT</em></h1>
         <button class="main-button" id="startBtn"><span>▶</span> BEGIN THE HUNT</button>
-        <div class="intro-foot" aria-label="Controls"><span class="control-group"><strong>WASD / ARROWS</strong> — MOVE</span><span class="control-sep">✦</span><span class="control-group"><strong>CHOOSE YOUR ELEMENT</strong></span></div>
+        <div class="intro-controls" aria-label="Keyboard controls">
+          <span>MOVE <kbd>WASD</kbd> <b>/</b> <kbd>↑ ← ↓ →</kbd></span>
+          <span>PAUSE <kbd>P</kbd></span>
+          <span>POWER-UPS <kbd>O</kbd></span>
+        </div>
       </section>
 
       <section class="screen-overlay hidden" id="upgrade" aria-live="polite">
@@ -65,38 +69,48 @@
           <span id="perkNotice" class="perk-notice" aria-live="polite">Choose a power to continue</span>
         </div>
         <div id="upgradeCards" class="upgrade-cards"></div>
-        <p class="card-hint">Pick 1–3 · R to reroll · B to banish</p>
+        <p class="card-hint">Pick 1–4 · Attack + Defense + 2 Random · R to reroll · B to banish</p>
       </section>
 
       <section class="screen-overlay hidden" id="endScreen" aria-live="polite">
-        <nav class="end-actions" aria-label="Choose next game mode">
+        <header class="end-header">
+          <div class="end-title-group">
+            <span class="eyebrow" id="endEyebrow">THE NIGHT CLAIMS ANOTHER SOUL</span>
+            <h2 id="endTitle">YOU DIED</h2>
+            <p class="overlay-sub" id="endSub">The horde still hungers...</p>
+          </div>
+          <div class="end-highlights">
+            <div class="end-stats"><div><span>TIME</span><strong id="finalTime">00:00</strong></div><div><span>KILLS</span><strong id="finalKills">0</strong></div><div><span>LEVEL</span><strong id="finalLevel">1</strong></div></div>
+            <div class="hunt-record"><span id="huntRank">NOVICE HUNTER</span><span id="bestKills">BEST: 0 KILLS</span></div>
+            <div class="end-mode"><img id="runRibbon" src="assets/easy-ribbon-v019.webp" alt="Pink ribbon: Easy Mode used" hidden><span class="run-mode" id="runMode">HARDCORE MODE</span></div>
+          </div>
+        </header>
+        <nav class="end-actions" aria-label="Next run">
           <button type="button" class="main-button end-new-game" id="restartBtn">↻ NEW GAME</button>
           <section class="easy-retry hidden" id="easyRetryOffer" aria-labelledby="easyRetryTitle">
             <h3 id="easyRetryTitle">🎀 EASY MODE — NEXT RUN ONLY</h3>
-            <p class="easy-retry-description">Died before 05:00? Your next run can have enemies with 50% HP, speed and damage, fewer spawns, and a pink ribbon. The 30:00 Reaper is still lethal.</p>
+            <p class="easy-retry-description">Enemies have 50% HP, speed and damage, fewer spawns and a pink ribbon. The 30:00 Reaper is still lethal.</p>
             <div class="easy-retry-buttons">
               <button type="button" id="easyYes" class="easy-retry-yes">YES · EASY MODE</button>
               <button type="button" id="easyNo" class="easy-retry-no">NO · HARDCORE</button>
             </div>
           </section>
         </nav>
-        <div class="eyebrow" id="endEyebrow">THE NIGHT CLAIMS ANOTHER SOUL</div>
-        <div class="end-crest" aria-hidden="true">☽</div>
-        <h2 id="endTitle">YOU DIED</h2>
-        <p class="overlay-sub" id="endSub">The horde still hungers...</p>
-        <div class="end-stats"><div><span>TIME</span><strong id="finalTime">00:00</strong></div><div><span>KILLS</span><strong id="finalKills">0</strong></div><div><span>LEVEL</span><strong id="finalLevel">1</strong></div></div>
-        <div class="hunt-record"><span id="huntRank">NOVICE HUNTER</span><span id="bestKills">BEST: 0 KILLS</span></div>
-        <p class="run-mode" id="runMode">HARDCORE MODE</p>
         <div class="run-board" id="runBoard">
-          <h3>FINAL SCOREBOARD</h3>
-          <div class="run-summary" id="runSummary"></div>
-          <h3>HUNTER STATS</h3>
-          <div class="run-stats" id="runStats"></div>
-          <h3>ACQUIRED POWER-UPS</h3>
-          <div class="run-perks" id="runPerks">No upgrades acquired</div>
+          <section class="run-data-col run-results-col">
+            <h3>FINAL SCOREBOARD</h3>
+            <div class="run-summary" id="runSummary"></div>
+          </section>
+          <section class="run-data-col run-hunter-col">
+            <h3>HUNTER STATS</h3>
+            <div class="run-stats" id="runStats"></div>
+          </section>
+          <section class="run-data-col run-perk-col">
+            <h3>ACQUIRED POWER-UPS</h3>
+            <div class="run-perks" id="runPerks">No upgrades acquired</div>
+          </section>
           <p class="run-best" id="runBest"></p>
         </div>
-
       </section>
 
       <section class="pause-card hidden" id="pauseOverlay"><span>Ⅱ</span><h2>PAUSED</h2><p>Press P or click resume.</p><button class="main-button" id="resumeBtn">▶ RESUME</button></section>
@@ -129,12 +143,12 @@
 
     <footer class="footer">
       <div><span class="green-dot"></span> <span id="statusText">READY FOR THE HUNT</span></div>
-      <div class="footer-help" aria-label="Controls"><span class="key-group"><span>MOVE</span> <kbd>WASD</kbd> <span class="key-or">/</span> <kbd>↑←↓→</kbd></span><span class="key-group"><span>PAUSE</span> <kbd>P</kbd></span><span class="key-group"><span>POWER-UPS</span> <kbd>O</kbd></span></div>
+
       
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="assets.js?v=0.20.0" defer></script>
-  <script src="game.js?v=0.20.0" defer></script>
+  <script src="assets.js?v=0.21.0" defer></script>
+  <script src="game.js?v=0.21.0" defer></script>
 </body>
 </html>

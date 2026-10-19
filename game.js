@@ -13,7 +13,7 @@
   // User-supplied gothic courtyard. The existing floor remains a fallback while loading.
   const courtyard = new Image();
   courtyard.decoding = 'async';
-  courtyard.src = 'assets/gothic-courtyard.png';
+  courtyard.src = 'assets/courtyard-new-v021.webp';
   const fountainArt = new Image();
   fountainArt.decoding = 'async';
   fountainArt.src = 'assets/blood-fountain-v014.png';
@@ -474,28 +474,38 @@
     }
   }
   function eligiblePowers(){return POWERS.filter(opt=>!game.banned.has(opt.id) && (!opt.can||opt.can(game.player)));}
+  const DAMAGE_POWER_IDS=new Set(["brutality","rapid_fire","forward","spread","pierce","crit","blood_power","fire_power","lightning_power","poison_power","hemorrhagic_burst"]);
+  const DEFENSE_POWER_IDS=new Set(["movement","vitality","regen","armor"]);
+  // Four unique cards: guaranteed offensive, guaranteed defensive, 2 RNG.
+  // Legendary Blood is rolled separately at 5% per entire offering.
   function rollChoices(previous=[]){
-    // One independent 5% chance per entire offering (also after Reroll).
-    // Excluded from ordinary choices; only Blood can see it, once.
     const eligible=eligiblePowers();
-    const special=eligible.find(o=>o.id==='hemorrhagic_burst');
-    const ordinary=eligible.filter(o=>o.id!=='hemorrhagic_burst');
-    const alternatives=ordinary.filter(o=>!previous.includes(o.id));
-    const pool=alternatives.length>=3?alternatives:ordinary;
-    for(let i=pool.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[pool[i],pool[j]]=[pool[j],pool[i]];}
-    const cards=pool.slice(0,3);
-    if(special&&!previous.includes(special.id)&&Math.random()<.05){
-      if(cards.length>=3)cards[(Math.random()*cards.length)|0]=special;
-      else cards.push(special);
+    const legendary=eligible.find(p=>p.id==='hemorrhagic_burst');
+    const pool=eligible.filter(p=>p.id!=='hemorrhagic_burst'),selected=[];
+    const pick=choices=>{
+      const unused=choices.filter(p=>!selected.includes(p));
+      if(!unused.length)return null;
+      const fresh=unused.filter(p=>!previous.includes(p.id));
+      const options=fresh.length?fresh:unused;
+      const result=options[(Math.random()*options.length)|0];
+      selected.push(result);return result;
+    };
+    let damage=pick(pool.filter(p=>DAMAGE_POWER_IDS.has(p.id)));
+    const defense=pick(pool.filter(p=>DEFENSE_POWER_IDS.has(p.id)));
+    if(legendary&&Math.random()<.05){
+      if(damage)selected.splice(selected.indexOf(damage),1);
+      damage=legendary;selected.push(legendary);
     }
-    return cards;
+    const random1=pick(pool),random2=pick(pool);
+    if(!damage||!defense||!random1||!random2)throw new Error('Cannot build four-card offer.');
+    return [damage,defense,random1,random2];
   }
   function renderUpgrade(){
     const g=game;
     el.upgradeCards.replaceChildren();
     g.upgradeChoices.forEach((opt,index)=>{
       const b=document.createElement('button');b.type='button';b.className='upgrade-card perk-'+opt.tier;
-      b.innerHTML=`<span class="perk-tier">${opt.tier}</span><span class="perk-art-frame">${powerIcon(opt.id)}</span><strong>${opt.name}</strong><span class="detail">${opt.element?elementDescriptionHTML(opt):opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
+      b.innerHTML=`<span class="perk-tier">${g.elementChosen?(index===0?'ATTACK · ':index===1?'DEFENSE · ':'RANDOM · '):''}${opt.tier}</span><span class="perk-art-frame">${powerIcon(opt.id)}</span><strong>${opt.name}</strong><span class="detail">${opt.element?elementDescriptionHTML(opt):opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
       b.addEventListener('click',()=>chooseUpgrade(index));el.upgradeCards.appendChild(b);
     });
     const choosingElement=!g.elementChosen;
@@ -503,7 +513,7 @@
     el.reroll.hidden=choosingElement; el.banish.hidden=choosingElement;
     el.rerollCount.textContent=String(g.rerolls);el.banishCount.textContent=String(g.banishes);
     el.reroll.disabled=g.rerolls<=0;
-    el.banish.disabled=g.banishes<=0 || eligiblePowers().length<=3;
+    el.banish.disabled=g.banishes<=0 || eligiblePowers().length<=4;
     el.banish.classList.toggle('armed',g.banishMode);
     el.perkNotice.textContent=choosingElement?'SELECT ONE TO BEGIN YOUR HUNT':g.banishMode?'SELECT A CARD TO BANISH · CLICK BANISH TO CANCEL':'CHOOSE AN UPGRADE · R TO REROLL · B TO BANISH';
     el.upgrade.querySelector('h2').textContent=choosingElement?'CHOOSE YOUR ELEMENT':'NEW POWER';
@@ -543,12 +553,15 @@
       flashMessage(`✦ ${choice.name} ATTUNED`,2200);playSound('start');syncMusic();updateHUD();return;
     }
     if(game.banishMode){
-      if(game.banishes<=0||eligiblePowers().length<=3)return;
+      if(game.banishes<=0||eligiblePowers().length<=4)return;
+      const remaining=eligiblePowers().filter(p=>p.id!==choice.id);
+      if(remaining.length<4||!remaining.some(p=>DAMAGE_POWER_IDS.has(p.id))||
+         !remaining.some(p=>DEFENSE_POWER_IDS.has(p.id))){
+        flashMessage('KEEP AT LEAST ONE ATTACK AND DEFENSE',1800);
+        return;
+      }
       game.banned.add(choice.id);game.banishes--;game.banishMode=false;
-      const inView=game.upgradeChoices.filter(o=>!game.banned.has(o.id));
-      const candidates=eligiblePowers().filter(o=>!inView.some(v=>v.id===o.id));
-      const substitute=candidates[(Math.random()*candidates.length)|0];
-      game.upgradeChoices=substitute?[...inView,substitute]:rollChoices();
+      game.upgradeChoices=rollChoices(game.upgradeChoices.map(p=>p.id));
       renderUpgrade();playSound('hit');return;
     }
     choice.apply(game.player,game);
@@ -600,7 +613,12 @@
       const perk=POWERS.find(x=>x.id===id);
       return perk?`${perk.name} ×${game.perkRanks[id]||1}`:null;
     }).filter(Boolean);
-    $('runPerks').textContent=perks.length?perks.join('  ·  '):'No upgrades acquired';
+    const list=$('runPerks');list.replaceChildren();
+    if(!perks.length)list.textContent='No upgrades acquired';
+    else for(const item of perks){
+      const badge=document.createElement('span');badge.className='run-perk-chip';
+      badge.textContent=item;list.appendChild(badge);
+    }
     $('runBest').textContent=
       `BEST: ${timeText(best.time)}  ·  ${num(best.kills)} KILLS  ·  ${num(best.xp)} XP${survived?'  ·  REAPER REACHED':''}`;
   }
@@ -609,6 +627,8 @@
     const survived=Boolean(won&&game.endingAt30);
     state='end';
     el.end.classList.remove('hidden');
+    el.xpStrip.hidden=true;
+    $('runRibbon').hidden=!game.easyMode;
     el.inventory.classList.add('hidden');
     el.inventoryBtn.hidden=true;
     el.bossBar.hidden=true;
@@ -634,7 +654,7 @@
     }catch(_){}
     $('bestKills').textContent=`BEST: ${best.kills} KILLS`;
     renderRunBoard(survived,best);
-    $('runMode').textContent=game.easyMode?'EASY MODE · PINK RIBBON':'HARDCORE MODE';
+    $('runMode').textContent=game.easyMode?'EASY MODE USED · PINK RIBBON':'HARDCORE MODE';
     // Offer Easy Mode immediately on the results screen of ANY loss below 5m.
     // Yes and No both start the next run, with no lasting preference.
     el.easyRetryOffer.classList.toggle('hidden',Boolean(game.endingAt30||game.time>=300));
@@ -1276,9 +1296,9 @@
     if(game?.easyMode){
       ctx.save();
       if(ribbonArt.complete&&ribbonArt.naturalWidth){
-        ctx.drawImage(ribbonArt,x-14,y-52+Math.sin(t*3)*1.2,30,30);
+        ctx.drawImage(ribbonArt,x-12,y-76+Math.sin(t*3)*1.2,25,25);
       }else{
-        ctx.textAlign='center';ctx.font='bold 19px serif';ctx.fillText('🎀',x,y-32);
+        ctx.textAlign='center';ctx.font='bold 19px serif';ctx.fillText('🎀',x,y-65);
       }
       ctx.restore();
     }
