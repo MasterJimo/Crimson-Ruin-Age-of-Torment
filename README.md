@@ -8,7 +8,7 @@ A dark-fantasy desktop **30-minute** arena-survival game, formerly **Noob Surviv
 
 ## Current gameplay — v0.17
 
-Survive up to a **30-minute run**; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
+Survive up to a **30-minute run** in the new hardcore difficulty; at 30:00 the Reaper inevitably claims the hunter. Collect blue XP crystals, level up and choose perks. Before combat, pick one of four elements; attacks automatically target enemies.
 
 | Element | Starting direct damage | DoT / special behavior |
 |---|---:|---|
@@ -21,7 +21,7 @@ Survive up to a **30-minute run**; at 30:00 the Reaper inevitably claims the hun
 
 **Hemorrhagic Burst appears with an independent 5% chance per complete level-up offer (three cards), including Rerolls.** Only Blood players can roll it, and the perk appears at most once per run after acquisition. When selected, **every subsequent Blood hit instantly produces eight Bleed stacks and detonates all eight** in a short-range explosion for their full combined base damage. A 20-damage Blood hit therefore also causes an **80-damage AoE burst** (eight stacks × 50% of 20) before crits or other damage modifiers. The stacks are consumed immediately and do not keep ticking. Existing Bleed stacks on that target are replaced; the burst does not apply new Bleed to nearby targets.
 
-Power upgrades remain useful: **Blood Power** increases the direct hit and resulting Bleed damage by 25% per rank; **Fire Power** boosts its direct hit by 25% and Burn potency by 20%; **Lightning Power** boosts its random hit range by 25% and chain chance by 10 percentage points; **Poison Power** boosts the DPS of future Poison stacks by 35% per rank. Normal global perks, projectile modifiers and critical hits still work as documented in game.
+Power upgrades remain useful: **Blood Power** increases the direct hit and resulting Bleed damage by 25% per rank; **Fire Power** boosts its direct hit by 25% and Burn potency by 20%; **Lightning Power** boosts its random hit range by 25% and chain chance by 10 percentage points; **Poison Power** increases the base Poison stack DPS by an additive 20% per rank; this updates both active and future stacks. Normal global perks, projectile modifiers and critical hits still work as documented in game.
 
 ### Blood Fountains
 
@@ -32,6 +32,7 @@ Two separated Blood Fountains spawn at the start, with more appearing during exp
 - **WASD / arrow keys** — movement; attacks fire automatically.
 - **P / Escape** — pause/resume.
 - **O** — open/close the Power-Up Grimoire; Escape closes it too.
+- If you suffer three consecutive deaths before 5:00, choose **YES** or **NO** on the optional Easy Mode offer before element selection.
 - **1–4** — initial element; **1–3** — level-up upgrade; **R** — reroll; **B** — banish.
 - Click the small **chest at the lower-left of the arena** to access the grimoire. The redundant on-screen Pause button was removed.
 
@@ -46,6 +47,15 @@ Art includes the supplied Veilwarden, arena, fountain and RPG icons. Music: [Anc
 ---
 
 ## Patch notes — newest first
+
+### v0.19 — Hardcore escalation, Poison Power and optional Easy Mode
+- **Poison:** Brutality is no longer offered. Poison Power is now +20% of the base 13 DPS per rank, additive (13 → 15.6 → 18.2 → 20.8 DPS per stack). Both existing and new stacks use the upgraded base value.
+- Base hero movement speed reduced to **100**.
+- First minute has roughly **double the original enemy pressure**. Each minute increases enemy HP by ×1.15, damage by ×1.12 and speed by ×1.06, with increasing spawn pressure. Chasers, flankers and interceptors now try to surround the hero.
+- After **three consecutive deaths before 05:00**, the next start presents an optional **Easy Mode: YES / NO** prompt before element selection. Any run lasting at least 05:00 resets the streak; the streak survives refreshes in localStorage.
+- Easy Mode uses 50% monster health, attack damage and movement speed, fewer spawns and reduced aggression. A **pink ribbon** appears on the player's main model. The 30:00 Reaper remains unavoidable.
+- The supplied final **Death Reaper** and **Enchanted Magenta Gothic Ribbon Ornament** are now included as transparent, game-sized WebP sprites.
+
 
 ### v0.18.1 — Consistent damage types and elemental icons
 - Fixed missing Blood, Fire, Lightning and Poison icons in the Grimoire's **Your Element** gold frame. The same unframed icon atlas is used for selection, power-ups and inventory.

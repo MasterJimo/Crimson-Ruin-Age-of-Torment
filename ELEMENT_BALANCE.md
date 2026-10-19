@@ -22,3 +22,10 @@
 ## UI
 - Desktop only. Chest icon lower-left opens the Grimoire; shortcut O; P pauses. No on-screen Pause icon.
 - README patch notes are in descending version order v0.17 through v0.8.
+
+## v0.19 — Current Poison and difficulty
+- Hero starts with 100 movement speed. Brutality has `can:p=>p.element!=='poison'` and never appears in Poison level-up cards.
+- Poison base stack = 13 DPS. Poison Power rank `r` changes it to **13 × (1 + 0.20 × r) DPS**, affecting all currently applied stacks as well as every new stack. This is additive *base damage* growth, not the previous 35% buff to newly applied stacks.
+- Normal enemy multipliers for minute `m`: HP = 1.15^m, attack damage = 1.12^m, speed = 1.06^m. Spawning starts ~2× higher, pressure grows each minute with active-enemy cap 230. AI pursuers flank and lead the player, including while stationary.
+- Three consecutive deaths before 05:00 (tracked in localStorage) trigger an optional YES/NO offer on the next run before the starting-element screen. Easy applies 0.5× enemy HP/damage/speed, reduced spawns and movement pressure. Scoreboard marks the run. Pink ribbon sprite is rendered on the hero; Death Reaper remains unavoidable at 30 minutes.
+- Art: `assets/death-reaper-v019.webp` (user-selected Gothic Reaper), `assets/easy-ribbon-v019.webp` (user-supplied magenta bow), both optimized transparent WebP images.

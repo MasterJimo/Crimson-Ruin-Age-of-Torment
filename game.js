@@ -262,7 +262,13 @@
   function enemyTarget(enemy,player){
     const mode=enemy.aiRole||0,pressure=enemy.aggression||1;
     if(!mode)return {x:player.x,y:player.y};
-    const vx=player.moveX||0,vy=player.moveY||0;
+    let vx=player.moveX||0,vy=player.moveY||0;
+    // Even a stationary hero can be surrounded, rather than always targeted
+    // at exactly the same center point by every enemy.
+    if(Math.hypot(vx,vy)<.1){
+      const dist=Math.max(1,Math.hypot(player.x-enemy.x,player.y-enemy.y));
+      vx=(player.x-enemy.x)/dist;vy=(player.y-enemy.y)/dist;
+    }
     const ahead=(mode>=3?74:25)*pressure;
     const flank=(mode%2?1:-1)*42*pressure;
     return {x:player.x+vx*ahead-vy*flank,y:player.y+vy*ahead+vx*flank};
