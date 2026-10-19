@@ -22,10 +22,10 @@ Choose Blood, Fire, Lightning, or Poison after pressing Begin the Hunt. First no
 | Blood Power | Heart Up | +25% hit power; later ranks unlock Lance, Orb, splash |
 | Fire Power | Fire Up | +25% Fire hits, stronger burns |
 | Lightning Power | Lightning Up | +25% Lightning hits, improved chain chance |
-| Poison Power | Leaf Up | +35% never-ending Poison DoT; no extra direct damage |
+| Poison Power | Leaf Up | +35% DPS per newly applied permanent Poison stack; no extra direct damage |
 
 ## Status visual language
-Bleed = crimson pulse. Burn = orange flame flicker. Shock = blue sparks (4 s, direct hits ×2). Poison = green haze, never expires. Poison DoT is strongest-only, not indefinitely stackable.
+Bleed = crimson pulse. Burn = orange flame flicker. Shock = blue sparks (4 s, direct hits ×2). Poison = green haze, never expires. Poison stacks infinitely and permanently (+12.5 base DPS on every hit); Fire has only one burn, refreshed by hits.
 
 ## Control
 First selection: 1–4. Standard perk cards: 1–3, R = Reroll, B = Banish.

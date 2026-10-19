@@ -63,7 +63,7 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - Blood: **16 hit**, bleeding equal to **50% of hit** over **8 seconds**.
 - Fire: **20 hit**, burns for an additional **100% of hit** over **2 seconds**.
 - Lightning: **20 hit**, **50% chance to shock** for 4 seconds; follow-up direct hits deal **+100% damage (2×)**. Shock does not immobilize or amplify damage-over-time.
-- Poison: **5 hit**, then **100 damage every 8 seconds forever**, until enemy death (does not stack; reapplied poison retains strongest DPS).
+- Poison: **5 hit**, then **100 damage every 8 seconds forever**, until enemy death (unlimited permanent stacks; each hit adds 12.5 DPS).
 - The soundtrack **name is no longer displayed**, but Music 10% / SFX 5% sliders and mute remain.
 - Footer controls are condensed into compact MOVE/PAUSE groups.
 - Perk icons appear inside the provided **golden transparent frame** without cropped edges, including on phones.
@@ -83,3 +83,9 @@ Replaced the procedural floor with the supplied **Seamless Gothic Courtyard of R
 - Single gold frame with uniform frameless icons.
 - Status overlays: crimson Bleed, orange Burn, blue Shock, green Poison.
 - See [16 perk descriptions](PERKS_V013.md).
+## v0.13.1 — Infinite Poison stacks / single Fire burn
+- Every Poison projectile hit adds **one permanent stack**: +12.5 DPS per stack at base power (100 damage per 8 seconds). No expiration or stack cap; 200 base stacks = 2,500 DPS.
+- Poison Power strengthens stacks applied **after** that upgrade. Existing stacks keep their potency.
+- A green `×N` counter above poisoned enemies shows accumulated stacks.
+- Fire remains single-stack: each hit refreshes the two-second burn and retains the strongest current DPS.
+- Other status rules remain unchanged.

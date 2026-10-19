@@ -61,7 +61,7 @@
     {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',desc:'+25% Blood hit power. Unlock Blood Lance and Orb.',tier:'rare',can:p=>p.element==='blood'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;if(p.elementRank===2)p.bloodLance++;if(p.elementRank===3)p.bloodOrbChance+=.20;if(p.elementRank===4)p.bloodSplashChance+=.20;}},
     {id:'fire_power',icon:'fire_power',name:'FIRE POWER',desc:'+25% Fire hit damage and stronger burns.',tier:'rare',can:p=>p.element==='fire'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.burnMultiplier*=1.2;}},
     {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',desc:'+25% Lightning damage and chain chance.',tier:'rare',can:p=>p.element==='lightning'&&p.elementRank<5,apply:p=>{p.elementRank++;p.damage*=1.25;p.stormBonus+=.10;}},
-    {id:'poison_power',icon:'poison_power',name:'POISON POWER',desc:'+35% permanent poison DoT. Not direct hit.',tier:'rare',can:p=>p.element==='poison'&&p.elementRank<5,apply:p=>{p.elementRank++;p.poisonMultiplier*=1.35;}}
+    {id:'poison_power',icon:'poison_power',name:'POISON POWER',desc:'+35% DPS per newly applied Poison stack.',tier:'rare',can:p=>p.element==='poison'&&p.elementRank<5,apply:p=>{p.elementRank++;p.poisonMultiplier*=1.35;}}
   ];
 
   // Initial choice occurs before any enemies spawn / game clock starts.
@@ -70,7 +70,7 @@
     {id:'blood',element:'blood',name:'BLOOD',desc:'16 hit · Bleed for 8s: +50% of the hit over time. Lowest upfront damage.',tier:'rare'},
     {id:'fire',element:'fire',name:'FIRE',desc:'20 hit · Burn for 2s: +100% of the hit over time.',tier:'rare'},
     {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'20 hit · 50% chance to SHOCK for 4s. Hits deal +100% damage while shocked.',tier:'rare'},
-    {id:'poison',element:'poison',name:'POISON',desc:'5 hit · Poison deals 100 damage per 8s and NEVER expires.',tier:'rare'}
+    {id:'poison',element:'poison',name:'POISON',desc:'5 hit · Each hit adds 12.5 poison DPS forever. Unlimited stacks.',tier:'rare'}
   ];
   const ELEMENT_DAMAGE={blood:16,fire:20,lightning:20,poison:5};
   // Icons are uniformly trimmed, without a second inset frame.
@@ -388,6 +388,19 @@
     enemy.hp-=finalDamage;
     return finalDamage;
   }
+  // One persistent Poison stack per hit: 100 damage / 8 seconds = 12.5 DPS.
+  // Aggregate DPS and count instead of allocating an object per stack, so even
+  // hundreds or thousands of stacks stay cheap to simulate.
+  function applyPoisonStack(enemy, potency){
+    enemy.poisonStacks=(enemy.poisonStacks||0)+1;
+    enemy.poisonDps=(enemy.poisonDps||0)+12.5*potency;
+  }
+  // Fire is explicitly single-stack: new hits refresh its two-second timer.
+  // Keep the stronger burn if a weaker hit lands while one is active.
+  function refreshBurn(enemy, hitDamage, potency){
+    enemy.burnTime=2;
+    enemy.burnDps=Math.max(enemy.burnDps||0,hitDamage*potency/2);
+  }
   function chainLightning(origin,damage,hitSet){
     const other=game.enemies.find(e=>e!==origin&&!hitSet.has(e)&&dist2(e.x,e.y,origin.x,origin.y)<115*115);
     if(!other)return;
@@ -491,12 +504,11 @@
           if(p.element==='blood'&&!b.orb){
             e.bleedTime=8;e.bleedDps=dmg*.5/8;
           }
-          if(b.fire){e.burnTime=2*p.burnMultiplier;e.burnDps=dmg*1.0/(2*p.burnMultiplier);}
+          if(b.fire)refreshBurn(e,dmg,p.burnMultiplier);
           if(b.lightning && Math.random()<.5){e.shockTime=4;floatText(e.x,e.y-35,'SHOCK!','#86d8ff');addMagicFx(e.x,e.y,'lightning',33,.19);}
           if(b.frost)e.slowTime=2.5;
-          // Poison persists until the enemy dies. Reapplication refreshes potency;
-          // do not stack infinite instances, which would break long-run balance.
-          if(b.poison){e.poisonDps=Math.max(e.poisonDps||0,12.5*p.poisonMultiplier);}
+          // Poison has no stack limit or expiry; every hit permanently increases DPS.
+          if(b.poison)applyPoisonStack(e,p.poisonMultiplier);
           if(Math.random()<p.leechChance)p.hp=Math.min(p.maxHp,p.hp+2);
           if(Math.random()<Math.min(.95,p.chainChance+(b.lightning?.36+p.stormBonus:0)))chainLightning(e,dmg*.55,b.hit);
           if(b.orb){explodeAt(e.x,e.y,dmg*.7,e,b.hit);addMagicFx(e.x,e.y,'blood_orb_v11',70,.26);}
@@ -726,6 +738,12 @@
       ctx.beginPath();ctx.ellipse(x,y-13,statusSize,statusSize*.95,0,0,TAU);ctx.fill();
       for(let j=0;j<3;j++){const yy=(t*(8+j*3)+j*12+e.phase*2)%31;
         ctx.fillRect(x-10+j*9,y+9-yy,2,3);}
+      ctx.restore();
+      ctx.save();
+      ctx.textAlign='center';ctx.font='bold 10px sans-serif';
+      ctx.lineWidth=3;ctx.strokeStyle='#102310';ctx.fillStyle='#b1ff83';
+      const stacks=`×${e.poisonStacks||1}`;
+      ctx.strokeText(stacks,x,y-43);ctx.fillText(stacks,x,y-43);
       ctx.restore();
     }
     if(e.bleedTime>0){
