@@ -211,7 +211,9 @@
     poison:'assets/audio/attack-poison.mp3'
   });
   const ATTACK_AUDIO_MAX_RATE=7,ATTACK_AUDIO_MAX_VOICES=2;
-  const ATTACK_AUDIO_CUTS={blood:.11,fire:.14,lightning:.08,poison:.11};
+  // User-uploaded short CC0 clips; per-element gain balances loudness.
+  const ATTACK_AUDIO_CUTS={blood:.18,fire:.19,lightning:.13,poison:.18};
+  const ATTACK_AUDIO_GAIN={blood:.60,fire:1,lightning:1.55,poison:1.55};
   let attackBuffers=Object.create(null),attackAudioLoading=false,attackLastAt=-Infinity,attackVoices=[];
   let sfxCompressor=null,sfxLimiter=null;
   function ensureSfx(){
@@ -260,11 +262,12 @@
     const source=audio.createBufferSource(),gain=audio.createGain();
     source.buffer=buffer;
     source.playbackRate.value=.96+Math.random()*.08; // Subtle +/-4% pitch variation.
-    const length=Math.min(ATTACK_AUDIO_CUTS[element]||.11,buffer.duration/source.playbackRate.value);
+    const length=Math.min(ATTACK_AUDIO_CUTS[element]||.18,buffer.duration/source.playbackRate.value);
     const fadeStart=Math.max(.004,length-.025);
+    const volume=.70*(ATTACK_AUDIO_GAIN[element]||1)*sfxVolume/100;
     gain.gain.setValueAtTime(0,now);
-    gain.gain.linearRampToValueAtTime(.70*sfxVolume/100,now+.004);
-    gain.gain.setValueAtTime(.70*sfxVolume/100,now+fadeStart);
+    gain.gain.linearRampToValueAtTime(volume,now+.004);
+    gain.gain.setValueAtTime(volume,now+fadeStart);
     gain.gain.linearRampToValueAtTime(0,now+length);
     source.connect(gain);gain.connect(sfxCompressor);
     const voice={endAt:now+length};

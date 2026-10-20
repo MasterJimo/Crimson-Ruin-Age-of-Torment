@@ -91,9 +91,8 @@ These are **total tier multipliers**, not multipliers compounded across earlier 
 
 - Each chosen element uses a distinct **CC0 Freesound** attack sample. Blood, Fire, Lightning and Poison play **one cue per attack action**, independent of multiple projectiles or pierce.
 - Normal attack sounds are capped at **7 playback starts per real second** (`1 / 7 ≈ 0.143s` minimum interval), regardless of Attack Speed. Actual projectiles and combat damage remain unchanged.
-- Attack samples are shortened to approximately **110ms (Blood)**, **140ms (Fire)**, **80ms (Lightning)** and **110ms (Poison)**, with a 25ms fade-out and randomized pitch **±4%**.
+- Attack samples last approximately **180ms (Blood)**, **190ms (Fire)**, **130ms (Lightning)** and **180ms (Poison)**, with adjusted loudness, a 25ms fade-out and randomized pitch **±4%**.
 - Up to **2 overlapping attack sample voices**; a compressor and final limiter control peaks. Special event sounds (hits, level-ups, shrines, deaths) remain independent of the attack rate cap. Until a local file loads, a capped synthesized attack sound acts as a fallback.
-- CC0 sources and optional artist credits: [Audio source credits](assets/audio/SOURCES.md).
 
 ## Shrines
 
