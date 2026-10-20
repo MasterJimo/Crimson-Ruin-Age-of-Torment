@@ -1318,7 +1318,6 @@
       else{
         const crit=Math.random()<p.critChance;
         applyPoisonStack(target,crit?p.critDamage:1);
-        if(crit)floatText(target.x,target.y-29,'CRIT POISON!','#f8e17e',10);
       }
     }
     addSkillImpact(element,source.x,source.y,radius*1.65,.42);
