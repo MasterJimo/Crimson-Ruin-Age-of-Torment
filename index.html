@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.31.3">
+  <meta name="game-version" content="0.31.4">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.31.3">
+  <link rel="stylesheet" href="style.css?v=0.31.4">
 </head>
 <body>
   <div class="site-shell">
@@ -141,37 +141,47 @@
       <section class="inventory-overlay hidden" id="inventoryOverlay" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
         <div class="inventory-panel">
           <header class="inventory-heading">
-            <div><span class="inventory-eyebrow">THE HUNTER'S GRIMOIRE</span><h2 id="inventoryTitle">POWER-UPS</h2><span class="inventory-subtitle">The hunt is paused while reading</span></div>
-            <button class="inventory-close" id="inventoryClose" type="button" aria-label="Close power-ups">✕ <span>CLOSE</span></button>
+            <div><span class="inventory-eyebrow">THE HUNTER'S GRIMOIRE</span><h2 id="inventoryTitle">CHARACTER STATS</h2><span class="inventory-subtitle">Your live build and knowledge archive · Game paused</span></div>
+            <button class="inventory-close" id="inventoryClose" type="button" aria-label="Close character screen">✕ <span>CLOSE</span></button>
           </header>
-          <nav class="inventory-tabs" role="tablist" aria-label="Paused game pages">
-            <button type="button" class="inventory-tab active" id="inventoryPowersTab" role="tab" aria-selected="true">✦ POWER-UPS</button>
-            <button type="button" class="inventory-tab" id="inventoryBestiaryTab" role="tab" aria-selected="false">☠ MONSTER BESTIARY</button>
-            <button type="button" class="inventory-tab" id="inventoryElementsTab" role="tab" aria-selected="false">✦ ELEMENTAL MECHANICS</button>
-            <button type="button" class="inventory-tab" id="inventoryAcquisitionTab" role="tab" aria-selected="false">◆ ITEM ACQUISITION</button>
-            <button type="button" class="inventory-tab" id="inventoryCatalogTab" role="tab" aria-selected="false">✚ POWER-UP LIBRARY</button>
-            <button type="button" class="inventory-tab" id="inventoryScalingTab" role="tab" aria-selected="false">⌛ ENEMY SCALING</button>
+          <nav class="inventory-tabs character-main-tabs" role="tablist" aria-label="Character and encyclopedia">
+            <button type="button" class="inventory-tab active" id="inventoryPowersTab" role="tab" aria-selected="true" aria-controls="inventoryPowersPage">♜ CHARACTER STATS</button>
+            <button type="button" class="inventory-tab" id="inventoryEncyclopediaTab" role="tab" aria-selected="false" aria-controls="inventoryEncyclopediaPage">✦ ENCYCLOPEDIA</button>
           </nav>
-          <div class="inventory-scroll" id="inventoryPowersPage">
-            <div class="inventory-element">
-              <div class="inventory-gold-frame" id="inventoryElementIcon"></div>
-              <div class="inventory-element-copy"><span class="inventory-section-kicker">YOUR ELEMENT</span>
-                <div class="inventory-element-title"><h3 id="inventoryElementName">BLOOD</h3><span id="inventoryElementRank">ELEMENT RANK 1</span></div>
-                <p id="inventoryElementDesc"></p>
+          <div class="inventory-scroll character-screen" id="inventoryPowersPage" role="tabpanel">
+            <div class="character-left">
+              <div class="inventory-element character-element">
+                <div class="inventory-gold-frame" id="inventoryElementIcon"></div>
+                <div class="inventory-element-copy">
+                  <span class="inventory-section-kicker">YOUR MAIN SPELL</span>
+                  <div class="inventory-element-title"><h3 id="inventoryElementName">BLOOD</h3><span id="inventoryElementRank">ELEMENT RANK 1</span></div>
+                  <p id="inventoryElementDesc"></p>
+                </div>
               </div>
+              <section class="inventory-col character-perks">
+                <div class="inventory-section-heading"><h3>EQUIPPED POWER-UPS</h3><span id="inventoryPerkCount">0 PICKED</span></div>
+                <div class="inventory-perks" id="inventoryPerks"></div>
+              </section>
             </div>
-            <div class="inventory-columns">
-              <section class="inventory-col"><div class="inventory-section-heading"><h3>ACTIVE POWER-UPS</h3><span id="inventoryPerkCount">0 PICKED</span></div>
-                <div class="inventory-perks" id="inventoryPerks"></div></section>
-              <section class="inventory-col"><div class="inventory-section-heading"><h3>HUNTER STATS</h3><span>LIVE VALUES</span></div>
-                <div class="inventory-stats" id="inventoryStats"></div></section>
-            </div>
+            <section class="inventory-col character-stats">
+              <div class="inventory-section-heading"><h3>LIVE CHARACTER STATS</h3><span>AFTER ALL POWER-UPS</span></div>
+              <div class="inventory-stats" id="inventoryStats"></div>
+            </section>
           </div>
-          <div class="monster-bestiary codex-page" id="inventoryBestiaryPage" hidden></div>
-          <div class="monster-bestiary codex-page" id="inventoryElementsPage" hidden></div>
-          <div class="monster-bestiary codex-page" id="inventoryAcquisitionPage" hidden></div>
-          <div class="monster-bestiary codex-page" id="inventoryCatalogPage" hidden></div>
-          <div class="monster-bestiary codex-page" id="inventoryScalingPage" hidden></div>
+          <div class="encyclopedia-shell" id="inventoryEncyclopediaPage" role="tabpanel" hidden>
+            <nav class="encyclopedia-tabs" role="tablist" aria-label="Encyclopedia chapters">
+              <button type="button" class="inventory-tab active" id="inventoryBestiaryTab" role="tab" aria-selected="true">☠ MONSTER BESTIARY</button>
+              <button type="button" class="inventory-tab" id="inventoryElementsTab" role="tab" aria-selected="false">✦ ELEMENTAL MECHANICS</button>
+              <button type="button" class="inventory-tab" id="inventoryAcquisitionTab" role="tab" aria-selected="false">◆ ITEM ACQUISITION</button>
+              <button type="button" class="inventory-tab" id="inventoryCatalogTab" role="tab" aria-selected="false">✚ POWER-UP LIBRARY</button>
+              <button type="button" class="inventory-tab" id="inventoryScalingTab" role="tab" aria-selected="false">⌛ ENEMY SCALING</button>
+            </nav>
+            <div class="monster-bestiary codex-page" id="inventoryBestiaryPage"></div>
+            <div class="monster-bestiary codex-page" id="inventoryElementsPage" hidden></div>
+            <div class="monster-bestiary codex-page" id="inventoryAcquisitionPage" hidden></div>
+            <div class="monster-bestiary codex-page" id="inventoryCatalogPage" hidden></div>
+            <div class="monster-bestiary codex-page" id="inventoryScalingPage" hidden></div>
+          </div>
           <div class="inventory-footer">PRESS <kbd>P</kbd>, <kbd>O</kbd> OR <kbd>ESC</kbd> TO RESUME</div>
         </div>
       </section>
@@ -184,8 +194,8 @@
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="monsters.js?v=0.31.3" defer></script>
-  <script src="assets.js?v=0.31.3" defer></script>
-  <script src="game.js?v=0.31.3" defer></script>
+  <script src="monsters.js?v=0.31.4" defer></script>
+  <script src="assets.js?v=0.31.4" defer></script>
+  <script src="game.js?v=0.31.4" defer></script>
 </body>
 </html>

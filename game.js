@@ -41,7 +41,7 @@
   const $ = id => document.getElementById(id);
   const el = {
     bleedBuff:$('bleedBuff'), powersTab:$('inventoryPowersTab'), bestiaryTab:$('inventoryBestiaryTab'),
-    powersPage:$('inventoryPowersPage'), bestiaryPage:$('inventoryBestiaryPage'),
+    powersPage:$('inventoryPowersPage'), encyclopediaPage:$('inventoryEncyclopediaPage'), encyclopediaTab:$('inventoryEncyclopediaTab'), bestiaryPage:$('inventoryBestiaryPage'),
     intro:$('intro'), upgrade:$('upgrade'), upgradeCards:$('upgradeCards'), end:$('endScreen'), pause:$('pauseOverlay'),
     inventory:$('inventoryOverlay'), inventoryBtn:$('inventoryBtn'), inventoryClose:$('inventoryClose'),
     easyStart:$('easyStartBtn'),
@@ -102,7 +102,7 @@
       case 'knowledge':return '+'+(8*u)+'% XP from crystals.';
       case 'magnet':return '+'+(10*u)+'% crystal pickup radius.';
       case 'forward':return (elementOverride||game?.player?.element)==='lightning'?
-        '+'+shotBonus(u)+' Chain Lightning projectile(s) fired backward (up to 3 total shots).':
+        '+'+shotBonus(u)+' independent Chain Lightning shot(s) in distinct random directions (up to 3 total shots).':
         '+'+shotBonus(u)+' parallel projectile(s).';
       case 'spread':return (elementOverride||game?.player?.element)==='lightning'?
         '+'+(2*spreadBonus(u))+' chain bounces (up to 25 total).':
@@ -178,7 +178,7 @@
   const ELEMENT_CHOICES = [
     {id:'blood',element:'blood',name:'BLOOD',desc:'21.6 DMG · Piercing spear',longDesc:'Very slow Blood Spear pierces every enemy. Each contact applies 1 Bleed stack (8s, up to 8); a slow enemy may be hit again by the same spear after 0.6s. Piercing Fangs adds Bleed stacks instead of pierce.',tier:'rare'},
     {id:'fire',element:'fire',name:'FIRE',desc:'43.2 DMG · Explosive fireball',longDesc:'Fast fireball detonates on the first target, dealing 43.2 direct damage. Its 55-unit blast applies 100% Burn to all nearby enemies for 2s. Piercing Fangs increases blast radius by 10% per point.',tier:'rare'},
-    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 4 chains',longDesc:'Lightning strikes the first target and chains to 4 additional enemies within 120 units. Each impact has a 50% chance to Shock. Piercing Fangs and Spread Shot add chains, up to 25 bounces. Forward Shot launches up to 2 additional spells backward, up to 3 shots per attack.',tier:'rare'},
+    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 4 chains',longDesc:'Lightning strikes the first target and chains to 4 additional enemies within 120 units. Each impact has a 50% chance to Shock. Piercing Fangs and Spread Shot add chains, up to 25 bounces. Forward Shot adds up to two independent Lightning bolts at distinct, randomly varied angles: one behind you with the first upgrade, then one to either rear side with the second. Maximum 3 bolts per attack.',tier:'rare'},
     {id:'poison',element:'poison',name:'POISON',desc:'15 DPS · Toxic splash',longDesc:'Toxic Orb bursts on the first enemy and adds 1 permanent Poison stack to all enemies in a 55-unit radius, matching Fireball. Each stack may crit. Piercing Fangs extends the Toxic Orb and Poison Proliferate radius by 10% per point. Death with 5+ stacks causes Poison Proliferate.',tier:'rare'}
   ];
   const ELEMENT_DAMAGE={blood:21.6,fire:43.2,lightning:1,poison:0}; // +8% base Blood and Fire
@@ -1008,14 +1008,14 @@
   // The paused Codex uses one navigation controller for all knowledge sections.
   // All formulae and perk ranks below read existing gameplay functions / tables.
   const CODEX_SECTIONS={
-    powers:['POWER-UPS','inventoryPowersTab','inventoryPowersPage'],
+    powers:['CHARACTER STATS','inventoryPowersTab','inventoryPowersPage'],
     bestiary:['MONSTER BESTIARY','inventoryBestiaryTab','inventoryBestiaryPage'],
     elements:['ELEMENTAL MECHANICS','inventoryElementsTab','inventoryElementsPage'],
     acquisition:['ITEM ACQUISITION','inventoryAcquisitionTab','inventoryAcquisitionPage'],
     catalog:['POWER-UP LIBRARY','inventoryCatalogTab','inventoryCatalogPage'],
     scaling:['ENEMY SCALING','inventoryScalingTab','inventoryScalingPage']
   };
-  let inventorySection='powers',bestiaryGroup='early',catalogGroup='offense',catalogRarity='common',codexFocus=null;
+  let inventorySection='powers',lastCodexSection='bestiary',bestiaryGroup='early',catalogGroup='offense',catalogRarity='common',codexFocus=null;
   function codexElement(tag,className='',value=''){
     const node=document.createElement(tag);
     if(className)node.className=className;
@@ -1053,22 +1053,35 @@
   }
   function switchInventorySection(section){
     if(state!=='inventory')return;
-    inventorySection=CODEX_SECTIONS[section]?section:'powers';
+    // The pause menu has two main destinations: Character Stats and Encyclopedia.
+    // Crosslinks between encyclopedia articles keep the Encyclopedia tab open.
+    if(section==='encyclopedia')section=lastCodexSection;
+    if(!CODEX_SECTIONS[section])section='powers';
+    inventorySection=section;
+    const character=section==='powers';
+    if(!character)lastCodexSection=section;
+    el.powersPage.hidden=!character;
+    el.encyclopediaPage.hidden=character;
+    el.powersTab.classList.toggle('active',character);
+    el.encyclopediaTab.classList.toggle('active',!character);
+    el.powersTab.setAttribute('aria-selected',String(character));
+    el.encyclopediaTab.setAttribute('aria-selected',String(!character));
     for(const [key,[title,tabId,pageId]] of Object.entries(CODEX_SECTIONS)){
-      const active=key===inventorySection,tab=$(tabId),page=$(pageId);
+      if(key==='powers')continue;
+      const active=key===section,tab=$(tabId),page=$(pageId);
       tab.classList.toggle('active',active);
       tab.setAttribute('aria-selected',String(active));
       page.hidden=!active;
     }
-    const title=CODEX_SECTIONS[inventorySection][0];
+    const title=character?'CHARACTER STATS':'ENCYCLOPEDIA';
     $('inventoryTitle').textContent=title;
     el.status.textContent=title+' · PAUSED';
-    if(inventorySection==='powers')renderInventory();
-    else if(inventorySection==='bestiary')renderBestiary();
-    else if(inventorySection==='elements')renderElements();
-    else if(inventorySection==='acquisition')renderAcquisition();
-    else if(inventorySection==='catalog')renderPowerLibrary();
-    else if(inventorySection==='scaling')renderEnemyScaling();
+    if(character)renderInventory();
+    else if(section==='bestiary')renderBestiary();
+    else if(section==='elements')renderElements();
+    else if(section==='acquisition')renderAcquisition();
+    else if(section==='catalog')renderPowerLibrary();
+    else if(section==='scaling')renderEnemyScaling();
   }
   function renderBestiary(){
     const root=el.bestiaryPage;root.replaceChildren();
@@ -1103,7 +1116,7 @@
     const contents=[
       ['blood','BLOOD','Slow piercing spear · 80 units/s','Direct = (21.6 × (1 + 0.05 × Blood Power units) + Brutality). Each contact adds 1 + Piercing Fangs stacks, up to 8 lasting 8s. One stack = actual hit damage / 8 damage per second. A single spear may hit again after 0.6s. Hemorrhagic Burst replaces the damage-over-time stacks with an instant 8-stack blast.'],
       ['fire','FIRE','Exploding fireball · 290 units/s','Direct = 43.2 × (1 + 0.05 × Fire Power units) + Brutality. First hit explodes, radius = 55 × (1 + 0.1 × Piercing Fangs). Every target in the radius burns for 2s. Burn DPS = base Fire direct damage (before crit), refreshed on subsequent hits.'],
-      ['lightning','LIGHTNING','Chain Lightning · 235 units/s','Direct = random integer 1–200 × (1 + 0.05 × Lightning Power units) + Brutality. Each impact can Shock (50% chance, 4s); Shock doubles incoming direct damage. Base 4 chain jumps, +1 per Piercing Fangs and +2 per Spread Shot, max 25. Forward Shot sends extra independent lightning projectiles BACKWARD (up to 3 total).'],
+      ['lightning','LIGHTNING','Chain Lightning · 235 units/s','Direct = random integer 1–200 × (1 + 0.05 × Lightning Power units) + Brutality. Each impact can Shock (50% chance, 4s); Shock doubles incoming direct damage. Base 4 chain jumps, +1 per Piercing Fangs and +2 per Spread Shot, max 25. Forward Shot adds 1 random rear bolt, then 2 separately angled rear-flank bolts (up to 3 total); bonus bolts never share the same direction.'],
       ['poison','POISON','Toxic Orb · 210 units/s','The explosion radius = 55 × (1 + 0.1 × Piercing Fangs). Every victim gets a permanent stack worth 15 × (1 + 0.05 × Poison Power units) DPS, multiplied by crit strength if that stack crits. At 5+ stacks on enemy defeat, Poison spreads 5 stacks to up to 6 nearby targets.']
     ];
     for(const [id,name,summary,body] of contents){
@@ -1204,7 +1217,7 @@
     el.inventory.classList.remove('hidden');
     switchInventorySection('powers');
     if(shouldFocus)el.inventoryClose.focus();
-    el.status.textContent='POWER-UPS · PAUSED';
+    el.status.textContent='CHARACTER STATS · PAUSED';
   }
   function closeInventory(){
     if(state!=='inventory')return;
@@ -1242,12 +1255,22 @@
     const speed=baseSpeed*p.projectileSpeed;
     const directions=[0];
     const forwardCount=element==='lightning'?Math.min(2,p.forwardShots):p.forwardShots;
-    // Lightning extras fire exactly opposite the primary target direction;
-    // Spread Shot increases chain bounces, not angular projectiles.
+      // Every bonus lightning bolt chooses a different angle on EACH attack.
+    // Shot 1 follows the enemy. Shot 2 goes behind the hunter. With a third
+    // shot, extras occupy opposite rear flanks, so they never overlap.
+    const lightningAngles=[aim];
+    if(element==='lightning'&&forwardCount===1)
+      lightningAngles.push(aim+Math.PI+(Math.random()-.5)*.45);
+    if(element==='lightning'&&forwardCount>=2){
+      const left=aim+1.95+Math.random()*.65;
+      const right=aim-1.95-Math.random()*.65;
+      if(Math.random()<.5)lightningAngles.push(left,right);
+      else lightningAngles.push(right,left);
+    }
     if(element!=='lightning')
       for(let k=1;k<=p.spreadShots;k++)directions.push(-.36*k,.36*k);
     for(const fan of directions)for(let i=0;i<=forwardCount;i++){
-      const angle=aim+fan+(element==='lightning'&&i>0?Math.PI:0);
+      const angle=element==='lightning'?lightningAngles[i]:aim+fan;
       const offset=(i-forwardCount/2)*9;
       const damage=element==='poison'?0:element==='lightning'?
         (1+Math.floor(Math.random()*200))*p.damage+p.flatDamage:p.damage+p.flatDamage;
@@ -2264,6 +2287,7 @@
   el.inventoryBtn.addEventListener('click',togglePause);
   el.inventoryClose.addEventListener('click',closeInventory);
   el.powersTab.addEventListener('click',()=>switchInventorySection('powers'));
+  el.encyclopediaTab.addEventListener('click',()=>switchInventorySection('encyclopedia'));
   el.bestiaryTab.addEventListener('click',()=>switchInventorySection('bestiary'));
   for(const section of ['elements','acquisition','catalog','scaling']){
     $(CODEX_SECTIONS[section][1]).addEventListener('click',()=>switchInventorySection(section));
