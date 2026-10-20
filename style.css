@@ -1085,3 +1085,50 @@ body:has(#intro:not(.hidden)) .site-shell{
   #inventoryPowersPage.character-screen{padding:9px 10px!important;}
   .character-stats{padding-left:0!important;}
 }
+
+/* v0.31.8 — edge-to-edge gameplay with an adaptive, non-stretched Canvas.
+   Keep the approved fixed-proportion title screen untouched. */
+body:has(#intro.hidden){
+  padding:0!important;
+  overflow:hidden;
+  width:100%;
+  height:100dvh;
+}
+body:has(#intro.hidden) .site-shell{
+  display:flex;
+  flex-direction:column;
+  width:100%!important;
+  max-width:none!important;
+  height:100dvh;
+  min-height:0;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  overflow:hidden;
+}
+body:has(#intro.hidden) .game-frame{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0!important;
+  max-height:none!important;
+  height:auto!important;
+  aspect-ratio:auto!important;
+  border:0;
+  border-radius:0;
+}
+body:has(#intro.hidden) #game{
+  display:block;
+  width:100%;
+  height:100%;
+}
+body:has(#intro.hidden) .topbar,
+body:has(#intro.hidden) .footer{
+  flex-shrink:0;
+  border-radius:0;
+}
+@supports not (height:100dvh){
+  body:has(#intro.hidden),
+  body:has(#intro.hidden) .site-shell{height:100vh;}
+}

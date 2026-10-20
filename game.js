@@ -1,15 +1,40 @@
 /* CRIMSON RUIN: AGE OF TORMENT — HUNTER'S NOCTURNE
    Dependency-free dark fantasy arena survival game.
-   Internal canvas: 640 x 360. Round length: 3 minutes. */
+   Responsive canvas, 640 x 360 base world at 16:9. Round length: 30 minutes. */
 (() => {
   'use strict';
   const canvas = document.querySelector('#game');
   const ctx = canvas.getContext('2d', { alpha: false });
   ctx.imageSmoothingEnabled = false;
-  // Pixel art stays sharp; curves, particles and glow render at 2x resolution.
-  ctx.setTransform(2, 0, 0, 2, 0, 0);
-
-  const W = 640, H = 360, TAU = Math.PI * 2, DURATION = 1800;
+  // The world uses consistent, undistorted units, while the canvas fills
+  // the available playfield at the actual monitor resolution.
+  // At 16:9 it shows 640 × 360 world units. Ultrawide shows more horizontally;
+  // tall displays show more vertically instead of stretching the sprites.
+  const BASE_WORLD_WIDTH=640, BASE_WORLD_HEIGHT=360;
+  let W=BASE_WORLD_WIDTH, H=BASE_WORLD_HEIGHT;
+  const TAU=Math.PI*2, DURATION=1800;
+  let lastFrameWidth=0,lastFrameHeight=0,lastDensity=0;
+  function resizePlayfield(){
+    const bounds=canvas.getBoundingClientRect();
+    const width=bounds.width,height=bounds.height;
+    if(width<=0||height<=0)return;
+    // Cap the backing surface near 4K so high-DPI / ultrawide monitors
+    // do not allocate enormous render targets.
+    const density=Math.max(.5,Math.min(window.devicePixelRatio||1,2,3840/width,2160/height));
+    if(Math.abs(width-lastFrameWidth)<.1&&Math.abs(height-lastFrameHeight)<.1&&density===lastDensity)return;
+    lastFrameWidth=width;lastFrameHeight=height;lastDensity=density;
+    const scale=Math.min(width/BASE_WORLD_WIDTH,height/BASE_WORLD_HEIGHT);
+    W=width/scale;H=height/scale;
+    canvas.width=Math.max(1,Math.round(width*density));
+    canvas.height=Math.max(1,Math.round(height*density));
+    // Uniform logical-world scaling; no sprite or collision distortions.
+    ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
+    ctx.imageSmoothingEnabled=false;
+  }
+  // ResizeObserver responds to menu/game transitions and window resizing.
+  if(typeof ResizeObserver!=='undefined')new ResizeObserver(resizePlayfield).observe(canvas);
+  window.addEventListener('resize',resizePlayfield);
+  resizePlayfield();
   // User-supplied gothic courtyard. The existing floor remains a fallback while loading.
   const courtyard = new Image();
   courtyard.decoding = 'async';
@@ -2268,6 +2293,8 @@
   }
 
   function loop(ts){
+    // Also catch fullscreen/zoom transitions in browsers without ResizeObserver.
+    if(typeof ResizeObserver==='undefined')resizePlayfield();
     if(!last)last=ts;
     const dt=Math.min((ts-last)/1000,.04);last=ts;
     // Freeze scene animations and gameplay when paused/reading/results.

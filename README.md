@@ -2,6 +2,10 @@
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)**
 
+## Full-screen responsive playfield
+
+Once a mode is selected, the arena fills the browser viewport instead of sitting inside a fixed-width 16:9 frame. The canvas backing resolution updates automatically on window resize and high-DPI displays (with a performance cap). The game uses a uniform world-to-screen scale: 16:9 shows the original 640 × 360 world units, ultrawide monitors show more horizontally, and taller monitors show more vertically. Sprites, hitboxes, projectiles, and movement do not stretch. The illustrated main menu keeps its original aspect ratio.
+
 ## Core mechanics
 
 - A run lasts up to **30:00**.
