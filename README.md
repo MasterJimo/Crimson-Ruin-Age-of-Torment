@@ -72,8 +72,8 @@ After **10:00**, no further early-wave monsters spawn. Any that are still alive 
 ### Bosses
 
 - **03:00 Gargoyle:** 11,000 base HP (10× the previous 1,100), a brilliant red 2,280-unit warning line (4× the previous visual) and a 2.6s charge telegraph. The 570-unit charge itself and its base 55 damage remain unchanged.
-- **08:00 Abomination:** very large HP pool and slow melee movement; warns for 1.8s before an AoE slam (radius 79). Defeating it awards **one Rare, Legendary or Mythic perk directly** without consuming XP or a level-up.
-- **17:00 Demon:** fast pursuit and three consecutive warned AoE blasts, radii **50, 94 and 142**, each able to hit separately.
+- **08:00 Abomination:** **52,000 base HP (×10)**, very large HP pool and slow melee movement; warns for 1.8s before an AoE slam (radius 79). Defeating it awards **one Rare, Legendary or Mythic perk directly** without consuming XP or a level-up.
+- **17:00 Demon:** **34,000 base HP (×10)**, fast pursuit and three consecutive warned AoE blasts, radii **50, 94 and 142**, each able to hit separately.
 - The 08:00 and 17:00 boss times are provisional pending final balancing.
 
 ### Enemy difficulty scaling
