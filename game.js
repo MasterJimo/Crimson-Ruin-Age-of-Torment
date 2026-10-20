@@ -120,6 +120,7 @@
   // Descriptions match the exact mechanic rather than promising an unrelated stat.
   // Rarity is rolled for EACH offered perk, not permanently assigned per perk.
   // The fifth (Mythic) band covers exactly 1% of normal RNG draws.
+  const MAX_HUNTER_LEVEL=150;
   const RARITY_TIERS=['common','magic','rare','legendary','mythic'];
   const RARITY_SCALE={common:1,magic:2,rare:4,legendary:8,mythic:16};
   function rollRarity(){
@@ -168,6 +169,10 @@
       case 'fire_power':return '+'+(5*u)+'% Fire damage.';
       case 'lightning_power':return '+'+(5*u)+'% Lightning damage.';
       case 'poison_power':return '+'+(5*u)+'% Poison damage.';
+      case 'survival_heal':return '+4 max HP, then heal at least 24 HP or 25% of max HP.';
+      case 'survival_heart':return '+12 max HP and heal 12 HP.';
+      case 'survival_regen':return '+0.15 HP per second permanently and heal 10 HP.';
+      case 'survival_phoenix':return 'Gain 1 revival charge (max 2). At the cap, gain +8 max HP and heal 8 HP. Revive restores 35% HP.';
       default:return '';
     }
   }
@@ -222,6 +227,25 @@
 
   // The four starting cards are intentionally brief. Full mechanics remain
   // available in the paused Power-Up Grimoire.
+  // Endless survival choices are reserved for depleted standard upgrade pools.
+  // They never consume the normal 54/25/15/5/1 rarity roll or enter shrine pools.
+  // All four remain meaningful and repeatable at any level.
+  const SURVIVAL_BOONS=[
+    {id:'survival_heal',icon:'vitality',name:'FIELD MEDIC',survival:true,apply:(p,g)=>{
+      p.maxHp+=4;const old=p.hp;p.hp=Math.min(p.maxHp,p.hp+Math.max(24,p.maxHp*.25));g.totalHealing+=p.hp-old;
+    }},
+    {id:'survival_heart',icon:'vitality',name:'ENDURING HEART',survival:true,apply:(p,g)=>{
+      p.maxHp+=12;const old=p.hp;p.hp=Math.min(p.maxHp,p.hp+12);g.totalHealing+=p.hp-old;
+    }},
+    {id:'survival_regen',icon:'regen',name:'MENDING VIGOR',survival:true,apply:(p,g)=>{
+      p.regen+=.15;const old=p.hp;p.hp=Math.min(p.maxHp,p.hp+10);g.totalHealing+=p.hp-old;
+    }},
+    {id:'survival_phoenix',icon:'armor',name:'PHOENIX SIGIL',survival:true,apply:(p,g)=>{
+      if(p.reviveCharges<2)p.reviveCharges++;
+      else{p.maxHp+=8;const old=p.hp;p.hp=Math.min(p.maxHp,p.hp+8);g.totalHealing+=p.hp-old;}
+    }}
+  ];
+
   const ELEMENT_CHOICES = [
     {id:'blood',element:'blood',name:'BLOOD',desc:'21.6 DMG · Piercing spear',longDesc:'Very slow Blood Spear pierces every enemy. Each contact applies 1 Bleed stack (8s, up to 8); a slow enemy may be hit again by the same spear after 0.6s. Piercing Fangs adds Bleed stacks instead of pierce.',tier:'rare'},
     {id:'fire',element:'fire',name:'FIRE',desc:'43.2 DMG · Explosive fireball',longDesc:'Fast fireball detonates on the first target, dealing 43.2 direct damage. Its 55-unit blast applies 100% Burn to all nearby enemies for 2s. Piercing Fangs increases blast radius by 10% per point.',tier:'rare'},
@@ -260,7 +284,7 @@
     return [['DIRECT HIT',fmt(direct)]];
   }
   function powerIcon(id){
-    const xy=SKILL_ICON_CELLS[id];
+    const xy=SKILL_ICON_CELLS[SURVIVAL_BOONS.find(p=>p.id===id)?.icon||id];
     if(!xy)return '<span class="glyph">✦</span>';
     // Fractions of the atlas extent; the CSS background-size is 500% 500%.
     return `<span class="glyph ability-icon skill-icon-v023" style="background-position:${xy[0]*25}% ${xy[1]*25}%" role="img" aria-label="${id.replaceAll('_',' ')}"></span>`;
@@ -384,7 +408,7 @@
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
-      player:{enemyBleed:[],x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
+      player:{enemyBleed:[],x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,reviveCharges:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], poisonBursts:[], bolts:[], fountains:[], magnetShrines:[], powerShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:45, magnetSpawned:false, nextPowerShrineAt:120, powerShrineSpawned:false, kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0,bossNext:Infinity,bossSpawned:new Set(),rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
@@ -705,13 +729,26 @@
   // Direct hits grant 0.5s protection from further contact, projectiles
   // and AoE damage; any existing damage-over-time remains independent.
   const HUNTER_HIT_GRACE_SECONDS=0.5;
+  function tryPhoenixRevive(){
+    const p=game.player;
+    if(p.hp>0||p.reviveCharges<=0)return false;
+    p.reviveCharges--;
+    p.hp=Math.max(1,Math.ceil(p.maxHp*.35));
+    p.hitCd=Math.max(p.hitCd,2);
+    p.enemyBleed.length=0;
+    addParticles(p.x,p.y,'#ffca77',38,105,2,5);
+    flashMessage('✦ PHOENIX SIGIL · REVIVED',2100);
+    playSound('level');
+    updateHUD();
+    return true;
+  }
   function damagePlayer(value){
     const p=game.player;
     if(p.hitCd>0)return false;
     const received=Math.max(1,Math.ceil(value*(1-p.armor)));p.hp=Math.max(0,p.hp-received);p.hitCd=HUNTER_HIT_GRACE_SECONDS;shake=Math.max(shake,6);flash=.18;
     addBloodBurst(p.x,p.y,12,'#ad1339'); floatText(p.x,p.y-24,`-${received}`,'#ffc9cd');
     playSound('hurt');
-    if(p.hp<=0) die(false);
+    if(p.hp<=0&&!tryPhoenixRevive()) die(false);
     return true;
   }
 
@@ -744,7 +781,11 @@
       game.stains.push({x:x+rand(-8,8),y:y+rand(-6,6),r:rand(5,14),alpha:rand(.28,.62),rot:rand(-.4,.4),tone:Math.random()<.35?'#4a0617':'#6a0019'});
     }
   }
-  function floatText(x,y,text,color='#ffd8df',size=10){ game.texts.push({x,y,text,color,size,life:.75,max:.75}); }
+  function floatText(x,y,text,color='#ffd8df',size=10){
+    // Bound damage-number spam in late-game hordes; visual only, no lost damage.
+    if(game.texts.length>=140)return;
+    game.texts.push({x,y,text,color,size,life:.75,max:.75});
+  }
 
   function playSound(kind){
     if(muted || sfxVolume === 0) return;
@@ -765,12 +806,18 @@
   }
 
   function gainXP(value){
-    const p=game.player; const earned=value*p.xpBonus;game.totalXP+=earned;p.xp+=earned;
+    const p=game.player;
+    const earned=Math.max(0,Number.isFinite(value*p.xpBonus)?value*p.xpBonus:0);
+    game.totalXP+=earned;
+    // XP still counts toward the run score, but no new level/card screens
+    // are generated past the explicit safety cap.
+    if(p.level>=MAX_HUNTER_LEVEL){p.xp=0;return;}
+    p.xp+=earned;
     if(p.xp>=p.next){
       p.xp-=p.next;
       p.level++;
-      p.next=Math.floor(12+p.level*8+p.level*p.level*1.5);
-      // Leveling only grants a power-up: no automatic HP restoration.
+      p.next=p.level>=MAX_HUNTER_LEVEL?Infinity:
+        Math.floor(12+p.level*8+p.level*p.level*1.5);
       state='upgrade';openUpgrade();playSound('level');
     }
   }
@@ -802,7 +849,8 @@
   // Four unique cards: guaranteed offensive, guaranteed defensive, 2 RNG.
   // Legendary Blood is rolled separately at 5% per entire offering.
   function withRarity(perk){
-    const tier=rollRarity();
+    // Survival fallback is a fixed reward, not a random rarity modifier.
+    const tier=perk.survival?'common':rollRarity();
     return {...perk,tier,desc:perkDescription(perk.id,tier)};
   }
   function rollChoices(previous=[]){
@@ -824,29 +872,34 @@
       damage=legendary;selected.push(legendary);
     }
     const random1=pick(pool),random2=pick(pool);
-    if(!damage||!defense||!random1||!random2)throw new Error('Cannot build four-card offer.');
-    return [damage,defense,random1,random2].map(withRarity);
+    // If a category ran dry, replace missing slots with repeatable bonuses.
+    // Never throw: even an empty/banned standard pool gives four unique cards.
+    const slots=[damage,defense,random1,random2];
+    for(let i=0;i<slots.length;i++)
+      if(!slots[i])slots[i]=pick(SURVIVAL_BOONS);
+    return slots.map(withRarity);
   }
   function renderUpgrade(){
     const g=game;
     el.upgradeCards.replaceChildren();
     g.upgradeChoices.forEach((opt,index)=>{
       const b=document.createElement('button');b.type='button';b.className='upgrade-card perk-'+opt.tier;
-      b.innerHTML=`<span class="perk-tier">${g.elementChosen?(index===0?'ATTACK · ':index===1?'DEFENSE · ':'RANDOM · '):''}${opt.tier}</span><span class="perk-art-frame">${powerIcon(opt.id)}</span><strong>${opt.name}</strong><span class="detail">${opt.element?elementDescriptionHTML(opt):opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
+      b.innerHTML=`<span class="perk-tier">${g.elementChosen?(opt.survival?'SURVIVAL · ':index===0?'ATTACK · ':index===1?'DEFENSE · ':'RANDOM · '):''}${opt.tier}</span><span class="perk-art-frame">${powerIcon(opt.id)}</span><strong>${opt.name}</strong><span class="detail">${opt.element?elementDescriptionHTML(opt):opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
       b.addEventListener('click',()=>chooseUpgrade(index));el.upgradeCards.appendChild(b);
     });
     const choosingElement=!g.elementChosen;
     el.upgrade.classList.toggle('element-select',choosingElement);
     el.reroll.hidden=choosingElement; el.banish.hidden=choosingElement;
     el.rerollCount.textContent=String(g.rerolls);el.banishCount.textContent=String(g.banishes);
-    el.reroll.disabled=g.rerolls<=0;
+    el.reroll.disabled=g.rerolls<=0||g.upgradeChoices.every(opt=>opt.survival);
     el.banish.disabled=g.banishes<=0 || eligiblePowers().length<=4;
     el.banish.classList.toggle('armed',g.banishMode);
     // Keep useful announcements for screen readers, without UI clutter.
     el.perkNotice.textContent=choosingElement?'Choose your starting element':
       g.banishMode?'Choose a power to banish. Press B to cancel.':
       'Choose your new power';
-    el.upgrade.querySelector('h2').textContent=choosingElement?'CHOOSE YOUR ELEMENT':'NEW POWER';
+    el.upgrade.querySelector('h2').textContent=choosingElement?'CHOOSE YOUR ELEMENT':
+      g.upgradeChoices.every(opt=>opt.survival)?'SURVIVAL REWARDS':'NEW POWER';
 
   }
   function openUpgrade(){
@@ -855,7 +908,8 @@
     renderUpgrade();el.upgrade.classList.remove('hidden');el.status.textContent='CHOOSE A NEW POWER';updateHUD();
   }
   function rerollUpgrades(){
-    if(state!=='upgrade'||!game.elementChosen||game.rerolls<=0)return;
+    if(state!=='upgrade'||!game.elementChosen||game.rerolls<=0||
+      game.upgradeChoices.every(opt=>opt.survival))return;
     const old=game.upgradeChoices.map(opt=>opt.id);
     game.rerolls--;game.banishMode=false;
     game.upgradeChoices=rollChoices(old);
@@ -882,6 +936,7 @@
       flashMessage(`✦ ${choice.name} ATTUNED`,2200);playSound('start');syncMusic();updateHUD();return;
     }
     if(game.banishMode){
+      if(choice.survival){flashMessage('SURVIVAL BONUS CANNOT BE BANISHED',1800);return;}
       if(game.banishes<=0||eligiblePowers().length<=4)return;
       const remaining=eligiblePowers().filter(p=>p.id!==choice.id);
       if(remaining.length<4||!remaining.some(p=>DAMAGE_POWER_IDS.has(p.id))||
@@ -1003,7 +1058,7 @@
     el.inventoryPerks.replaceChildren();
     let perkTotal=0;
     for(const id of game.perkOrder){
-      const perk=POWERS.find(v=>v.id===id);
+      const perk=POWERS.find(v=>v.id===id)||SURVIVAL_BOONS.find(v=>v.id===id);
       const rank=game.perkRanks[id]||0;
       if(!perk||rank<1)continue;
       perkTotal+=rank;
@@ -1013,7 +1068,7 @@
       row.className='inventory-perk perk-'+latest;
       row.innerHTML=`<span class="inventory-perk-icon">${powerIcon(id)}</span>
         <div class="inventory-perk-copy"><div class="inventory-perk-heading"><strong>${perk.name}</strong><span class="inventory-rank">RANK ${rank}</span></div>
-        <p>${tiers.map(v=>v.toUpperCase()).join(' · ')}</p>
+        <p>${tiers.length>8?tiers.slice(0,4).map(v=>v.toUpperCase()).join(' · ')+' · … '+(tiers.length-6)+' MORE · '+tiers.slice(-2).map(v=>v.toUpperCase()).join(' · '):tiers.map(v=>v.toUpperCase()).join(' · ')}</p>
         <p>Latest: ${perkDescription(id,latest)}</p></div>`;
       el.inventoryPerks.appendChild(row);
     }
@@ -1042,6 +1097,7 @@
       ['LIFE SHRINE REGEN',p.fountainRegenTime>0?`${Math.ceil(p.fountainRegenTime)}s · +1 HP/s`:'—'],
       ['MAGNET SHRINE',p.magnetBuffTime>0?`${Math.ceil(p.magnetBuffTime)}s · GLOBAL XP`:'—'],
       ['MAX HEALTH',String(p.maxHp)],
+      ['REVIVAL CHARGES',String(p.reviveCharges||0)],
       ['BLEED CAP',p.element==='blood'?'8':'—']
     ];
     el.inventoryStats.replaceChildren();
@@ -1183,11 +1239,12 @@
     const grid=codexElement('div','codex-grid');
     const source=[
       ['XP CRYSTALS','Guaranteed on normal enemy defeat','Each normal enemy drops its XP value as a crystal. Collect crystals to level up and select one of four upgrade cards. XP needed for the next level after reaching level L: floor(12 + 8L + 1.5L²).'],
-      ['LEVEL-UP CARDS','Rarity rolled separately per card','Common 54% · Magic 25% · Rare 15% · Legendary 5% · Mythic 1%. Each offer contains one offensive, one defensive, and two additional eligible cards. Individual power-up odds depend on eligible options, bans and current limits.'],
+      ['LEVEL-UP CARDS','Rarity rolled separately per standard card','Common 54% · Magic 25% · Rare 15% · Legendary 5% · Mythic 1%. While eligible, each offer includes an offensive, defensive and two further cards. Exhausted categories or insufficient distinct perks are filled with repeatable Common Survival rewards. Individual regular power-up odds depend on eligible options, bans and caps.'],
       ['POWER SHRINE','First at 02:00 · next 4–6 minutes after collection','Pick up a shrine for one immediate eligible upgrade without leveling up: 75% Legendary / 25% Mythic. With eligible Hemorrhagic Burst, it has a special 40% selection roll; otherwise eligible powers use weighted random choice.'],
       ['LIFE SHRINE','A fountain, not an RNG item drop','Grants +1 HP/s for 30 seconds, with no instant heal. New fountains appear roughly every 42–64 seconds. Refreshes rather than stacks.'],
       ['MAGNET SHRINE','First offered at 00:45','Immediately collects all XP crystals, then automatically collects new XP globally for 15 seconds. The next shrine becomes available 90–150 seconds after pickup.'],
-      ['ABOMINATION REWARD','Guaranteed on boss defeat','One instant eligible power-up: Rare 65% · Legendary 29% · Mythic 6%. This does not use XP or increase the player level.']
+      ['ABOMINATION REWARD','Guaranteed on boss defeat','One instant eligible power-up: Rare 65% · Legendary 29% · Mythic 6%. This does not use XP or increase the player level.'],
+      ['ENDGAME SURVIVAL','When standard perks cannot fill a four-card offer','Four repeatable Common survival rewards become available only as replacements for unavailable normal cards: Field Medic (+4 maximum HP and heal 25%/at least 24), Enduring Heart (+12 maximum HP and heal 12), Mending Vigor (+0.15 permanent HP/s and heal 10), and Phoenix Sigil (up to 2 revival charges; additional sigils give +8 maximum HP). Each revival restores 35% HP and gives 2 seconds of protection. Level 150 is the cap: further crystals still add to total XP scored without forcing more upgrade screens.']
     ];
     for(const [name,shortText,description] of source){
       const {article,content}=codexArticle(name,shortText,description);
@@ -1198,31 +1255,34 @@
   }
   function renderPowerLibrary(){
     const root=$('inventoryCatalogPage');root.replaceChildren();
-    codexIntro(root,'UPGRADE CATALOG','Choose a group and rarity to preview its effects. Each pickup increases that perk rank by 1; its effect uses that roll’s rarity multiplier. Entries reflect the real game rules.');
+    codexIntro(root,'UPGRADE CATALOG','Browse the 18 regular perks plus four fixed late-game Survival rewards. Regular perk effects use their roll’s rarity multiplier, while Survival rewards are repeatable and fixed.');
     const categories=[
-      ['offense','OFFENSE'],['defense','DEFENSE'],['utility','UTILITY'],['elemental','ELEMENTAL']
+      ['offense','OFFENSE'],['defense','DEFENSE'],['utility','UTILITY'],['elemental','ELEMENTAL'],['survival','SURVIVAL']
     ];
     const byGroup={
       offense:['brutality','rapid_fire','forward','spread','pierce','crit','crit_damage'],
       utility:['knowledge','magnet'],
       defense:['movement','vitality','regen','armor'],
-      elemental:['blood_power','hemorrhagic_burst','fire_power','lightning_power','poison_power']
+      elemental:['blood_power','hemorrhagic_burst','fire_power','lightning_power','poison_power'],
+      survival:SURVIVAL_BOONS.map(p=>p.id)
     };
     if(codexFocus){
       const group=Object.keys(byGroup).find(k=>byGroup[k].includes(codexFocus));
       if(group)catalogGroup=group;
     }
     codexFilters(root,categories,catalogGroup,v=>{catalogGroup=v;codexFocus=null;renderPowerLibrary();});
-    codexFilters(root,RARITY_TIERS.map(t=>[t,t.toUpperCase()]),catalogRarity,v=>{catalogRarity=v;renderPowerLibrary();});
+    if(catalogGroup!=='survival')
+      codexFilters(root,RARITY_TIERS.map(t=>[t,t.toUpperCase()]),catalogRarity,v=>{catalogRarity=v;renderPowerLibrary();});
+    else root.append(codexElement('p','codex-info-line','These four repeatable rewards have fixed effects (Common) and are offered only when normal cards cannot fill four slots.'));
     const grid=codexElement('div','codex-grid');
     for(const id of byGroup[catalogGroup]){
-      const perk=POWERS.find(p=>p.id===id);if(!perk)continue;
+      const perk=POWERS.find(p=>p.id===id)||SURVIVAL_BOONS.find(p=>p.id===id);if(!perk)continue;
       const focus=codexFocus===id;
       const selectedElement=game?.player?.element||'blood';
       const relatedElement=id.endsWith('_power')?id.replace('_power',''):id==='hemorrhagic_burst'?'blood':selectedElement;
-      const description=perkDescription(id,catalogRarity,relatedElement);
+      const description=perkDescription(id,perk.survival?'common':catalogRarity,relatedElement);
       const item=codexArticle(perk.name,description,'',focus);
-      item.content.append(codexElement('p','codex-article-detail','Rarity: '+catalogRarity.toUpperCase()+' · magnitude ×'+rarityScale(catalogRarity)));
+      item.content.append(codexElement('p','codex-article-detail',perk.survival?'Survival reward · fixed Common effect':'Rarity: '+catalogRarity.toUpperCase()+' · magnitude ×'+rarityScale(catalogRarity)));
       if(['forward','spread','pierce'].includes(id)){
         item.content.append(codexElement('p','codex-article-detail','ELEMENT-SPECIFIC EFFECTS'));
         for(const elName of ['blood','fire','lightning','poison']){
@@ -1552,7 +1612,7 @@
       p.hp=Math.max(0,p.hp-b.dps*elapsed*(1-p.armor));
       b.time-=dt;if(b.time<=0)p.enemyBleed.splice(i,1);
     }
-    if(p.hp<=0)die(false);
+    if(p.hp<=0&&!tryPhoenixRevive())die(false);
   }
   function enemyFire(e,p,def){
     const aim=Math.atan2(p.y-e.y,p.x-e.x),speed=def.projectileSpeed;
@@ -1834,8 +1894,18 @@
     for(let i=g.drops.length-1;i>=0;i--){
       const d=g.drops[i]; d.phase+=dt*5; d.life-=dt;
       const dd=Math.hypot(p.x-d.x,p.y-d.y);
-      if(dd<84*p.magnet){ const a=Math.atan2(p.y-d.y,p.x-d.x), v=150+Math.max(0,90-dd)*2; d.x+=Math.cos(a)*v*dt; d.y+=Math.sin(a)*v*dt; }
-      if(dd<17){ g.drops.splice(i,1); addParticles(d.x,d.y,'#46caff',4,32,2,3); playSound('pickup'); gainXP(d.value); if(state!=='playing') break; }
+      if(dd<84*p.magnet&&dd>0){
+        // Inspired by accelerating pickup-to-owner motion, with a clamped
+        // positive speed: unlike min(12*time-4,6), XP never moves away first.
+        d.pullTime=Math.min(.7,(d.pullTime||0)+dt);
+        const ramp=d.pullTime/.7, speed=130+510*ramp*ramp;
+        const step=Math.min(dd,speed*dt); // never overshoot or oscillate
+        d.x+=(p.x-d.x)/dd*step;d.y+=(p.y-d.y)/dd*step;
+      }else d.pullTime=0;
+      if(dist2(d.x,d.y,p.x,p.y)<17*17){
+        g.drops.splice(i,1);addParticles(d.x,d.y,'#46caff',4,32,2,3);
+        playSound('pickup');gainXP(d.value);if(state!=='playing')break;
+      }
       else if(d.life<0) g.drops.splice(i,1);
     }
 
@@ -1884,9 +1954,9 @@
       el.magnetBuff.textContent=`🧲 ${remaining}s`;
       el.magnetBuff.title=`Magnet Shrine: all map XP automatically collected (${remaining}s left)`;
     }
-    const xpPct=clamp(100*p.xp/p.next,0,100);
+    const xpPct=p.level>=MAX_HUNTER_LEVEL?100:clamp(100*p.xp/p.next,0,100);
     el.xp.style.width=`${xpPct}%`; el.xpStrip.setAttribute('aria-valuenow',String(Math.round(xpPct)));
-    el.level.textContent=p.level; el.kills.textContent=game.kills; el.time.textContent=timeText(game.time);
+    el.level.textContent=p.level>=MAX_HUNTER_LEVEL?p.level+' MAX':p.level; el.kills.textContent=game.kills; el.time.textContent=timeText(game.time);
     const boss=game.enemies.find(e=>ENEMIES[e.type]?.boss);
     el.bossBar.hidden=!boss;
     if(boss)el.bossName.textContent=ENEMIES[boss.type].name.toUpperCase();

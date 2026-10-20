@@ -1159,3 +1159,7 @@ body:has(#intro.hidden) .footer{
   image-rendering:auto;
 }
 @media(max-width:730px){.codex-monster-art{flex-basis:49px;height:49px;}}
+
+/* v0.32.1 — readable survival options when standard upgrades are exhausted. */
+.upgrade-card .perk-tier{white-space:normal;}
+.upgrade-card .detail{overflow-wrap:anywhere;}

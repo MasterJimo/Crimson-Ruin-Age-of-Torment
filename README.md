@@ -15,7 +15,7 @@ Once a mode is selected, the arena fills the browser viewport instead of sitting
 - A run lasts up to **30:00**.
 - Select one of four elements before combat; attacks automatically target nearby enemies. Enemies arrive in two groups, and new bosses appear at fixed moments.
 - Starting stats: **100 HP**, movement speed **100**, **6% critical chance**, **×1.6 critical damage**. Base attack speed is determined by the selected element. Direct enemy hits grant **0.5 seconds** of immunity against further contact, ranged and area attacks; existing damage-over-time effects still tick.
-- Blue XP crystals grant levels. A level-up grants a power-up **without healing HP**. XP required for the next level after reaching level `L`: `floor(12 + 8L + 1.5L²)`.
+- Blue XP crystals grant levels. XP required for the next level after reaching level `L`: `floor(12 + 8L + 1.5L²)`. Normal level-ups do not restore HP by default; selected survival rewards may heal. **Maximum level: 150**. XP collected after that point still counts toward your total score without triggering more upgrade screens.
 
 ## Elements
 
@@ -40,7 +40,7 @@ Base shot interval is `1 / attacks per second`: **1.0s** for Blood, Fire and Lig
 
 ## Power-ups and rarity
 
-Every level-up offers **4 different cards**: one Attack, one Defense and two random. Each run includes **3 Rerolls** and **3 Banishes**; banished powers do not reappear that run. **Power-ups are element-specific where noted:** their effects can differ from the generic names.
+Every level-up offers **4 different cards**: one Attack, one Defense and two random **while the relevant normal powers remain eligible**. If normal upgrades have reached their caps or been banished, any empty slots are replaced by distinct, repeatable **Survival Rewards**. This prevents late-game empty draws/crashes. Each run includes **3 Rerolls** and **3 Banishes**; survival rewards cannot be banished, and reroll is disabled when all four are the only possible choices. **Power-ups are element-specific where noted:** their effects can differ from the generic names.
 
 | Rarity | Chance per card | Multiplier `u` | Element Power |
 |---|---:|---:|---:|
@@ -100,6 +100,23 @@ Enemy stats are base values from the Bestiary times the following multiplier:
 On top of the tier: **HP × 1.045^minute**, **damage × 1.025^minute**, **speed × 1.018^minute**. Spawn pressure grows at **1.14^minute** up to its cap. Easy Mode halves all these resulting enemy values. Already-spawned enemies inherit new tier jumps without resetting their current HP percentage.
 
 **Blood Slime Bleed:** Each successful melee hit applies a 6-second stack, up to 8 at a time. One stack inflicts **0.65 + 0.11 × current five-minute tier HP/s** before armor. A small blood-droplet indicator near the HP bar displays active stacks.
+
+## Endgame Survival Rewards
+
+Four fixed **Common** replacement rewards are offered only when standard eligible power-ups cannot fill all four card slots. They are repeatable and do not dilute regular perk rarity chances or Power Shrine drops:
+
+| Reward | Effect |
+|---|---|
+| **Field Medic** | +4 max HP, then restore at least 24 HP or 25% of maximum HP |
+| **Enduring Heart** | +12 max HP and restore 12 HP |
+| **Mending Vigor** | Permanent +0.15 HP/s regeneration and restore 10 HP |
+| **Phoenix Sigil** | Gain a resurrection charge, up to 2. When holding 2 charges, grants +8 max HP and heals 8 instead |
+
+A Phoenix revival triggers before death from a direct hit or bleeding, consumes one charge, restores **35% maximum HP**, clears enemy Bleed stacks, and gives **2 seconds** of damage immunity. The amount of XP collected remains unrestricted for scorekeeping, but leveling stops at level **150**.
+
+## Smooth XP magnet movement
+
+Normal blue XP crystals begin to accelerate when entering your effective **84 × Soul Magnet** pickup radius. Their attraction speed ramps positively from **130 to 640 units/s in 0.7 seconds**, with movement clamped to the remaining distance to prevent bouncing or overshooting. A crystal is collected when it reaches the hunter. The global Magnet Shrine still collects XP instantly. A cap of **140 simultaneous floating combat texts** limits visual spam without limiting damage.
 
 ## Shrines
 
