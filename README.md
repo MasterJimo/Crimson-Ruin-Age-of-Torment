@@ -95,27 +95,19 @@ These are **total tier multipliers**, not multipliers compounded across earlier 
 | **Magnet Shrine** | **Guaranteed at 00:45**. After each collection, the next spawns randomly **90–150s later**; max **1** active. | Instantly collects **all unclaimed map XP** and grants **15s of global XP collection** for new drops. |
 | **Power Shrine** | **Guaranteed at 02:00**, then randomly **4–6 minutes after the previous pickup**; maximum **1** active. | Grants **1 Legendary (75%) or Mythic (25%) perk immediately**, without consuming XP or a level. **Hemorrhagic Burst has a 40% roll for Blood** until acquired; otherwise Element Power weighs **×5**, Critical Damage **×3**, and Forward Shot / Spread Shot / Piercing Fangs / Deadly Precision / Rapid Fire **×2**. Banned and capped perks cannot roll. |
 
-## Music and sound credits
-
-All externally sourced audio currently used by the game comes from **OpenGameArt.org** and **Freesound.org**. These five recordings are published under **[Creative Commons CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/)**. Attribution is not legally required by CC0, but the creators and original sources are credited here voluntarily.
+## Music Credits
 
 ### Music
 
-| In-game music | Artist | Source website / original recording | License |
+| Track | Artist | Source | License |
 |---|---|---|---|
-| **Ancient Caverns** (looping background ambience) | **[congusbongus](https://opengameart.org/content/ancient-caverns-horror-ambient-loop)** | **[OpenGameArt — Ancient caverns (horror ambient loop)](https://opengameart.org/content/ancient-caverns-horror-ambient-loop)** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Ancient Caverns | [congusbongus](https://opengameart.org/content/ancient-caverns-horror-ambient-loop) | [OpenGameArt](https://opengameart.org/content/ancient-caverns-horror-ambient-loop) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
 
-The background track is streamed directly from OpenGameArt as `https://opengameart.org/sites/default/files/caverns.ogg`.
+### Sound Effects
 
-### Elemental sound effects
-
-| Attack sound | Artist | Source website / original recording | License |
+| Element | Artist | Source | License |
 |---|---|---|---|
-| **Blood** | **[_stubb](https://freesound.org/people/_stubb/)** | **[Freesound — Blood Spatter_Squelch_Near_Mono](https://freesound.org/people/_stubb/sounds/406582/)** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| **Fire** | **[qubodup](https://freesound.org/people/qubodup/)** | **[Freesound — Fire Spell](https://freesound.org/people/qubodup/sounds/442871/)** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| **Lightning** | **[JoelAudio](https://freesound.org/people/JoelAudio/)** | **[Freesound — ELECTRIC_ZAP_001.wav](https://freesound.org/people/JoelAudio/sounds/136542/)** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| **Poison** | **[qubodup](https://freesound.org/people/qubodup/)** | **[Freesound — Slime Attack 1](https://freesound.org/people/qubodup/sounds/751338/)** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
-
-These Freesound WAV / FLAC recordings were **cropped, converted into short mono MP3 samples, peak-normalized and faded in/out** for the game. Other in-game cues (e.g., pickups, hits, level-ups and deaths) are **procedurally synthesized with Web Audio API**, not externally sourced recordings.
-
-Full source and adaptation details: [assets/audio/SOURCES.md](assets/audio/SOURCES.md).
+| Blood | [_stubb](https://freesound.org/people/_stubb/) | [Freesound](https://freesound.org/people/_stubb/sounds/406582/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Fire | [qubodup](https://freesound.org/people/qubodup/) | [Freesound](https://freesound.org/people/qubodup/sounds/442871/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Lightning | [JoelAudio](https://freesound.org/people/JoelAudio/) | [Freesound](https://freesound.org/people/JoelAudio/sounds/136542/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Poison | [qubodup](https://freesound.org/people/qubodup/) | [Freesound](https://freesound.org/people/qubodup/sounds/751338/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
