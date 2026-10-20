@@ -2,12 +2,10 @@
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)**
 
-> **Temporary empty-arena build (v0.30.2):** Placeholder enemy sprites, their atlas, and their definitions have been removed. Normal waves, ambushes, the Warden, and the 30-minute Reaper appearance are disabled while the new enemy roster is being balanced. Blood projectiles now travel at **80 units/s** instead of **40 units/s**; the other elemental speeds are unchanged. Auto-aim shots require an enemy target, so no shots appear in this empty-arena build. The combat framework remains in place for the next update.
-
 ## Core mechanics
 
 - A run lasts up to **30:00**; at 30:00 an invulnerable **Reaper** kills the hunter.
-- Select one of four elements before combat; attacks automatically target nearby enemies.
+- Select one of four elements before combat; attacks automatically target nearby enemies. **Enemy spawning and the Reaper are disabled in the current empty-arena test build**; without enemy targets, auto-attacks do not fire.
 - Starting stats: **100 HP**, movement speed **100**, **6% critical chance**, **×1.6 critical damage**. Base attack speed is determined by the selected element.
 - Blue XP crystals grant levels. A level-up grants a power-up **without healing HP**. XP required for the next level after reaching level `L`: `floor(12 + 8L + 1.5L²)`.
 
@@ -15,10 +13,10 @@
 
 | Element | Base hit | Base attacks/s | Damage and status rules |
 |---|---:|---:|---|
-| **Blood** | **21.6** (+8%) | **1** | **Blood Spear:** extremely slow **40 units/s** projectile with **unlimited pierce**. Every hit applies 1 Bleed stack (100% of hit damage over **8s**, max 8 stacks). The same enemy may be hit again after **0.6s** of continued contact. Piercing Fangs grants extra Bleed stacks per hit. |
+| **Blood** | **21.6** (+8%) | **1** | **Blood Spear:** slow **80 units/s** projectile with **unlimited pierce**. Every hit applies 1 Bleed stack (100% of hit damage over **8s**, max 8 stacks). The same enemy may be hit again after **0.6s** of continued contact. Piercing Fangs grants extra Bleed stacks per hit. |
 | **Fire** | **43.2** (+8%) | **1** | **Fireball:** **290 units/s**, detonates on its first target, dealing direct damage there and applying Burn to **all** enemies within **55 units**. Burn = **43.2 DPS × 2s** at base, refreshed but not stacked. |
-| **Lightning** | **Random 1–200** | **1** | **Chain Lightning:** strikes the first enemy then bounces **4 times** to distinct enemies within **120 units** of the previous target, max **5 hits** initially. Each hit has **50%** chance to Shock for **4s**. Piercing Fangs adds bounces, capped at **25**. |
-| **Poison** | **0** | **2** | **Toxic Orb:** **210 units/s**. Its first impact splashes **1 permanent 15 DPS Poison stack** onto every enemy within **140 units** (**2.55×** Fireball radius). Each stack can crit. On death with 5+ Poison stacks, Poison Proliferate spreads 5 stacks to up to 6 targets within 175 units; stacks remain unlimited. |
+| **Lightning** | **Random 1–200** | **1** | **Chain Lightning:** strikes the first enemy then bounces **4 times** to distinct enemies within **120 units** of the previous target (up to **5 hits** initially). Each hit has **50%** Shock chance for **4s**. **Piercing Fangs** and **Spread Shot** add bounces, up to **25** per chain. **Forward Shot** launches up to **3 independent Chain Lightnings** per attack. |
+| **Poison** | **0** | **2** | **Toxic Orb:** **210 units/s**. Its first impact splashes **1 permanent 15 DPS Poison stack** onto every enemy within **55 units**, matching Fireball. Each stack can crit. On death with **5+** stacks, Poison Proliferate spreads **5 stacks** to up to **6 enemies** within **55 units** (both radii gain **+10% per Piercing Fangs point**). No Proliferate text is shown; stacks remain unlimited. |
 
 ### Elemental damage formulas
 
@@ -27,14 +25,14 @@ Base shot interval is `1 / attacks per second`: **1.0s** for Blood, Fire and Lig
 - **Element Power:** Each upgrade adds `5% × rarity multiplier` to the base damage of the chosen element. Multiple bonuses **add**, rather than multiply.
 - **Blood:** direct hit = `21.6 × (1 + Blood Power bonus) + flat damage`. Each Blood Spear collision adds `1 + Piercing Fangs points` Bleed stacks, each worth `actual hit damage / 8` DPS for 8 seconds, capped at **8 active stacks**. Spear pierces infinitely, with a **0.6s per-target repeat-hit cooldown** for each spear. Crits scale both the direct hit and Bleed.
 - **Fire:** direct hit on first enemy = `43.2 × (1 + Fire Power bonus) + flat damage`. Every enemy within radius `55 × (1 + 0.1 × Piercing Fangs points)` gets a 2-second Burn. Burn DPS = `basic hit × 1.0`; subsequent explosions refresh rather than stack it. At base, the primary target takes **43.2 direct + 86.4 Burn** if the full Burn elapses; secondary targets receive Burn only.
-- **Lightning:** each hit starts from the projectile's base roll `random integer 1–200 × (1 + Lightning Power bonus) + flat damage`, with independent crit and Shock rolls per enemy. From the first hit, bounce to the nearest unhit enemy within **120 units** of the last target; maximum `min(25, 4 + Piercing Fangs points)` bounces. No repeated targets within one chain.
-- **Poison:** Toxic Orb blast radius = `140 × (1 + 0.1 × Piercing Fangs points)`; each enemy hit by the blast gains one stack. Poison DPS = `15 × (1 + Poison Power bonus) × sum(crit multiplier of each stack)`. Individual stacks may crit (base ×1.6), are permanent, and have no count cap. At death with **5+** stacks, Poison Proliferate transfers **5 stacks** to up to **6 enemies** within 175 units, preserving average crit potency.
+- **Lightning:** each hit starts from the projectile's base roll `random integer 1–200 × (1 + Lightning Power bonus) + flat damage`, with independent crit and Shock rolls per enemy. From the first hit, bounce to the nearest unhit enemy within **120 units** of the last target; maximum `min(25, 4 + Piercing Fangs points + 2 × Spread Shot points)` bounces **per independent chain**. Forward Shot grants `min(3, 1 + Forward Shot points)` separate Chain Lightning projectiles, each with its own hit list and chaining. No repeated targets within one chain.
+- **Poison:** Toxic Orb and Poison Proliferate radii = `55 × (1 + 0.1 × Piercing Fangs points)`; each enemy hit by the Toxic Orb blast gains one stack. Poison DPS = `15 × (1 + Poison Power bonus) × sum(crit multiplier of each stack)`. Individual stacks may crit (base ×1.6), are permanent, and have no count cap. At death with **5+** stacks, Poison Proliferate transfers **5 stacks** to up to **6 enemies** within the same blast radius, preserving average crit potency.
 
 **Hemorrhagic Burst (Blood):** An independent **5% chance per four-card power-up offer** (including rerolls), available once per run. After selection, every Blood hit detonates Bleed immediately instead of leaving ticking stacks. Base area damage = `(8 + Piercing Fangs points) × hit damage` (**172.8** for an unmodified 21.6-damage hit with 0 Piercing Fangs points). Rarity adds `10% × (rarity multiplier − 1)` burst potency; the explosion does not spread Bleed.
 
 ## Power-ups and rarity
 
-Every level-up offers **4 different cards**: one Attack, one Defense and two random. Each run includes **3 Rerolls** and **3 Banishes**; banished powers do not reappear that run.
+Every level-up offers **4 different cards**: one Attack, one Defense and two random. Each run includes **3 Rerolls** and **3 Banishes**; banished powers do not reappear that run. **Power-ups are element-specific where noted:** their effects can differ from the generic names.
 
 | Rarity | Chance per card | Multiplier `u` | Element Power |
 |---|---:|---:|---:|
@@ -54,9 +52,9 @@ Every level-up offers **4 different cards**: one Attack, one Defense and two ran
 | Iron Will | Multiplicative incoming-damage reduction by up to `3u%` per pick, max **80%** total reduction |
 | Forbidden Knowledge | XP gained ×`(1 + 0.08u)` |
 | Soul Magnet | Crystal pickup radius ×`(1 + 0.10u)` |
-| Forward Shot | +1 parallel projectile (+2 Legendary, +3 Mythic), max **3 extra** |
-| Spread Shot | +2 angled projectiles (+4 Legendary/Mythic), max **8 spread ranks** |
-| Piercing Fangs | Grants **1 point** (+2 Legendary, +3 Mythic). **Blood:** +1 Bleed stack per hit and +1 stack worth of Hemorrhagic Burst damage; **Lightning:** +1 chain bounce, max 25 bounces (21 extra points); **Fire / Poison:** +10% explosion radius per point, max **4 points**. Blood Spear inherently pierces all enemies. |
+| Forward Shot | **Blood / Fire / Poison:** +1 parallel projectile (+2 Legendary, +3 Mythic), max **3 extra**. **Lightning:** +1 independent Chain Lightning projectile per point, max **3 total** (2 extra); every chain has separate targets and bounces. |
+| Spread Shot | **Blood / Fire / Poison:** +2 angled projectiles (+4 Legendary/Mythic), max **8 spread points**. **Lightning:** +2 chain bounces per spread point (+4 with Legendary/Mythic), **no angled shots**; max **25 combined bounces**. |
+| Piercing Fangs | Grants **1 point** (+2 Legendary, +3 Mythic). **Blood:** +1 Bleed stack per hit and +1 stack worth of Hemorrhagic Burst damage; **Lightning:** +1 bounce per point, max **25 bounces** combined with Spread Shot; **Fire / Poison:** +10% area radius per point (including Poison Proliferate), max **4 points**. Blood Spear pierces every enemy. |
 | Deadly Precision | +`3u%` critical chance, max **85%** |
 | Critical Damage | +`10u%` critical damage multiplier, no cap |
 | Blood / Fire / Lightning / Poison Power | +`5u%` of elemental base damage, additive, max **5 picks** for the chosen element |

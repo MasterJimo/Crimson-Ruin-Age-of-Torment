@@ -78,6 +78,14 @@
   function rarityScale(tier){return RARITY_SCALE[tier]||1;}
   function shotBonus(scale){return scale>=16?3:scale>=8?2:1;}
   function spreadBonus(scale){return scale>=8?2:1;}
+  // Lightning interprets Spread Shot as +2 chains per spread point,
+  // not extra angled projectiles. Each Forward Shot fires its own chain.
+  const LIGHTNING_BASE_CHAINS=4,LIGHTNING_MAX_CHAINS=25;
+  function lightningChainCount(p){return Math.min(LIGHTNING_MAX_CHAINS,LIGHTNING_BASE_CHAINS+p.pierce+2*p.spreadShots);}
+  function attackProjectileCount(p){
+    return p.element==='lightning'?1+Math.min(2,p.forwardShots):
+      (1+p.forwardShots)*(1+2*p.spreadShots);
+  }
   function perkDescription(id,tier){
     const u=rarityScale(tier),percent=n=>Math.round(n*100)+'%';
     switch(id){
@@ -89,8 +97,12 @@
       case 'armor':return 'Reduce incoming damage by '+(3*u)+'%.';
       case 'knowledge':return '+'+(8*u)+'% XP from crystals.';
       case 'magnet':return '+'+(10*u)+'% crystal pickup radius.';
-      case 'forward':return '+'+shotBonus(u)+' parallel projectile(s).';
-      case 'spread':return '+'+(2*spreadBonus(u))+' angled projectile(s).';
+      case 'forward':return game?.player?.element==='lightning'?
+        '+'+shotBonus(u)+' independent Chain Lightning (max 3 active shots per attack).':
+        '+'+shotBonus(u)+' parallel projectile(s).';
+      case 'spread':return game?.player?.element==='lightning'?
+        '+'+(2*spreadBonus(u))+' chain bounces (up to 25 total).':
+        '+'+(2*spreadBonus(u))+' angled projectile(s).';
       case 'pierce':{
         const amount=shotBonus(u),element=game?.player?.element;
         if(element==='blood')return '+'+amount+' Bleed stack(s) per hit; adds to Hemorrhagic Burst.';
@@ -145,9 +157,9 @@
     {id:'armor',icon:'armor',name:'IRON WILL',can:p=>p.armor<.80,apply:(p,g,u)=>{const reduction=Math.min(.80,.03*u);p.armor=Math.min(.80,1-(1-p.armor)*(1-reduction));}},
     {id:'knowledge',icon:'knowledge',name:'FORBIDDEN KNOWLEDGE',apply:(p,g,u)=>p.xpBonus*=1+.08*u},
     {id:'magnet',icon:'magnet',name:'SOUL MAGNET',apply:(p,g,u)=>p.magnet*=1+.1*u},
-    {id:'forward',icon:'forward',name:'FORWARD SHOT',can:p=>p.forwardShots<3,apply:(p,g,u)=>p.forwardShots=Math.min(3,p.forwardShots+shotBonus(u))},
-    {id:'spread',icon:'spread',name:'SPREAD SHOT',can:p=>p.spreadShots<8,apply:(p,g,u)=>p.spreadShots=Math.min(8,p.spreadShots+spreadBonus(u))},
-    {id:'pierce',icon:'pierce',name:'PIERCING FANGS',can:p=>p.pierce<(p.element==='lightning'?21:4),apply:(p,g,u)=>p.pierce=Math.min(p.element==='lightning'?21:4,p.pierce+shotBonus(u))},
+    {id:'forward',icon:'forward',name:'FORWARD SHOT',can:p=>p.forwardShots<(p.element==='lightning'?2:3),apply:(p,g,u)=>p.forwardShots=Math.min(p.element==='lightning'?2:3,p.forwardShots+shotBonus(u))},
+    {id:'spread',icon:'spread',name:'SPREAD SHOT',can:p=>p.spreadShots<8&&(p.element!=='lightning'||lightningChainCount(p)<25),apply:(p,g,u)=>p.spreadShots=Math.min(8,p.spreadShots+spreadBonus(u))},
+    {id:'pierce',icon:'pierce',name:'PIERCING FANGS',can:p=>p.pierce<(p.element==='lightning'?21:4)&&(p.element!=='lightning'||lightningChainCount(p)<25),apply:(p,g,u)=>p.pierce=Math.min(p.element==='lightning'?21:4,p.pierce+shotBonus(u))},
     {id:'crit',icon:'crit',name:'DEADLY PRECISION',can:p=>p.critChance<.85,apply:(p,g,u)=>p.critChance=Math.min(.85,p.critChance+.03*u)},
     {id:'crit_damage',icon:'crit',name:'CRITICAL DAMAGE',apply:(p,g,u)=>{p.critDamage+=.10*u;}},
     {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',can:p=>p.element==='blood'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
@@ -162,8 +174,8 @@
   const ELEMENT_CHOICES = [
     {id:'blood',element:'blood',name:'BLOOD',desc:'21.6 DMG · Piercing spear',longDesc:'Very slow Blood Spear pierces every enemy. Each contact applies 1 Bleed stack (8s, up to 8); a slow enemy may be hit again by the same spear after 0.6s. Piercing Fangs adds Bleed stacks instead of pierce.',tier:'rare'},
     {id:'fire',element:'fire',name:'FIRE',desc:'43.2 DMG · Explosive fireball',longDesc:'Fast fireball detonates on the first target, dealing 43.2 direct damage. Its 55-unit blast applies 100% Burn to all nearby enemies for 2s. Piercing Fangs increases blast radius by 10% per point.',tier:'rare'},
-    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 4 chains',longDesc:'Lightning strikes the first target and chains to 4 additional enemies within 120 units of the previous target (up to 5 hits). Each impact has a 50% chance to Shock. Piercing Fangs adds chains, up to 25 bounces.',tier:'rare'},
-    {id:'poison',element:'poison',name:'POISON',desc:'15 DPS · Toxic splash',longDesc:'Toxic Orb bursts on the first enemy and adds 1 permanent Poison stack to all enemies in a 140-unit radius. Individual stacks may crit. Piercing Fangs extends splash radius by 10% per point. Death with 5+ stacks causes Poison Proliferate.',tier:'rare'}
+    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 4 chains',longDesc:'Lightning strikes the first target and chains to 4 additional enemies within 120 units. Each impact has a 50% chance to Shock. Piercing Fangs and Spread Shot add chains, up to 25 bounces. Forward Shot launches up to 3 independent Chain Lightning spells per attack.',tier:'rare'},
+    {id:'poison',element:'poison',name:'POISON',desc:'15 DPS · Toxic splash',longDesc:'Toxic Orb bursts on the first enemy and adds 1 permanent Poison stack to all enemies in a 55-unit radius, matching Fireball. Each stack may crit. Piercing Fangs extends the Toxic Orb and Poison Proliferate radius by 10% per point. Death with 5+ stacks causes Poison Proliferate.',tier:'rare'}
   ];
   const ELEMENT_DAMAGE={blood:21.6,fire:43.2,lightning:1,poison:0}; // +8% base Blood and Fire
   const ELEMENT_ATTACK_RATE={blood:1,fire:1,lightning:1,poison:2};
@@ -878,7 +890,7 @@
       ['CRIT DAMAGE','×'+p.critDamage.toFixed(2)],
       ['ARMOR',Math.round(p.armor*100)+'%'],
       ['XP MULTIPLIER','×'+p.xpBonus.toFixed(2)],
-      ['PROJECTILES',(1+p.forwardShots)*(1+2*p.spreadShots)],
+      ['PROJECTILES',attackProjectileCount(p)],
       ['PICKUP RADIUS',Math.round(84*p.magnet)]
     ],'run-stat-tile');
     const taken=game.perkOrder||[];
@@ -968,7 +980,7 @@
       el.inventoryPerks.appendChild(empty);
     }
     el.inventoryPerkCount.textContent=perkTotal+' PICKED · '+game.perkOrder.length+' TYPES';
-    const shots=(1+p.forwardShots)*(1+2*p.spreadShots);
+    const shots=attackProjectileCount(p);
     const fmt=(n,d=1)=>Number(n).toFixed(d);
     const stats=[
       ...damageStatRows(p),
@@ -976,8 +988,8 @@
       ['MOVE SPEED',fmt(p.speed,0)],
       ['PROJECTILES',String(shots)],
       p.element==='blood'?['BLEED STACKS / HIT',String(1+p.pierce)]:
-        p.element==='lightning'?['CHAIN BOUNCES',String(4+p.pierce)]:
-        ['BLAST RADIUS',String(Math.round((p.element==='poison'?140:55)*(1+.1*p.pierce)))],
+        p.element==='lightning'?['CHAIN BOUNCES',String(lightningChainCount(p))]:
+        ['BLAST RADIUS',String(Math.round(55*(1+.1*p.pierce)))],
       ['CRITICAL',Math.round(p.critChance*100)+'%'],
       ['CRIT DAMAGE','×'+p.critDamage.toFixed(2)],
       ['ARMOR',Math.round(p.armor*100)+'%'],
@@ -1041,9 +1053,13 @@
     const baseSpeed={blood:80,lightning:235,fire:290,poison:210}[element]||142;
     const speed=baseSpeed*p.projectileSpeed;
     const directions=[0];
-    for(let k=1;k<=p.spreadShots;k++)directions.push(-.36*k,.36*k);
-    for(const fan of directions)for(let i=0;i<=p.forwardShots;i++){
-      const angle=aim+fan,offset=(i-p.forwardShots/2)*9;
+    const forwardCount=element==='lightning'?Math.min(2,p.forwardShots):p.forwardShots;
+    // Lightning Spread Shot extends EACH independent chain; it does not fire
+    // extra angled projectiles. Three parallel lightning spells are the max.
+    if(element!=='lightning')
+      for(let k=1;k<=p.spreadShots;k++)directions.push(-.36*k,.36*k);
+    for(const fan of directions)for(let i=0;i<=forwardCount;i++){
+      const angle=aim+fan,offset=(i-forwardCount/2)*9;
       const damage=element==='poison'?0:element==='lightning'?
         (1+Math.floor(Math.random()*200))*p.damage+p.flatDamage:p.damage+p.flatDamage;
       game.shots.push({
@@ -1171,11 +1187,11 @@
   function applyPoisonStack(enemy,critMultiplier=1){
     applyPoisonStacks(enemy,1,critMultiplier);
   }
-  // Innate Poison Proliferate: spread five stacks to six nearest enemies
-  // within a 175-unit circle when a 5+-stack target dies. Can chain.
+  // Innate Poison Proliferate: spread 5 stacks to up to 6 enemies. Its
+  // radius matches Toxic Orb / Fireball and grows with Piercing Fangs.
   function proliferatePoison(source){
     if(game.player.element!=='poison'||(source.poisonStacks||0)<5)return;
-    const radius=175;
+    const radius=55*(1+.10*game.player.pierce);
     const nearby=game.enemies.filter(e=>
       dist2(source.x,source.y,e.x,e.y)<=(radius+e.r)*(radius+e.r)
     ).sort((a,b)=>dist2(source.x,source.y,a.x,a.y)-dist2(source.x,source.y,b.x,b.y)).slice(0,6);
@@ -1187,18 +1203,17 @@
     game.poisonBursts.push({x:source.x,y:source.y,radius,life:.52,max:.52});
     if(game.poisonBursts.length>24)game.poisonBursts.shift();
     addParticles(source.x,source.y,'#65ff80',24,90,2,4);
-    floatText(source.x,source.y-36,'PROLIFERATE ×'+nearby.length,'#b2ff99',11);
   }
   // Fire's single Burn deals the full basic hit each second for 2s; refreshes.
   function refreshBurn(enemy,p){
     enemy.burnDps=burnDps(p);
     enemy.burnTime=2;
   }
-  // Four base bounces, +Piercing Fangs up to 25 total; no repeat target.
+  // Four base bounces plus Piercing Fangs and Spread Shot; max 25 per chain.
   function chainLightning(origin,shot,hitSet){
     const p=game.player;
     let current=origin;
-    for(let i=0;i<Math.min(25,4+p.pierce);i++){
+    for(let i=0;i<lightningChainCount(p);i++){
       const candidates=game.enemies.filter(e=>!hitSet.has(e)&&e!==current&&e.hp>0&&
         dist2(e.x,e.y,current.x,current.y)<=120*120);
       if(!candidates.length)break;
@@ -1229,7 +1244,7 @@
     addMagicFx(x,y,'skill:'+element+':particles',size*1.05,life*.75);
   }
   function elementalSplash(element,source,p){
-    const radius=(element==='fire'?55:140)*(1+.10*p.pierce);
+    const radius=55*(1+.10*p.pierce);
     for(const target of game.enemies.slice()){
       if(dist2(source.x,source.y,target.x,target.y)>(radius+target.r)**2)continue;
       if(element==='fire')refreshBurn(target,p);
