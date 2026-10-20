@@ -2,6 +2,31 @@
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)**
 
+## v0.33.1 — Play on phones (portrait and landscape)
+
+**Mobile phones and tablets now use an analog on-screen joystick**: drag
+from the center in any direction, including diagonally. A separate touch
+control dock sits below the arena, keeping the battle visible. Release your
+finger to stop. The **PAUSE** button opens Character Stats and the
+Encyclopedia; existing keyboard controls remain unchanged on desktop.
+
+Mobile HUD: kills/level and HP remain at the top, the clock stays in a fixed
+topbar cell, and the **SOUND** control expands the existing Music/SFX/Mute
+settings without consuming a permanent second header row. On portrait
+phones the title menu displays readable, native buttons instead of shrinking
+the entire landscape illustration. Landscape retains the approved art.
+
+The canvas reacts to viewport changes using its measured size and a
+uniform world scale, so players, monsters, attacks and collisions never
+stretch when rotating between portrait and landscape. The virtual stick
+is reset on release, cancel, orientation changes, lost focus and pause.
+The same touchscreen works with both **Easy** and **Hardcore**, including
+level-up choices, Reliquaries, Ascensions, inventory and Codex.
+
+**Browser limitation:** ordinary mobile web pages cannot reliably lock a
+phone's screen orientation. Instead, this game dynamically adapts to
+portrait and landscape and keeps navigation usable in either direction.
+
 ## v0.33.0 — Four Torment Systems (review build)
 
 The v0.32.7 baseline is preserved at [backup/v0.32.7-before-new-mechanics-2026-10-20](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment/tree/backup/v0.32.7-before-new-mechanics-2026-10-20). The following systems are playable in both Easy and Hardcore, with all game UI in English.

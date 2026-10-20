@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.33.0">
+  <meta name="game-version" content="0.33.1">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.33.0">
+  <link rel="stylesheet" href="style.css?v=0.33.1">
 </head>
 <body>
   <div class="site-shell">
@@ -35,7 +35,8 @@
         <strong id="timeText">00:00</strong>
       </div>
       <div class="topbar-right solo-audio">
-        <div class="audio-controls" aria-label="Audio settings">
+        <button id="mobileAudioToggle" class="mobile-audio-toggle" type="button" aria-expanded="false" aria-controls="audioControls">♫ SOUND</button>
+        <div class="audio-controls" id="audioControls" aria-label="Audio settings">
           <label class="volume-control" for="musicVolume">
             <span>MUSIC</span>
             <input type="range" id="musicVolume" min="0" max="100" step="1" value="10" aria-label="Music volume">
@@ -100,6 +101,7 @@
           </button>
         </div>
         <p class="intro-keyboard-help" id="introKeyboardHelp">Move with WASD or arrow keys. Press P to pause and O to open inventory and Codex.</p>
+        <p class="mobile-intro-help">Use the joystick to move in any direction. Spells attack automatically. Tap PAUSE for stats and the Encyclopedia.</p>
       </section>
 
       <section class="screen-overlay hidden" id="upgrade" aria-live="polite">
@@ -234,6 +236,17 @@
       </section>
       </main>
 
+    <aside id="mobileControls" class="mobile-controls" aria-label="Touch gameplay controls" hidden>
+      <div class="mobile-stick-wrap">
+        <div id="mobileJoystick" class="mobile-joystick" role="group" aria-label="Movement joystick: touch and drag in any direction">
+          <div class="mobile-stick-cross" aria-hidden="true">✦</div>
+          <div id="mobileStickThumb" class="mobile-stick-thumb" aria-hidden="true"></div>
+        </div>
+        <span class="mobile-stick-label">MOVE</span>
+      </div>
+      <div class="mobile-control-hint" aria-hidden="true">DRAG TO MOVE<br><span>ANY DIRECTION</span></div>
+      <button id="mobilePauseBtn" class="mobile-pause-button" type="button" aria-label="Pause and open Character Stats">Ⅱ <span>PAUSE</span></button>
+    </aside>
     <footer class="footer">
       <div><span class="green-dot"></span> <span id="statusText">READY FOR THE HUNT</span></div>
 
@@ -241,8 +254,8 @@
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="monsters.js?v=0.33.0" defer></script>
-  <script src="assets.js?v=0.33.0" defer></script>
-  <script src="game.js?v=0.33.0" defer></script>
+  <script src="monsters.js?v=0.33.1" defer></script>
+  <script src="assets.js?v=0.33.1" defer></script>
+  <script src="game.js?v=0.33.1" defer></script>
 </body>
 </html>

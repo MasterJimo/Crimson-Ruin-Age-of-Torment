@@ -126,7 +126,8 @@
     sound:$('soundBtn'), musicVolume:$('musicVolume'), sfxVolume:$('sfxVolume'),
     musicVolumeValue:$('musicVolumeValue'), sfxVolumeValue:$('sfxVolumeValue'), xpStrip:$('xpStrip'),
     msg:$('message'), status:$('statusText'), bossBar:$('bossBar'), bossFill:$('bossFill'), bossName:$('bossName'),
-    reroll:$('rerollBtn'), banish:$('banishBtn'), rerollCount:$('rerollCount'), banishCount:$('banishCount'), perkNotice:$('perkNotice')
+    reroll:$('rerollBtn'), banish:$('banishBtn'), rerollCount:$('rerollCount'), banishCount:$('banishCount'), perkNotice:$('perkNotice'),
+    mobileControls:$('mobileControls'), mobileJoystick:$('mobileJoystick'), mobileStickThumb:$('mobileStickThumb'), mobilePause:$('mobilePauseBtn'), mobileAudioToggle:$('mobileAudioToggle')
   };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const rand = (a, b) => a + Math.random() * (b - a);
@@ -508,6 +509,80 @@
 
   const keys = new Set();
   let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 10, sfxVolume = 1, sfx = null;
+
+  // Pointer Events support one anchored, analog touch joystick. World movement
+  // remains identical to keyboard movement: no new damage, speed or difficulty.
+  // A dedicated responsive control dock avoids covering the monsters in combat.
+  let touchEnabled=Boolean(window.matchMedia?.('(pointer: coarse)').matches||'ontouchstart' in window);
+  let joystickPointerId=null,joystickX=0,joystickY=0;
+  if(touchEnabled)document.body.classList.add('touch-game');
+  function resetJoystick(){
+    joystickPointerId=null;joystickX=0;joystickY=0;
+    el.mobileStickThumb.style.transform='translate(0px, 0px)';
+  }
+  function syncMobileControls(){
+    const show=touchEnabled&&state==='playing';
+    if(el.mobileControls.hidden!==!show){
+      el.mobileControls.hidden=!show;
+      if(!show)resetJoystick();
+      resizePlayfield();
+    }
+  }
+  function moveJoystick(e){
+    if(e.pointerId!==joystickPointerId)return;
+    const rect=el.mobileJoystick.getBoundingClientRect();
+    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+    const radius=Math.max(1,Math.min(rect.width,rect.height)*.35);
+    const dx=e.clientX-cx,dy=e.clientY-cy,distance=Math.hypot(dx,dy);
+    const fraction=Math.min(1,distance/radius),theta=Math.atan2(dy,dx);
+    // Ignore finger tremor close to the center; honor gentle analog input.
+    const power=fraction<.12?0:(fraction-.12)/.88;
+    joystickX=Math.cos(theta)*power;joystickY=Math.sin(theta)*power;
+    const visual=Math.min(radius,distance);
+    el.mobileStickThumb.style.transform=
+      'translate('+Math.cos(theta)*visual+'px, '+Math.sin(theta)*visual+'px)';
+    e.preventDefault?.();
+  }
+  el.mobileJoystick.addEventListener('pointerdown',e=>{
+    if(state!=='playing'||!touchEnabled||joystickPointerId!==null)return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    joystickPointerId=e.pointerId;
+    try{el.mobileJoystick.setPointerCapture(e.pointerId);}catch(_){}
+    moveJoystick(e);
+  });
+  el.mobileJoystick.addEventListener('pointermove',moveJoystick);
+  function releaseJoystick(e){
+    if(e.pointerId!==joystickPointerId)return;
+    resetJoystick();
+  }
+  for(const event of ['pointerup','pointercancel','lostpointercapture'])
+    el.mobileJoystick.addEventListener(event,releaseJoystick);
+  el.mobilePause.addEventListener('click',()=>{
+    if(state==='playing')togglePause();
+    syncMobileControls();
+  });
+  el.mobileAudioToggle.addEventListener('click',()=>{
+    const wrapper=el.mobileAudioToggle.parentElement;
+    const open=!wrapper.classList.contains('audio-open');
+    wrapper.classList.toggle('audio-open',open);
+    el.mobileAudioToggle.setAttribute('aria-expanded',String(open));
+  });
+  // If desktop DevTools emulates a phone after initial load, activate touch UI
+  // on the very first real touch. No desktop mouse controls are affected.
+  window.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='touch'&&!touchEnabled){
+      touchEnabled=true;document.body.classList.add('touch-game');
+      syncMobileControls();
+    }
+  });
+  window.addEventListener('orientationchange',()=>{
+    resetJoystick();
+    // Canvas sizes come from actual measured bounds, never screen orientation.
+    resizePlayfield();
+  });
+  window.addEventListener('resize',resetJoystick);
+  window.visualViewport?.addEventListener('resize',resizePlayfield);
+
   let musicPlayer = null, currentTrack = 'caverns';
   // Four local CC0 Freesound samples: max 7 attack cues/s, max 2 voices.
   // One cue per attack action, NOT per multishot projectile or enemy hit.
@@ -2062,7 +2137,16 @@
 
     let mx=Number(keys.has('d')||keys.has('arrowright')) - Number(keys.has('a')||keys.has('arrowleft'));
     let my=Number(keys.has('s')||keys.has('arrowdown')) - Number(keys.has('w')||keys.has('arrowup'));
-    const mag=Math.hypot(mx,my); p.moving=mag>.02; if(mag>0){ mx/=mag; my/=mag; p.x+=mx*p.speed*dt; p.y+=my*p.speed*dt; p.walk+=dt*11; p.face=mx<-.05?-1:mx>.05?1:p.face; }
+    // Keyboard is full-speed digital movement. The stick can use gradual speed.
+    const keyboardActive=Boolean(mx||my);
+    if(!keyboardActive){mx=joystickX;my=joystickY;}
+    const mag=Math.hypot(mx,my);
+    p.moving=mag>.06;
+    if(mag>0){
+      if(keyboardActive||mag>1){mx/=mag;my/=mag;}
+      p.x+=mx*p.speed*dt;p.y+=my*p.speed*dt;
+      p.walk+=dt*11;p.face=mx<-.05?-1:mx>.05?1:p.face;
+    }
     p.moveX=mag?mx:0;p.moveY=mag?my:0;
 
     updateFountains(dt);
@@ -2755,6 +2839,7 @@
     // Freeze scene animations and gameplay when paused/reading/results.
     if(state==='playing'||state==='death')animTime+=dt;
     if(state==='death')updateDeath(dt);else update(dt);
+    syncMobileControls();
     draw(animTime);raf=requestAnimationFrame(loop);
   }
 
@@ -2788,8 +2873,8 @@
   // Changing browser focus, Alt+Tab or moving to another monitor must
   // NOT open the pause menu. Clear movement keys to prevent stuck walking
   // when the browser does not deliver a matching keyup event.
-  window.addEventListener('blur',()=>keys.clear());
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)keys.clear();});
+  window.addEventListener('blur',()=>{keys.clear();resetJoystick();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();resetJoystick();}});
   document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
   $('reliquaryClaim').addEventListener('click',()=>chooseReliquary(false));
