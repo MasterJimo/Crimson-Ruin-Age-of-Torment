@@ -23,6 +23,20 @@
   const powerShrineArt=new Image();powerShrineArt.decoding='async';powerShrineArt.src='assets/power-shrine-v025.png';
   const deathArt=new Image();deathArt.decoding='async';deathArt.src='assets/death-reaper-v019.webp';
   const ribbonArt=new Image();ribbonArt.decoding='async';ribbonArt.src='assets/easy-ribbon-v019.webp';
+  // Twelve provided skill illustrations packed into one 3-column / 4-row
+  // transparent atlas: projectile, impact and particles for each element.
+  const skillArt=new Image();
+  skillArt.decoding='async';
+  skillArt.src='assets/elemental-skills-v030.webp';
+  const SKILL_TILE=64,SKILL_ROWS={blood:0,lightning:1,fire:2,poison:3};
+  function drawSkillFrame(element,frame,x,y,width,height,opacity=1){
+    if(!skillArt.complete||!skillArt.naturalWidth)return false;
+    const row=SKILL_ROWS[element];
+    if(row===undefined)return false;
+    ctx.save();ctx.globalAlpha*=opacity;ctx.imageSmoothingEnabled=true;
+    ctx.drawImage(skillArt,frame*SKILL_TILE,row*SKILL_TILE,SKILL_TILE,SKILL_TILE,x,y,width,height);
+    ctx.restore();return true;
+  }
 
   const $ = id => document.getElementById(id);
   const el = {
@@ -83,7 +97,13 @@
       case 'magnet':return '+'+(10*u)+'% crystal pickup radius.';
       case 'forward':return '+'+shotBonus(u)+' parallel projectile(s).';
       case 'spread':return '+'+(2*spreadBonus(u))+' angled projectile(s).';
-      case 'pierce':return '+'+shotBonus(u)+' extra pierce.';
+      case 'pierce':{
+        const amount=shotBonus(u),element=game?.player?.element;
+        if(element==='blood')return '+'+amount+' Bleed stack(s) per hit; adds to Hemorrhagic Burst.';
+        if(element==='lightning')return '+'+amount+' chain bounce(s), up to 25 total.';
+        if(element==='fire'||element==='poison')return '+'+(10*amount)+'% explosion radius.';
+        return '+'+amount+' extra pierce.';
+      }
       case 'crit':return '+'+(3*u)+'% critical chance.';
       case 'crit_damage':return '+'+(10*u)+'% critical damage multiplier.';
       case 'blood_power':return '+'+(5*u)+'% Blood damage.';
@@ -99,7 +119,7 @@
   // No added proc chances, extra projectiles, or separate Burn affix.
   const POISON_DPS=15;
   // Burn deals 100% of the basic Fire hit PER SECOND for 2 seconds
-  // (base: 40 DPS = 80 total DoT). Crits and Shock do not amplify Burn.
+  // (base: 43.2 DPS = 86.4 total DoT). Crits and Shock do not amplify Burn.
   function burnDps(p){return p.damage+p.flatDamage;}
   function syncActiveBurn(p,g){
     if(p.element!=='fire')return;
@@ -133,7 +153,7 @@
     {id:'magnet',icon:'magnet',name:'SOUL MAGNET',apply:(p,g,u)=>p.magnet*=1+.1*u},
     {id:'forward',icon:'forward',name:'FORWARD SHOT',can:p=>p.forwardShots<3,apply:(p,g,u)=>p.forwardShots=Math.min(3,p.forwardShots+shotBonus(u))},
     {id:'spread',icon:'spread',name:'SPREAD SHOT',can:p=>p.spreadShots<8,apply:(p,g,u)=>p.spreadShots=Math.min(8,p.spreadShots+spreadBonus(u))},
-    {id:'pierce',icon:'pierce',name:'PIERCING FANGS',can:p=>p.pierce<4,apply:(p,g,u)=>p.pierce=Math.min(4,p.pierce+shotBonus(u))},
+    {id:'pierce',icon:'pierce',name:'PIERCING FANGS',can:p=>p.pierce<(p.element==='lightning'?21:4),apply:(p,g,u)=>p.pierce=Math.min(p.element==='lightning'?21:4,p.pierce+shotBonus(u))},
     {id:'crit',icon:'crit',name:'DEADLY PRECISION',can:p=>p.critChance<.85,apply:(p,g,u)=>p.critChance=Math.min(.85,p.critChance+.03*u)},
     {id:'crit_damage',icon:'crit',name:'CRITICAL DAMAGE',apply:(p,g,u)=>{p.critDamage+=.10*u;}},
     {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',can:p=>p.element==='blood'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
@@ -146,10 +166,10 @@
   // The four starting cards are intentionally brief. Full mechanics remain
   // available in the paused Power-Up Grimoire.
   const ELEMENT_CHOICES = [
-    {id:'blood',element:'blood',name:'BLOOD',desc:'21.6 DMG · Bleed on hit',longDesc:'21.6 direct damage. Every hit Bleeds for 100% of its damage over 8s per stack (21.6 total each at base), up to 8 stacks. Brutality and Blood Power improve Bleed.',tier:'rare'},
-    {id:'fire',element:'fire',name:'FIRE',desc:'43.2 DMG · Burn over 2s',longDesc:'43.2 direct damage. Burn deals 100% of the basic hit every second for 2s (43.2 + 43.2 at base), refreshing on hit. Brutality and Fire Power improve Burn.',tier:'rare'},
-    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 50% Shock',longDesc:'Random 1–200 direct damage per hit. Each hit has a 50% chance to Shock for 4s; shocked enemies take double direct-hit damage.',tier:'rare'},
-    {id:'poison',element:'poison',name:'POISON',desc:'15 DPS · Infinite stacks',longDesc:'Every hit adds 15 DPS Poison, multiplied by Crit Damage on critical hits. Enemies dying with 5+ Poison stacks spread 5 stacks to up to 6 nearby targets. <strong>Infinite scaling</strong>: stacks never expire.',tier:'rare'}
+    {id:'blood',element:'blood',name:'BLOOD',desc:'21.6 DMG · Piercing spear',longDesc:'Very slow Blood Spear pierces every enemy. Each contact applies 1 Bleed stack (8s, up to 8); a slow enemy may be hit again by the same spear after 0.6s. Piercing Fangs adds Bleed stacks instead of pierce.',tier:'rare'},
+    {id:'fire',element:'fire',name:'FIRE',desc:'43.2 DMG · Explosive fireball',longDesc:'Fast fireball detonates on the first target, dealing 43.2 direct damage. Its 55-unit blast applies 100% Burn to all nearby enemies for 2s. Piercing Fangs increases blast radius by 10% per point.',tier:'rare'},
+    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 4 chains',longDesc:'Lightning strikes the first target and chains to 4 additional enemies within 120 units of the previous target (up to 5 hits). Each impact has a 50% chance to Shock. Piercing Fangs adds chains, up to 25 bounces.',tier:'rare'},
+    {id:'poison',element:'poison',name:'POISON',desc:'15 DPS · Toxic splash',longDesc:'Toxic Orb bursts on the first enemy and adds 1 permanent Poison stack to all enemies in a 140-unit radius. Individual stacks may crit. Piercing Fangs extends splash radius by 10% per point. Death with 5+ stacks causes Poison Proliferate.',tier:'rare'}
   ];
   const ELEMENT_DAMAGE={blood:21.6,fire:43.2,lightning:1,poison:0}; // +8% base Blood and Fire
   const ELEMENT_ATTACK_RATE={blood:1,fire:1,lightning:1,poison:2};
@@ -803,7 +823,6 @@
       el.inventoryBtn.hidden=false;
       game.player.damage=ELEMENT_DAMAGE[choice.element];
       game.player.attackRate=ELEMENT_ATTACK_RATE[choice.element];
-      if(choice.element==='lightning')game.player.projectileSpeed*=1.25;
       game.player.shotCd=0;
       attackLastAt=-Infinity;attackVoices=[];
       state='playing';el.upgrade.classList.add('hidden');
@@ -960,7 +979,9 @@
       ['ATTACKS / SEC',fmt(p.attackRate,2)],
       ['MOVE SPEED',fmt(p.speed,0)],
       ['PROJECTILES',String(shots)],
-      ['PIERCE',String(p.pierce+(p.element==='blood'?p.bloodLance:0))],
+      p.element==='blood'?['BLEED STACKS / HIT',String(1+p.pierce)]:
+        p.element==='lightning'?['CHAIN BOUNCES',String(4+p.pierce)]:
+        ['BLAST RADIUS',String(Math.round((p.element==='poison'?140:55)*(1+.1*p.pierce)))],
       ['CRITICAL',Math.round(p.critChance*100)+'%'],
       ['CRIT DAMAGE','×'+p.critDamage.toFixed(2)],
       ['ARMOR',Math.round(p.armor*100)+'%'],
@@ -1007,8 +1028,9 @@
     else if(state==='playing')openInventory();
   }
 
-  // Restored classic slow projectile auto-fire. Each shot travels across the arena
-  // and deals damage only on collision; no immediate or sweeping melee damage.
+  // Blood: deliberately very slow and infinite piercing.
+  // Lightning: projectile detonates into a 4+ chain spell on first impact.
+  // Fire / Poison: fast impact orbs that splash their status over an area.
   function shoot(){
     const p=game.player;
     let target=null,best=370*370;
@@ -1018,30 +1040,33 @@
     }
     if(!target)return;
     const aim=Math.atan2(target.y-p.y,target.x-p.x);
-    p.face=Math.cos(aim)<0?-1:1;
-    p.attackDir=aim;
-    const speed=142*p.projectileSpeed;
+    p.face=Math.cos(aim)<0?-1:1;p.attackDir=aim;
+    const element=p.element;
+    const baseSpeed={blood:40,lightning:235,fire:290,poison:210}[element]||142;
+    const speed=baseSpeed*p.projectileSpeed;
     const directions=[0];
     for(let k=1;k<=p.spreadShots;k++)directions.push(-.36*k,.36*k);
     for(const fan of directions)for(let i=0;i<=p.forwardShots;i++){
-      const angle=aim+fan;
-      const offset=(i-p.forwardShots/2)*9;
-      const element=p.element;
-      const fire=element==='fire'||Math.random()<p.fireChance;
-      const frost=!fire&&Math.random()<p.frostChance;
-      const poison=element==='poison';
-      const lightning=element==='lightning';
-      const orb=element==='blood'&&Math.random()<p.bloodOrbChance;
-      const kind=orb?'blood_orb_v11':fire?'fire_bolt_v11':lightning?'lightning_bolt_v11':poison?'poison_bolt_v11':frost?'ice_bolt':'blood_bolt_v11';
-      const shotSpeed=orb?Math.max(44,speed*.35):speed;
-      game.shots.push({hostile:false,x:p.x+Math.cos(angle)*14-Math.sin(angle)*offset,y:p.y+Math.sin(angle)*14+Math.cos(angle)*offset,
-        vx:Math.cos(angle)*shotSpeed,vy:Math.sin(angle)*shotSpeed,angle,life:Math.max(1.5,orb?3.5:2.85/p.projectileSpeed),damage:poison?0:lightning?(1+Math.floor(Math.random()*200))*p.damage+p.flatDamage:p.damage+p.flatDamage,kind,fire,frost,poison,lightning,orb,size:p.projectileSize*(orb?1.55:1),
-        pierce:orb?0:p.pierce+(element==='blood'?p.bloodLance:0),hit:new Set()});
+      const angle=aim+fan,offset=(i-p.forwardShots/2)*9;
+      const damage=element==='poison'?0:element==='lightning'?
+        (1+Math.floor(Math.random()*200))*p.damage+p.flatDamage:p.damage+p.flatDamage;
+      game.shots.push({
+        hostile:false,element,
+        x:p.x+Math.cos(angle)*14-Math.sin(angle)*offset,
+        y:p.y+Math.sin(angle)*14+Math.cos(angle)*offset,
+        vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,angle,
+        life:element==='blood'?Math.max(11,460/Math.max(1,speed)):
+          Math.max(1.5,420/Math.max(1,speed)),
+        damage,kind:element,fire:element==='fire',poison:element==='poison',
+        lightning:element==='lightning',size:p.projectileSize,
+        hit:new Set(),lastHit:new Map()
+      });
     }
-    addParticles(p.x+Math.cos(aim)*13,p.y+Math.sin(aim)*13,'#e8c3d0',4,25,2,3);
+    addParticles(p.x+Math.cos(aim)*13,p.y+Math.sin(aim)*13,
+      element==='poison'?'#a2ff84':element==='lightning'?'#b4a9ff':
+      element==='fire'?'#ffb47c':'#f67a94',4,25,2,3);
     playSound('shot');
   }
-
   function enemyDie(e){
     const index=game.enemies.indexOf(e); if(index<0) return;
     game.enemies.splice(index,1); game.kills++;
@@ -1127,7 +1152,7 @@
     const stacks=enemy.bleedStacks||(enemy.bleedStacks=[]);
     if(game.player.hemorrhagicBurst){
       // Instant 8-stack detonation on EVERY hit, replacing existing Bleed.
-      const damage=8*hitDamage*(game.player.hemorrhagicBurstBoost||1);
+      const damage=(8+game.player.pierce)*hitDamage*(game.player.hemorrhagicBurstBoost||1);
       stacks.length=0;
       burstHemorrhage(enemy,damage);
       return;
@@ -1173,14 +1198,54 @@
     enemy.burnDps=burnDps(p);
     enemy.burnTime=2;
   }
-  function chainLightning(origin,damage,hitSet){
-    const other=game.enemies.find(e=>e!==origin&&!hitSet.has(e)&&dist2(e.x,e.y,origin.x,origin.y)<115*115);
-    if(!other)return;
-    hitSet.add(other);damage=applyHitDamage(other,damage);other.hit=.2;
-    game.bolts.push({x:origin.x,y:origin.y,toX:other.x,toY:other.y,life:.22,max:.22});
-    addMagicFx(other.x,other.y,'lightning',45,.2);
-    floatText(other.x,other.y-16,String(Math.ceil(damage)),'#d6b6ff');
-    if(other.hp<=0)enemyDie(other);
+  // Four base bounces, +Piercing Fangs up to 25 total; no repeat target.
+  function chainLightning(origin,shot,hitSet){
+    const p=game.player;
+    let current=origin;
+    for(let i=0;i<Math.min(25,4+p.pierce);i++){
+      const candidates=game.enemies.filter(e=>!hitSet.has(e)&&e!==current&&e.hp>0&&
+        dist2(e.x,e.y,current.x,current.y)<=120*120);
+      if(!candidates.length)break;
+      candidates.sort((a,b)=>dist2(a.x,a.y,current.x,current.y)-dist2(b.x,b.y,current.x,current.y));
+      const next=candidates[0],fromX=current.x,fromY=current.y;
+      hitSet.add(next);
+      const crit=Math.random()<p.critChance;
+      const damage=applyHitDamage(next,shot.damage*(next.type==='warden'?p.bossDamage:1)*
+        (crit?p.critDamage:1));
+      next.hit=.2;
+      game.bolts.push({x:fromX,y:fromY,toX:next.x,toY:next.y,
+        life:.26,max:.26,element:'lightning'});
+      // Cap transient visuals at very high attack speed; all chain hits still land.
+      if(game.bolts.length>200)game.bolts.splice(0,game.bolts.length-200);
+      addSkillImpact('lightning',next.x,next.y,49,.30);
+      floatText(next.x,next.y-16,String(Math.ceil(damage))+(crit?'!':''),
+        crit?'#ffe39b':'#c9bcff');
+      if(Math.random()<.5){
+        next.shockTime=4;
+        floatText(next.x,next.y-33,'SHOCK!','#86d8ff');
+      }
+      current=next;
+      if(next.hp<=0)enemyDie(next);
+    }
+  }
+  function addSkillImpact(element,x,y,size=60,life=.38){
+    addMagicFx(x,y,'skill:'+element+':impact',size,life);
+    addMagicFx(x,y,'skill:'+element+':particles',size*1.05,life*.75);
+  }
+  function elementalSplash(element,source,p){
+    const radius=(element==='fire'?55:140)*(1+.10*p.pierce);
+    for(const target of game.enemies.slice()){
+      if(dist2(source.x,source.y,target.x,target.y)>(radius+target.r)**2)continue;
+      if(element==='fire')refreshBurn(target,p);
+      else{
+        const crit=Math.random()<p.critChance;
+        applyPoisonStack(target,crit?p.critDamage:1);
+        if(crit)floatText(target.x,target.y-29,'CRIT POISON!','#f8e17e',10);
+      }
+    }
+    addSkillImpact(element,source.x,source.y,radius*1.65,.42);
+    addImpact(source.x,source.y,radius,element==='fire'?'#ff943f':'#82ed4b');
+    addParticles(source.x,source.y,element==='fire'?'#ffa355':'#8cfa75',14,70,2,4);
   }
   function explodeAt(x,y,damage,primary,hitSet){
     addMagicFx(x,y,'impact',70,.35);
@@ -1298,36 +1363,45 @@
           continue;
         }
         for(const e of g.enemies.slice()){
-          if(b.hit.has(e))continue;
-          if(dist2(b.x,b.y,e.x,e.y-4)>Math.pow(e.r+5*(b.size||1),2))continue;
-          b.hit.add(e);const crit=Math.random()<p.critChance;const dmg=applyHitDamage(e,b.damage*(e.type==='warden'?p.bossDamage:1)*(crit?p.critDamage:1));e.hit=.18;
-          // Damage-over-time uses real seconds and the damage of the actual hit.
-          if(p.element==='blood')applyBleedStack(e,dmg);
-          if(b.fire)refreshBurn(e,p);
-          if(b.lightning && Math.random()<.5){e.shockTime=4;floatText(e.x,e.y-35,'SHOCK!','#86d8ff');addMagicFx(e.x,e.y,'lightning',33,.19);}
-          if(b.frost)e.slowTime=2.5;
-          // Poison has no stack limit or expiry; every hit adds 15 DPS.
-          if(b.poison){
-            applyPoisonStack(e,crit?p.critDamage:1);
-            if(crit)floatText(e.x,e.y-28,'CRIT POISON!','#f8e17e',10);
+          if(b.element==='blood'){
+            // No permanent hit-set for a slow Blood Spear: 0.6s cooldown
+            // permits a second hit while an enemy remains inside the spear.
+            const last=b.lastHit.get(e);
+            if(last!==undefined&&g.time-last<.60)continue;
+          }else if(b.hit.has(e))continue;
+          if(dist2(b.x,b.y,e.x,e.y-4)>(e.r+5*(b.size||1))**2)continue;
+          b.hit.add(e);
+          if(b.element==='blood')b.lastHit.set(e,g.time);
+          const crit=Math.random()<p.critChance;
+          const dmg=applyHitDamage(e,b.damage*(e.type==='warden'?p.bossDamage:1)*
+            (crit?p.critDamage:1));
+          e.hit=.18;
+          if(b.element==='blood'){
+            if(p.hemorrhagicBurst)applyBleedStack(e,dmg);
+            else for(let k=0;k<1+p.pierce;k++)applyBleedStack(e,dmg);
+            addSkillImpact('blood',e.x,e.y,52,.33);
+            if(Math.random()<p.bloodSplashChance)explodeAt(e.x,e.y,dmg*.38,e,b.hit);
+          }else if(b.element==='lightning'){
+            if(Math.random()<.5){
+              e.shockTime=4;floatText(e.x,e.y-35,'SHOCK!','#86d8ff');
+            }
+            addSkillImpact('lightning',e.x,e.y,51,.33);
+            chainLightning(e,b,b.hit);
+          }else if(b.element==='fire'||b.element==='poison'){
+            elementalSplash(b.element,e,p);
           }
-          if(p.chainChance>0&&Math.random()<Math.min(.95,p.chainChance))chainLightning(e,dmg*.55,b.hit);
-          if(b.orb){explodeAt(e.x,e.y,dmg*.7,e,b.hit);addMagicFx(e.x,e.y,'blood_orb_v11',70,.26);}
-          else if(p.element==='blood'&&Math.random()<p.bloodSplashChance)explodeAt(e.x,e.y,dmg*.38,e,b.hit);
           if(Math.random()<p.blastChance)explodeAt(e.x,e.y,dmg*.48,e,b.hit);
-          const a=b.angle;
-          const push=e.type==='warden'?3.5:8;
-          e.knockX=Math.cos(a)*35;e.knockY=Math.sin(a)*35;
-          e.x+=Math.cos(a)*push;e.y+=Math.sin(a)*push;
-          addSlashBurst(e.x,e.y,a,e.type==='warden');
-          addParticles(e.x,e.y,'#ffd5dc',5,46,2,3);
-          if(dmg>0)floatText(e.x,e.y-20,`${Math.ceil(dmg)}${crit?'!':''}`,crit?'#ffd274':'#ffe9d0');
-          addMagicFx(e.x,e.y,b.fire?'impact':b.frost?'frost_nova':'impact',b.fire?40:28,.28);
+          if(dmg>0)floatText(e.x,e.y-20,`${Math.ceil(dmg)}${crit?'!':''}`,
+            crit?'#ffd274':'#ffe9d0');
           if(e.hp<=0)enemyDie(e);
-          else addBloodBurst(e.x,e.y,e.type==='warden'?11:6,ENEMIES[e.type].blood);
+          else if(b.element==='blood')addBloodBurst(e.x,e.y,e.type==='warden'?11:6,ENEMIES[e.type].blood);
           shake=Math.max(shake,1.5);
-          if(b.pierce<=0){remove=true;break;}
-          b.pierce--;
+          if(b.element!=='blood'){
+            // Fire and Poison always detonate on the FIRST collision; Lightning
+            // becomes a chain from that contact. Pierce instead alters their spell.
+            remove=true;break;
+          }
+          // Blood Spear never stops or loses its ability to pierce.
         }
       }
       b.life-=dt;
@@ -1714,9 +1788,14 @@
         ctx.fillStyle='#a02f4b';ctx.fillRect(-5,-3,11,6);
         ctx.fillStyle='#ffc1cd';ctx.fillRect(-2,-2,5,4);
       }else{
-        const width=(b.orb?31:45)*(b.size||1),height=(b.orb?31:25)*(b.size||1);
-        if(!window.NoobArt?.paint(ctx,b.kind||'blood_bolt',-width*.5,-height*.5,width,height)){
-          ctx.fillStyle='#fda0ae';ctx.fillRect(-9,-3,18,6);
+        const size=b.size||1;
+        const widths={blood:55,lightning:47,fire:39,poison:44};
+        const heights={blood:18,lightning:17,fire:36,poison:37};
+        const w=(widths[b.element]||45)*size,h=(heights[b.element]||25)*size;
+        if(!drawSkillFrame(b.element,0,-w/2,-h/2,w,h)){
+          if(!window.NoobArt?.paint(ctx,b.kind||'blood_bolt',-w/2,-h/2,w,h)){
+            ctx.fillStyle='#fda0ae';ctx.fillRect(-9,-3,18,6);
+          }
         }
       }
       ctx.restore();
@@ -1744,9 +1823,21 @@
   }
   function drawMagic(camX,camY){
     for(const f of game.magicFx){
-      const s=f.size* (1.12-f.life/f.max*.24);window.NoobArt?.paint(ctx,f.kind,f.x-camX-s/2,f.y-camY-s/2,s,s*.78,clamp(f.life/f.max,0,1));
+      const s=f.size*(1.12-f.life/f.max*.24),alpha=clamp(f.life/f.max,0,1);
+      if(f.kind.startsWith('skill:')){
+        const [,element,frame]=f.kind.split(':');
+        drawSkillFrame(element,frame==='impact'?1:2,f.x-camX-s/2,f.y-camY-s/2,s,s,alpha);
+      }else window.NoobArt?.paint(ctx,f.kind,f.x-camX-s/2,f.y-camY-s/2,s,s*.78,alpha);
     }
-    for(const b of game.bolts){ctx.save();ctx.strokeStyle=`rgba(199,171,255,${b.life/b.max})`;ctx.lineWidth=2.4;ctx.shadowColor='#a17bff';ctx.shadowBlur=12;ctx.beginPath();ctx.moveTo(b.x-camX,b.y-camY);ctx.lineTo(b.toX-camX,b.toY-camY);ctx.stroke();ctx.restore();}
+    for(const b of game.bolts){
+      const opacity=clamp(b.life/b.max,0,1);
+      const x=b.x-camX,y=b.y-camY,dx=b.toX-b.x,dy=b.toY-b.y,length=Math.hypot(dx,dy);
+      ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(dy,dx));
+      ctx.strokeStyle=`rgba(199,171,255,${opacity})`;ctx.lineWidth=2.4;ctx.shadowColor='#a17bff';ctx.shadowBlur=12;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(length,0);ctx.stroke();
+      if(b.element==='lightning')drawSkillFrame('lightning',0,0,-12,length,24,opacity);
+      ctx.restore();
+    }
     const p=game.player;
     for(let i=0;i<p.orbits;i++){
       const a=game.worldTime*2.7+i*TAU/p.orbits,x=p.x+Math.cos(a)*42-camX,y=p.y+Math.sin(a)*42-camY;

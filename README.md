@@ -13,22 +13,22 @@
 
 | Element | Base hit | Base attacks/s | Damage and status rules |
 |---|---:|---:|---|
-| **Blood** | **21.6** (+8%) | **1** | Every hit applies Bleed equal to **100% of actual hit damage over 8s per stack** (base **21.6 damage per stack / 2.7 DPS**). Up to **8 independent stacks** (base **172.8 total DoT** if all run their full duration); further hits replace the oldest stack. |
-| **Fire** | **43.2** (+8%) | **1** | Applies one refreshing Burn dealing **100% of the basic hit each second for 2s** (base: **43.2 DPS × 2s = 86.4 total Burn damage**, plus the initial **43.2 direct hit**). Burn cannot stack. |
-| **Lightning** | **Random 1–200** | **1** | Each hit has **50% Shock chance** for **4s**. Shocked enemies take **×2 direct-hit damage**; DoT is unaffected. |
-| **Poison** | **0** | **2** | Every hit applies a **permanent 15 DPS stack** (120 damage over 8s). Critical hits scale their new stack with **Crit Multiplier**. On death with **5+ stacks**, the enemy spreads **5 stacks** to up to **6 enemies** within **175 units**. Proliferation can chain. Stacks have no count or duration limit. |
+| **Blood** | **21.6** (+8%) | **1** | **Blood Spear:** extremely slow **40 units/s** projectile with **unlimited pierce**. Every hit applies 1 Bleed stack (100% of hit damage over **8s**, max 8 stacks). The same enemy may be hit again after **0.6s** of continued contact. Piercing Fangs grants extra Bleed stacks per hit. |
+| **Fire** | **43.2** (+8%) | **1** | **Fireball:** **290 units/s**, detonates on its first target, dealing direct damage there and applying Burn to **all** enemies within **55 units**. Burn = **43.2 DPS × 2s** at base, refreshed but not stacked. |
+| **Lightning** | **Random 1–200** | **1** | **Chain Lightning:** strikes the first enemy then bounces **4 times** to distinct enemies within **120 units** of the previous target, max **5 hits** initially. Each hit has **50%** chance to Shock for **4s**. Piercing Fangs adds bounces, capped at **25**. |
+| **Poison** | **0** | **2** | **Toxic Orb:** **210 units/s**. Its first impact splashes **1 permanent 15 DPS Poison stack** onto every enemy within **140 units** (**2.55×** Fireball radius). Each stack can crit. On death with 5+ Poison stacks, Poison Proliferate spreads 5 stacks to up to 6 targets within 175 units; stacks remain unlimited. |
 
 ### Elemental damage formulas
 
 Base shot interval is `1 / attacks per second`: **1.0s** for Blood, Fire and Lightning, and **0.5s** for Poison. Rapid Fire multiplies the selected element's attack speed normally.
 
 - **Element Power:** Each upgrade adds `5% × rarity multiplier` to the base damage of the chosen element. Multiple bonuses **add**, rather than multiply.
-- **Blood:** basic hit = `21.6 × (1 + Blood Power bonus) + flat damage`. Bleed DPS per stack = `actual hit damage / 8` for **8s**, so each stack deals **100% of that hit** over its lifetime. With 8 base stacks: `8 × 21.6 = 172.8` total Bleed damage. Bleed scales with flat damage, Blood Power, crits and other direct-hit modifiers.
-- **Fire:** basic hit = `43.2 × (1 + Fire Power bonus) + flat damage`. Burn DPS = `basic hit × 1.0` for **2s**; at base that is **43.2 direct + 43.2 DoT in second 1 + 43.2 DoT in second 2**. Burn scales with flat damage and Fire Power, but not critical damage or Shock.
-- **Lightning:** hit = `random integer 1–200 × (1 + Lightning Power bonus) + flat damage`, followed by applicable direct-hit modifiers.
-- **Poison:** DPS = `15 × (1 + Poison Power bonus) × sum(crit multiplier of each stack)`. Normal stacks contribute ×1, critical stacks contribute the **Crit Damage multiplier at application** (base ×1.6); crit potency remains when Poison Power upgrades existing stacks. At death with 5+ stacks, propagate **5 stacks with the source's average crit potency** to up to 6 nearby enemies within radius 175. Spread stacks can spread again upon death. **No 20-stack execution rule or stack cap** exists in the live game. Flat damage is unavailable to Poison.
+- **Blood:** direct hit = `21.6 × (1 + Blood Power bonus) + flat damage`. Each Blood Spear collision adds `1 + Piercing Fangs points` Bleed stacks, each worth `actual hit damage / 8` DPS for 8 seconds, capped at **8 active stacks**. Spear pierces infinitely, with a **0.6s per-target repeat-hit cooldown** for each spear. Crits scale both the direct hit and Bleed.
+- **Fire:** direct hit on first enemy = `43.2 × (1 + Fire Power bonus) + flat damage`. Every enemy within radius `55 × (1 + 0.1 × Piercing Fangs points)` gets a 2-second Burn. Burn DPS = `basic hit × 1.0`; subsequent explosions refresh rather than stack it. At base, the primary target takes **43.2 direct + 86.4 Burn** if the full Burn elapses; secondary targets receive Burn only.
+- **Lightning:** each hit starts from the projectile's base roll `random integer 1–200 × (1 + Lightning Power bonus) + flat damage`, with independent crit and Shock rolls per enemy. From the first hit, bounce to the nearest unhit enemy within **120 units** of the last target; maximum `min(25, 4 + Piercing Fangs points)` bounces. No repeated targets within one chain.
+- **Poison:** Toxic Orb blast radius = `140 × (1 + 0.1 × Piercing Fangs points)`; each enemy hit by the blast gains one stack. Poison DPS = `15 × (1 + Poison Power bonus) × sum(crit multiplier of each stack)`. Individual stacks may crit (base ×1.6), are permanent, and have no count cap. At death with **5+** stacks, Poison Proliferate transfers **5 stacks** to up to **6 enemies** within 175 units, preserving average crit potency.
 
-**Hemorrhagic Burst (Blood):** An independent **5% chance per four-card power-up offer** (including rerolls), available once per run. After selection, every Blood hit immediately creates and detonates 8 Bleed stacks in an area instead of leaving ticking stacks. Base area damage = `8 × hit damage` (**172.8 area damage** for an unmodified 21.6-damage Blood hit). Rarity adds `10% × (rarity multiplier − 1)` burst potency; the explosion does not spread Bleed.
+**Hemorrhagic Burst (Blood):** An independent **5% chance per four-card power-up offer** (including rerolls), available once per run. After selection, every Blood hit detonates Bleed immediately instead of leaving ticking stacks. Base area damage = `(8 + Piercing Fangs points) × hit damage` (**172.8** for an unmodified 21.6-damage hit with 0 Piercing Fangs points). Rarity adds `10% × (rarity multiplier − 1)` burst potency; the explosion does not spread Bleed.
 
 ## Power-ups and rarity
 
@@ -54,7 +54,7 @@ Every level-up offers **4 different cards**: one Attack, one Defense and two ran
 | Soul Magnet | Crystal pickup radius ×`(1 + 0.10u)` |
 | Forward Shot | +1 parallel projectile (+2 Legendary, +3 Mythic), max **3 extra** |
 | Spread Shot | +2 angled projectiles (+4 Legendary/Mythic), max **8 spread ranks** |
-| Piercing Fangs | +1 pierce (+2 Legendary, +3 Mythic), max **4** |
+| Piercing Fangs | Grants **1 point** (+2 Legendary, +3 Mythic). **Blood:** +1 Bleed stack per hit and +1 stack worth of Hemorrhagic Burst damage; **Lightning:** +1 chain bounce, max 25 bounces (21 extra points); **Fire / Poison:** +10% explosion radius per point, max **4 points**. Blood Spear inherently pierces all enemies. |
 | Deadly Precision | +`3u%` critical chance, max **85%** |
 | Critical Damage | +`10u%` critical damage multiplier, no cap |
 | Blood / Fire / Lightning / Poison Power | +`5u%` of elemental base damage, additive, max **5 picks** for the chosen element |
