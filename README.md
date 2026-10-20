@@ -84,7 +84,7 @@ These are **total tier multipliers**, not multipliers compounded across earlier 
 
 - Regular enemy spawn distance: **225–345** before 05:00, **170–255** from 05:00 and **145–225** from 10:00.
 - Each spawn batch contains up to **12 enemies**. Interval: `max(0.045, 0.5 / sqrt(max(1, spawn pressure)))` seconds. Maximum **230 active enemies**.
-- **Easy Mode:** multiplies enemy HP, damage, speed, spawn pressure and aggression by **0.5**. Available for the next run when the player dies before 05:00; resets afterward.
+- **Easy Mode:** selectable before **every run**. Multiplies enemy HP, damage, speed, spawn pressure and aggression by **0.5** for that run; selection resets on returning to the mode-selection screen. **Hardcore Mode:** uses **×1** scaling.
 - **Crimson Warden:** first appears after ~**51s** and may appear again from **119s** if the first is defeated. Its stats use the current difficulty multiplier.
 
 ## Audio mechanics

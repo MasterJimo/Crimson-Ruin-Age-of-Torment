@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.27.1">
+  <meta name="game-version" content="0.28">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.27.1">
+  <link rel="stylesheet" href="style.css?v=0.28">
 </head>
 <body>
   <div class="site-shell">
@@ -49,14 +49,44 @@
       </div>
       <div class="float-messages" id="message"></div>
 
-      <section class="screen-overlay intro" id="intro">
-        <div class="crest"><img src="assets/veilwarden-portrait-v101.png?v=0.10.3" alt="Silver-haired vampire hunter" class="hero-art-portrait"/><canvas id="portrait" width="64" height="64" aria-hidden="true" hidden></canvas></div>
-        <h1>CRIMSON RUIN<br><em>AGE OF TORMENT</em></h1>
-        <button class="main-button" id="startBtn"><span>▶</span> BEGIN THE HUNT</button>
+      <section class="screen-overlay intro" id="intro" aria-labelledby="introTitle">
+        <div class="intro-title">
+          <span class="intro-ornament" aria-hidden="true">✦ &nbsp; THE NIGHT BEGINS &nbsp; ✦</span>
+          <h1 id="introTitle">CRIMSON RUIN<em>AGE OF TORMENT</em></h1>
+          <div class="intro-divider" aria-hidden="true"><span>✦</span></div>
+        </div>
+        <div class="intro-mode-choices" role="group" aria-label="Choose difficulty mode">
+          <button type="button" class="intro-mode-button intro-hardcore" id="startBtn" aria-label="Start Hardcore Mode">
+            <span class="mode-mark mode-skull" aria-hidden="true">
+              <svg viewBox="0 0 96 96" focusable="false">
+                <path d="M22 39C19 19 35 10 48 10s29 9 26 29l-6 13-2 14H30l-2-14Z" fill="#ebd9b7" stroke="#381920" stroke-width="5"/>
+                <path d="M24 42 12 32M72 42 84 32M34 14 26 4M62 14 70 4" fill="none" stroke="#b34740" stroke-width="5" stroke-linecap="round"/>
+                <path d="m30 42 14 3-8 13-12-9Zm36 0-14 3 8 13 12-9Z" fill="#5d071a" stroke="#ad2637" stroke-width="2"/>
+                <path d="m48 57-7 8h14Z" fill="#4f1420"/>
+                <path d="M34 68h28v14H34Z" fill="#eee0c8" stroke="#4f2530" stroke-width="3"/>
+                <path d="M42 68v14m6-14v14m6-14v14" stroke="#57252a" stroke-width="3"/>
+              </svg>
+            </span>
+            <span class="mode-name">HARDCORE MODE</span>
+            <span class="mode-caption">THE TRUE TORMENT</span>
+          </button>
+          <button type="button" class="intro-mode-button intro-easy" id="easyStartBtn" aria-label="Start Easy Mode">
+            <span class="easy-purple-bow" aria-hidden="true">
+              <svg viewBox="0 0 94 60" focusable="false">
+                <path d="M44 29C31 10 7 2 5 15c-4 19 19 23 39 17M50 29C63 10 87 2 89 15c4 19-19 23-39 17" fill="#b385ef" stroke="#4f238b" stroke-width="5"/>
+                <path d="m42 31-16 25 18-7 5-16 7 16 15 7-17-25" fill="#9b60d9" stroke="#4f238b" stroke-width="4"/>
+                <ellipse cx="47" cy="29" rx="10" ry="9" fill="#d0b4ff" stroke="#5a2b96" stroke-width="4"/>
+              </svg>
+            </span>
+            <span class="mode-mark mode-easy-symbol" aria-hidden="true">✦</span>
+            <span class="mode-name">EASY MODE</span>
+            <span class="mode-caption">A GENTLER HUNT</span>
+          </button>
+        </div>
         <div class="intro-controls" aria-label="Keyboard controls">
-          <span>MOVE <kbd>WASD</kbd> <b>/</b> <kbd>↑ ← ↓ →</kbd></span>
-          <span>PAUSE <kbd>P</kbd></span>
-          <span>POWER-UPS <kbd>O</kbd></span>
+          <span><strong>MOVE</strong> <kbd>WASD</kbd> <b>/</b> <kbd>↑ ← ↓ →</kbd></span>
+          <span><strong>PAUSE</strong> <kbd>P</kbd></span>
+          <span><strong>POWER-UPS</strong> <kbd>O</kbd></span>
         </div>
       </section>
 
@@ -89,15 +119,7 @@
           </div>
         </header>
         <nav class="end-actions" aria-label="Next run">
-          <button type="button" class="main-button end-new-game" id="restartBtn">↻ NEW GAME</button>
-          <section class="easy-retry hidden" id="easyRetryOffer" aria-labelledby="easyRetryTitle">
-            <h3 id="easyRetryTitle">🎀 EASY MODE — NEXT RUN ONLY</h3>
-            <p class="easy-retry-description">Enemies have 50% HP, speed and damage, fewer spawns and a pink ribbon. The 30:00 Reaper is still lethal.</p>
-            <div class="easy-retry-buttons">
-              <button type="button" id="easyYes" class="easy-retry-yes">YES · EASY MODE</button>
-              <button type="button" id="easyNo" class="easy-retry-no">NO · HARDCORE</button>
-            </div>
-          </section>
+          <button type="button" class="main-button end-new-game" id="restartBtn">↻ CHOOSE MODE</button>
         </nav>
         <div class="run-board" id="runBoard">
           <section class="run-data-col run-results-col">
@@ -151,7 +173,7 @@
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="assets.js?v=0.27.1" defer></script>
-  <script src="game.js?v=0.27.1" defer></script>
+  <script src="assets.js?v=0.28" defer></script>
+  <script src="game.js?v=0.28" defer></script>
 </body>
 </html>

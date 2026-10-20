@@ -28,7 +28,7 @@
   const el = {
     intro:$('intro'), upgrade:$('upgrade'), upgradeCards:$('upgradeCards'), end:$('endScreen'), pause:$('pauseOverlay'),
     inventory:$('inventoryOverlay'), inventoryBtn:$('inventoryBtn'), inventoryClose:$('inventoryClose'),
-    easyRetryOffer:$('easyRetryOffer'),easyYes:$('easyYes'),easyNo:$('easyNo'),
+    easyStart:$('easyStartBtn'),
     inventoryElementIcon:$('inventoryElementIcon'), inventoryElementName:$('inventoryElementName'),
     inventoryElementDesc:$('inventoryElementDesc'), inventoryElementRank:$('inventoryElementRank'),
     inventoryPerks:$('inventoryPerks'), inventoryStats:$('inventoryStats'), inventoryPerkCount:$('inventoryPerkCount'),
@@ -36,7 +36,7 @@
     hp:$('hpFill'), hpText:$('hpText'), xp:$('xpFill'), level:$('levelText'), kills:$('killText'), time:$('timeText'),
     sound:$('soundBtn'), musicVolume:$('musicVolume'), sfxVolume:$('sfxVolume'),
     musicVolumeValue:$('musicVolumeValue'), sfxVolumeValue:$('sfxVolumeValue'), xpStrip:$('xpStrip'),
-    msg:$('message'), status:$('statusText'), portrait:$('portrait'), bossBar:$('bossBar'), bossFill:$('bossFill'), bossName:$('bossName'),
+    msg:$('message'), status:$('statusText'), bossBar:$('bossBar'), bossFill:$('bossFill'), bossName:$('bossName'),
     reroll:$('rerollBtn'), banish:$('banishBtn'), rerollCount:$('rerollCount'), banishCount:$('banishCount'), perkNotice:$('perkNotice')
   };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -194,10 +194,6 @@
   };
 
   const sprite = window.NoobSprites.get;
-  const portrait = el.portrait.getContext('2d');
-  portrait.clearRect(0,0,el.portrait.width,el.portrait.height);
-  portrait.imageSmoothingEnabled = true;
-  if(!window.NoobArt?.paint(portrait,'hero_portrait',4,2,56,60)) portrait.drawImage(sprite('heroPortrait'), 5, 1, 54, 62);
 
   const keys = new Set();
   let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 10, sfxVolume = 5, sfx = null;
@@ -295,11 +291,17 @@
   }
   function changeTrack(id){ currentTrack = id in MUSIC_TRACKS ? id : 'caverns'; syncMusic(); }
 
-  // Easy Mode is a one-run choice offered on the scoreboard when a hunter
-  // dies before 05:00. No failure streak, prompt on the next start, or storage.
-  function chooseEasyMode(yes){
-    if(state!=='end'||!game||game.endingAt30||game.time>=300)return;
-    startGame(Boolean(yes));
+  // Both modes are selectable immediately, for every run.
+  // The results screen returns to this choice instead of forcing Hardcore.
+  function returnToModeSelect(){
+    if(state!=='end')return;
+    game=null;state='intro';keys.clear();shake=0;flash=0;
+    el.end.classList.add('hidden');
+    el.intro.classList.remove('hidden');
+    el.hud.hidden=true;el.xpStrip.hidden=true;el.bossBar.hidden=true;
+    el.inventory.classList.add('hidden');el.inventoryBtn.hidden=true;
+    el.msg.textContent='';el.status.textContent='CHOOSE YOUR MODE';
+    el.start.focus();
   }
   function startGame(easyMode=false){
     game = {
@@ -313,7 +315,7 @@
     state='upgrade';
     shake=0;flash=0;keys.clear();
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.pause.classList.add('hidden');
-    el.inventory.classList.add('hidden');el.inventoryBtn.hidden=true;el.easyRetryOffer.classList.add('hidden');
+    el.inventory.classList.add('hidden');el.inventoryBtn.hidden=true;
     el.hud.hidden = false; el.xpStrip.hidden = false; el.bossBar.hidden = true; el.msg.textContent = ''; el.status.textContent = 'CHOOSE YOUR STARTING ELEMENT';
     updateHUD();
     openUpgrade();
@@ -914,9 +916,7 @@
     $('bestKills').textContent=`BEST: ${best.kills} KILLS`;
     renderRunBoard(survived,best);
     $('runMode').textContent=game.easyMode?'EASY MODE USED':'HARDCORE MODE';
-    // Offer Easy Mode immediately on the results screen of ANY loss below 5m.
-    // Yes and No both start the next run, with no lasting preference.
-    el.easyRetryOffer.classList.toggle('hidden',Boolean(game.endingAt30||game.time>=300));
+    // Easy Mode is available from the main menu on every new run.
     el.end.classList.toggle('victory',survived);
     el.status.textContent=survived?'30:00 · REAPER HAS CLAIMED YOU':'HUNT FAILED';
     playSound('death');
@@ -1829,17 +1829,20 @@
     if(state==='upgrade'&&['1','2','3','4'].includes(k))chooseUpgrade(Number(k)-1);
     if(state==='upgrade'&&k==='r')rerollUpgrades();
     if(state==='upgrade'&&k==='b')toggleBanish();
-    if(state==='intro'&&(k==='enter'||k===' '))startGame();
-    if(state==='end'&&k==='enter'&&e.target?.tagName!=='BUTTON')startGame(false);
+    if(state==='intro'&&(k==='enter'||k===' ')&&!e.repeat&&e.target?.tagName!=='BUTTON')startGame(false);
+    if(state==='intro'&&k==='e'&&!e.repeat)startGame(true);
+    if(state==='end'&&k==='enter'&&e.target?.tagName!=='BUTTON')returnToModeSelect();
   });
   window.addEventListener('blur',()=>{keys.clear();if(state==='playing')openInventory(false);});
   document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);
-  el.start.addEventListener('click',()=>startGame(false)); el.restart.addEventListener('click',()=>startGame(false)); el.resume.addEventListener('click',togglePause);
-  el.inventoryBtn.addEventListener('click',togglePause);el.inventoryClose.addEventListener('click',closeInventory);
-  el.easyYes.addEventListener('click',()=>chooseEasyMode(true));
-  el.easyNo.addEventListener('click',()=>chooseEasyMode(false));
+  el.start.addEventListener('click',()=>startGame(false));
+  el.easyStart.addEventListener('click',()=>startGame(true));
+  el.restart.addEventListener('click',returnToModeSelect);
+  el.resume.addEventListener('click',togglePause);
+  el.inventoryBtn.addEventListener('click',togglePause);
+  el.inventoryClose.addEventListener('click',closeInventory);
   function updateAudioUI(){
     el.sound.textContent=muted?'MUTE ON':'MUTE OFF';
     el.sound.setAttribute('aria-pressed',String(muted));

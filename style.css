@@ -631,3 +631,111 @@ body{padding:10px}
   #upgrade .perk-tool{min-width:170px;min-height:53px;font-size:16px;padding:10px 15px}
   #upgrade.element-select .upgrade-card{min-height:192px;gap:8px}
 }
+
+/* v0.28 — Gothic title screen with real interactive difficulty selection. */
+body:has(#intro:not(.hidden)) .site-shell{width:min(1300px,100%);}
+body:has(#intro:not(.hidden)) .game-frame{aspect-ratio:16 / 9;min-height:min(680px,calc(100svh - 95px));}
+#intro.intro{
+  isolation:isolate;justify-content:space-between;gap:clamp(7px,1.5vh,16px);
+  padding:clamp(20px,3.6%,42px) clamp(12px,3.5%,40px) clamp(14px,2.4%,30px);
+  background:radial-gradient(ellipse at 50% 18%,#480d17 0%,#1e090d 45%,#050405 100%);
+  backdrop-filter:none;overflow:hidden;
+}
+#intro.intro::before{
+  content:"";position:absolute;inset:-12px;z-index:-2;
+  width:auto;height:auto;border:0;border-radius:0;opacity:.82;box-shadow:none;
+  background:url('assets/intro-gothic-v028.webp') center center / cover no-repeat;
+  filter:none;pointer-events:none;
+}
+#intro.intro::after{
+  content:"";position:absolute;inset:0;z-index:-1;opacity:1;
+  background:
+    radial-gradient(ellipse at 50% 40%,#180508ce 4%,#170609bd 34%,#100409b0 60%,#090305df 100%),
+    linear-gradient(180deg,#1605084f,#160305b0 55%,#060203ea 100%);
+  pointer-events:none;
+}
+#intro .intro-title,#intro .intro-mode-choices,#intro .intro-controls{position:relative;z-index:1}
+#intro .intro-title{width:100%;display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.4vh,18px);flex:0 1 auto}
+#intro .intro-ornament{font:800 clamp(8px,1vw,13px) Georgia,serif;letter-spacing:.35em;color:#e8bfb1;text-shadow:0 0 15px #f8626980}
+#intro h1{
+  margin:0!important;line-height:.89!important;
+  font:1000 clamp(53px,8.1vw,128px)/.9 Georgia,'Times New Roman',serif;
+  font-size:clamp(53px,8.1vw,128px)!important;
+  letter-spacing:.03em!important;filter:none;
+  color:#f7e6da!important;text-shadow:0 4px 0 #140306,0 6px 22px #020102,0 0 42px #b91b3592;
+  white-space:nowrap;max-width:100%;
+}
+#intro h1 em{
+  display:block;margin-top:clamp(10px,1.5vh,20px);font-size:.42em!important;
+  line-height:1.1!important;letter-spacing:.23em!important;font-style:normal;
+  color:#ffc1a8!important;-webkit-text-fill-color:#ffc1a8!important;
+  text-shadow:0 3px 4px #000,0 0 25px #ef4f6d70;
+}
+#intro .intro-divider{width:min(480px,67%);height:2px;background:linear-gradient(90deg,transparent,#ad4051,#f3bd88,#ad4051,transparent);box-shadow:0 0 12px #ee688d9c;position:relative;margin-top:6px}
+#intro .intro-divider span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:0 18px;color:#f9c58f;background:#260a0e;font-size:15px}
+#intro .intro-mode-choices{display:flex;align-items:stretch;justify-content:center;gap:clamp(16px,3vw,42px);width:min(1110px,95%);margin:0 auto;flex:0 0 auto}
+#intro .intro-mode-button{
+  position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:min(49%,520px);min-height:clamp(125px,19vh,193px);padding:clamp(13px,2.4vh,24px) 14px;
+  cursor:pointer;border-radius:19px;border:3px solid;
+  outline-offset:5px;overflow:visible;
+  transition:transform .15s ease,filter .15s ease,box-shadow .15s ease;
+}
+#intro .intro-mode-button:hover{transform:translateY(-5px) scale(1.025);filter:brightness(1.16)}
+#intro .intro-mode-button:active{transform:scale(.985)}
+#intro .intro-mode-button:focus-visible{outline:3px solid #ffdfb4}
+#intro .intro-hardcore{
+  color:#ffe7df;border-color:#dc8273;
+  background:linear-gradient(160deg,#70211acc,#36080bfa 65%,#180608);
+  box-shadow:0 0 0 3px #340f10,0 5px 35px #ff443c50,0 18px 34px #000d,inset 0 2px #fcbca958;
+}
+#intro .intro-hardcore::before,#intro .intro-easy::before{content:"";position:absolute;inset:7px;border-radius:12px;border:1px solid #ffddc65b;pointer-events:none}
+#intro .intro-easy{
+  color:#efffeb;border-color:#80e4a4;
+  background:linear-gradient(160deg,#38905d,#17452d 64%,#092116);
+  box-shadow:0 0 0 3px #143721,0 5px 35px #41d87940,0 18px 34px #000d,inset 0 2px #e5ffda66;
+}
+#intro .intro-easy::before{border-color:#e1ffbf6e}
+#intro .mode-mark{display:block;height:clamp(38px,6vw,68px);flex:0 0 auto;filter:drop-shadow(0 5px 9px #0008)}
+#intro .mode-skull svg{height:100%;width:auto}
+#intro .mode-easy-symbol{font-size:clamp(34px,5.2vw,62px);line-height:1;color:#dfffb6;text-shadow:0 0 18px #d1ff97bd}
+#intro .mode-name{font:1000 clamp(18px,2.4vw,34px)/1.05 Georgia,serif;letter-spacing:.07em;text-shadow:0 3px 5px #000c,0 0 14px #0009;white-space:nowrap}
+#intro .mode-caption{font:900 clamp(8px,.92vw,13px)/1.2 system-ui,sans-serif;letter-spacing:.18em;margin-top:10px;opacity:.9}
+#intro .easy-purple-bow{position:absolute;top:-29px;right:23px;z-index:2;width:82px;height:58px;filter:drop-shadow(0 4px 7px #0009) drop-shadow(0 0 7px #b98bfa8f);pointer-events:none}
+#intro .easy-purple-bow svg{width:100%;height:100%}
+#intro .intro-controls{
+  width:min(1150px,100%);margin:0 auto;padding:14px clamp(8px,1vw,20px);
+  display:flex;justify-content:space-around;align-items:center;gap:12px 22px;flex-wrap:wrap;
+  border:1px solid #a65a527d;border-radius:12px;
+  background:linear-gradient(90deg,#1c090dbf,#2a0d15d5,#1c090dbf);
+  box-shadow:0 8px 25px #0009,inset 0 1px #ffffff17;
+  color:#ffddd9;font:900 clamp(11px,1.3vw,17px)/1.5 system-ui,sans-serif;
+}
+#intro .intro-controls span{white-space:nowrap}
+#intro .intro-controls strong{color:#f3c2b4;margin-right:9px;letter-spacing:.08em}
+#intro .intro-controls kbd{
+  display:inline-block;padding:4px 9px;background:#3a1820;
+  border:1px solid #bb7582;border-radius:6px;color:#ffecdc;
+  font:900 1em/1.3 system-ui,sans-serif;box-shadow:0 2px 0 #130306;
+}
+#intro .intro-controls b{color:#d495a1;margin:0 4px}
+#endScreen .end-mode.is-easy img{filter:hue-rotate(53deg) saturate(1.4) drop-shadow(0 0 7px #b775ff)!important}
+@media(max-width:720px){
+  body:has(#intro:not(.hidden)) .game-frame{min-height:500px;aspect-ratio:auto}
+  #intro h1{font-size:clamp(43px,8.8vw,78px)!important}
+  #intro .intro-mode-choices{width:100%;gap:14px}
+  #intro .intro-mode-button{width:calc(50% - 7px);min-height:132px}
+  #intro .mode-name{font-size:clamp(13px,2.7vw,22px)}
+  #intro .easy-purple-bow{width:57px;height:40px;right:8px;top:-19px}
+}
+@media(max-width:460px){
+  body:has(#intro:not(.hidden)) .game-frame{min-height:590px}
+  #intro h1{font-size:clamp(34px,9vw,51px)!important}
+  #intro h1 em{font-size:.43em!important;letter-spacing:.12em!important}
+  #intro .intro-mode-choices{gap:16px;flex-direction:column;align-items:center}
+  #intro .intro-mode-button{width:min(100%,360px);min-height:114px}
+  #intro .mode-mark{height:33px}
+  #intro .mode-name{font-size:22px}
+  #intro .intro-controls{gap:6px 13px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){#intro .intro-mode-button{transition:none}}
