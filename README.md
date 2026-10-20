@@ -16,6 +16,18 @@ The endlessly repeated courtyard texture mirrors **horizontally only**. Vertical
 
 Once a mode is selected, the arena fills the browser viewport instead of sitting inside a fixed-width 16:9 frame. The canvas backing resolution updates automatically on window resize and high-DPI displays (with a performance cap). The game uses a uniform world-to-screen scale: 16:9 shows the original 640 × 360 world units, ultrawide monitors show more horizontally, and taller monitors show more vertically. Sprites, hitboxes, projectiles, and movement do not stretch. The illustrated main menu keeps its original aspect ratio.
 
+## Hardcore escalation at 15:00
+
+Hardcore receives an additional, deliberately severe enemy-scaling curve starting **exactly at 15:00**. Earlier Hardcore gameplay (before 15:00) and **all of Easy Mode, including late waves, remain unchanged**. The existing base enemy stats and boss spawn times remain unchanged.
+
+| Time | Hardcore HP stage | Damage stage | Speed stage | Spawn stage | Special surge group |
+|---|---:|---:|---:|---:|---:|
+| 15:00–19:59 | ×8 | ×2.25 | ×1.45 | ×5.2 | +8 extra enemies |
+| 20:00–24:59 | ×15.5 | ×3.15 | ×1.58 | ×8 | +14 extra enemies |
+| 25:00–29:59 | ×29 | ×4.5 | ×1.70 | ×11 | +20 extra enemies |
+
+These are **total stage multipliers**, applied together with the original minute-by-minute HP/Damage/Speed formulas (not extra multiplicative stacks). Existing enemies gain the stage adjustment when a five-minute surge begins. Hardcore spawn pressure can reach 72 instead of 40, but the **maximum number of active enemies stays 230** to control performance. The horde's attack and movement behavior is otherwise unchanged. The Enemy Scaling page displays the appropriate live Hardcore or Easy values.
+
 ## Core mechanics
 
 - A run lasts up to **30:00**.

@@ -582,20 +582,34 @@
     {hp:5,damage:1.8,speed:1.42,spawn:3.2,aggression:1.6},
     {hp:7,damage:2.1,speed:1.55,spawn:4,aggression:1.8}
   ];
+  // Hardcore-only second-half escalation; the original DIFFICULTY_SURGES
+  // above remain the exact source of truth for Easy and the first 15 minutes.
+  // Each entry is a TOTAL multiplier, not an additional stacked modifier.
+  const HARDCORE_ENDGAME_SURGES={
+    3:{hp:8,damage:2.25,speed:1.45,spawn:5.2,aggression:1.85},
+    4:{hp:15.5,damage:3.15,speed:1.58,spawn:8,aggression:2.1},
+    5:{hp:29,damage:4.5,speed:1.7,spawn:11,aggression:2.4}
+  };
+  function surgeFor(tier,easy=false){
+    return easy||tier<3?DIFFICULTY_SURGES[tier]:HARDCORE_ENDGAME_SURGES[tier];
+  }
   const SURGE_TITLES=['','THE SLAUGHTER BEGINS','NIGHTMARE UNLEASHED','NO MERCY','THE ABYSS OPENS','FINAL ONSLAUGHT'];
   function difficultyTier(seconds){return Math.min(5,Math.floor(Math.max(0,seconds)/300));}
   function difficultyAt(seconds,easy=false){
     const minute=Math.min(29,Math.floor(Math.max(0,seconds)/60));
-    const surge=DIFFICULTY_SURGES[difficultyTier(seconds)],factor=easy?.5:1;
+    const surge=surgeFor(difficultyTier(seconds),easy),factor=easy?.5:1;
+    // Previous spawning plateaued at 40, so late-game Hardcore could not
+    // increase horde pressure beyond that cap. Easy stays at the old cap.
+    const spawnCap=!easy&&minute>=15?72:40;
     return {minute,
       hp:Math.pow(1.045,minute)*surge.hp*factor,
       damage:Math.pow(1.025,minute)*surge.damage*factor,
       speed:Math.pow(1.018,minute)*surge.speed*factor,
-      spawn:Math.min(40,Math.min(8,2*Math.pow(1.14,minute))*surge.spawn)*factor,
+      spawn:Math.min(spawnCap,Math.min(8,2*Math.pow(1.14,minute))*surge.spawn)*factor,
       aggression:surge.aggression*factor};
   }
   function applyDifficultySurge(g,newTier){
-    const previous=DIFFICULTY_SURGES[g.difficultyTier],next=DIFFICULTY_SURGES[newTier];
+    const previous=surgeFor(g.difficultyTier,g.easyMode),next=surgeFor(newTier,g.easyMode);
     for(const e of g.enemies){
       e.hp*=next.hp/previous.hp;e.maxHp*=next.hp/previous.hp;
       e.damage*=next.damage/previous.damage;e.speed*=next.speed/previous.speed;
@@ -603,7 +617,10 @@
     }
     g.difficultyTier=newTier;
     const pool=g.time<600?window.CrimsonMonsters.early:window.CrimsonMonsters.late;
-    const count=Math.min(230-g.enemies.length,10+newTier*4),offset=rand(0,TAU);
+    // Extra pressure at Hardcore 15/20/25 minutes, bounded by the same
+    // 230-enemy active limit. Easy keeps the original burst size.
+    const extra=!g.easyMode&&newTier>=3?8+(newTier-3)*6:0;
+    const count=Math.max(0,Math.min(230-g.enemies.length,10+newTier*4+extra)),offset=rand(0,TAU);
     for(let i=0;i<count;i++)spawnEnemy(pool[i%pool.length],rand(165,225),offset+TAU*i/Math.max(1,count));
     g.spawn=Math.min(g.spawn,.08);
     flashMessage('☠ '+SURGE_TITLES[newTier],2000);
@@ -1298,8 +1315,8 @@
   }
   function renderEnemyScaling(){
     const root=$('inventoryScalingPage');root.replaceChildren();
-    codexIntro(root,'TIME & SCALING','Enemies grow gradually each minute with bigger jumps at 05:00, 10:00, 15:00, 20:00 and 25:00.');
-    const detail=codexElement('p','codex-info-line','HP = base HP × tier HP × 1.045^minute. Damage = base damage × tier damage × 1.025^minute. Speed = base speed × tier speed × 1.018^minute. Easy Mode applies a ×0.5 modifier.');
+    codexIntro(root,'TIME & SCALING','Enemies grow each minute, with danger spikes every five minutes. Hardcore becomes substantially harder starting at 15:00; Easy retains the original scaling throughout.');
+    const detail=codexElement('p','codex-info-line','HP = base HP × tier HP × 1.045^minute. Damage = base damage × tier damage × 1.025^minute. Speed = base speed × tier speed × 1.018^minute. Easy Mode uses its original ×0.5 modifier; the 15:00+ Hardcore stage multipliers and spawn pressure are separate.');
     root.append(detail);
     const table=codexElement('table','bestiary-scale-table');
     table.innerHTML='<thead><tr><th>TIME</th><th>HP ×</th><th>DAMAGE ×</th><th>SPEED ×</th><th>SPAWN ×</th></tr></thead>';
@@ -1314,7 +1331,7 @@
       body.append(row);
     }
     table.append(body);root.append(table);
-    root.append(codexElement('p','codex-info-line','After 10:00, only the later monster group spawns; enemies already alive remain. Watcher Eye fires one extra bolt every five minutes.'));
+    root.append(codexElement('p','codex-info-line','After 10:00, only the later monster group spawns; existing enemies remain. In Hardcore, the 15:00/20:00/25:00 waves also reinforce and strengthen enemies already alive. The 230-enemy performance cap is unchanged. Watcher Eye fires one extra bolt every five minutes.'));
     codexLink(root,'bestiary','Open Monster Bestiary');
   }
   function openInventory(shouldFocus=true){
