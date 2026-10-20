@@ -2,6 +2,17 @@
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)**
 
+## Courtyard texture clarity
+
+The original gothic courtyard artwork remains unchanged. Once its WebP texture
+loads, the game builds a **slightly sharper version** in a temporary Canvas
+using a weak five-sample unsharp mask (strength `0.18`) and a small contrast
+increase (`1.025`). The enhanced texture is cached and reused when drawing
+the infinitely tiled courtyard, so there is **no extra image processing per
+frame**. Characters, enemies, spells, HUD, hitboxes and gameplay are untouched.
+If browser pixel access or memory is unavailable, the game continues with the
+original texture automatically.
+
 ## Sharper animated monster sprites
 
 All 13 ordinary enemies and bosses now use the original 192 × 192 transparent art frames, packed into one animated WebP atlas (`assets/monsters-hd-v032.webp`). Each enemy has four idle frames and six walking frames. The combat renderer selects the correct source frame at runtime and uses restrained silhouette lighting so creatures remain legible against the gothic courtyard. Visual sizes, damage, speeds, collision radii, spawns, and rewards are unchanged. A compact legacy atlas remains as a fallback if the HD texture has not loaded yet. The same high-resolution artwork appears in the Monster Bestiary.

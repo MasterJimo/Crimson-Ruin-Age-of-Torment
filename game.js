@@ -35,9 +35,57 @@
   if(typeof ResizeObserver!=='undefined')new ResizeObserver(resizePlayfield).observe(canvas);
   window.addEventListener('resize',resizePlayfield);
   resizePlayfield();
-  // User-supplied gothic courtyard. The existing floor remains a fallback while loading.
+  // Sharpen only the original courtyard texture, ONCE at native resolution.
+  // Keep the original art, color palette, monuments, bloodstains and layout.
+  // The enhanced texture is cached; no sharpen filters run during gameplay.
   const courtyard = new Image();
   courtyard.decoding = 'async';
+  let detailedCourtyard = null;
+  const MAP_DETAIL_SHARPNESS = .18;
+  const MAP_DETAIL_CONTRAST = 1.025;
+  function prepareCourtyardDetail(){
+    const w=courtyard.naturalWidth,h=courtyard.naturalHeight;
+    if(!w||!h||detailedCourtyard||w*h>4000000)return;
+    try{
+      const offscreen=document.createElement('canvas');
+      offscreen.width=w;offscreen.height=h;
+      const context=offscreen.getContext('2d',{willReadFrequently:true});
+      if(!context)return;
+      context.drawImage(courtyard,0,0,w,h);
+      const source=context.getImageData(0,0,w,h).data;
+      const output=context.createImageData(w,h);
+      const dest=output.data;
+      // Weak five-point unsharp mask; preserves alpha and avoids oversaturation.
+      // Edge pixels clamp their sample coordinates to the image boundaries.
+      for(let y=0;y<h;y++){
+        const row=y*w*4,up=(y?y-1:y)*w*4,down=(y+1<h?y+1:y)*w*4;
+        for(let x=0;x<w;x++){
+          const i=row+x*4;
+          const left=row+(x?x-1:x)*4,right=row+(x+1<w?x+1:x)*4;
+          const above=up+x*4,below=down+x*4;
+          for(let c=0;c<3;c++){
+            const center=source[i+c];
+            const edge=4*center-source[left+c]-source[right+c]-source[above+c]-source[below+c];
+            const sharpened=Math.max(-16,Math.min(16,edge*MAP_DETAIL_SHARPNESS));
+            const value=128+(center-128)*MAP_DETAIL_CONTRAST+sharpened;
+            dest[i+c]=Math.max(0,Math.min(255,Math.round(value)));
+          }
+          dest[i+3]=source[i+3];
+        }
+      }
+      context.putImageData(output,0,0);
+      detailedCourtyard=offscreen;
+    }catch(_error){
+      // No pixel access, memory pressure or unsupported APIs: use original art.
+      detailedCourtyard=null;
+    }
+  }
+  courtyard.addEventListener('load',()=>{
+    // Prefer browser idle time during the title screen.
+    if(typeof window.requestIdleCallback==='function')
+      window.requestIdleCallback(prepareCourtyardDetail,{timeout:1600});
+    else setTimeout(prepareCourtyardDetail,0);
+  },{once:true});
   courtyard.src = 'assets/courtyard-new-v021.webp';
   const fountainArt = new Image();
   fountainArt.decoding = 'async';
@@ -2087,6 +2135,7 @@
 
   function drawFloor(cameraX,cameraY,t){
     if(courtyard.complete && courtyard.naturalWidth){
+      const courtyardTexture=detailedCourtyard||courtyard;
       // Repeat the arena beyond the starting tile for endless exploration.
       // Horizontal mirroring joins side edges, but NEVER mirror vertically:
       // baked-in tombstones, crypts and monuments must remain upright.
@@ -2103,7 +2152,7 @@
         ctx.save();
         ctx.translate(x+(gx%2!==0?tile:0),y);
         ctx.scale(gx%2!==0?-1:1,1);
-        ctx.drawImage(courtyard,0,0,tile,tile);
+        ctx.drawImage(courtyardTexture,0,0,tile,tile);
         ctx.restore();
       }
       ctx.restore();
