@@ -213,7 +213,7 @@
       case 'crit':return '+'+(3*u)+'% critical chance.';
       case 'crit_damage':return '+'+(10*u)+'% critical damage multiplier.';
       case 'blood_power':return '+'+(5*u)+'% Blood damage.';
-      case 'hemorrhagic_burst':return '8-stack Blood detonation on every hit · +'+(10*(u-1))+'% burst potency.';
+      case 'hemorrhagic_burst':return '8-stack Blood detonation on every hit · +'+(10*(u-1))+'% detonation potency.';
       case 'fire_power':return '+'+(5*u)+'% Fire damage.';
       case 'lightning_power':return '+'+(5*u)+'% Lightning damage.';
       case 'poison_power':return '+'+(5*u)+'% Poison damage.';
@@ -267,7 +267,7 @@
     {id:'crit',icon:'crit',name:'DEADLY PRECISION',can:p=>p.critChance<.85,apply:(p,g,u)=>p.critChance=Math.min(.85,p.critChance+.03*u)},
     {id:'crit_damage',icon:'crit',name:'CRITICAL DAMAGE',apply:(p,g,u)=>{p.critDamage+=.10*u;}},
     {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',can:p=>p.element==='blood'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
-    {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC BURST',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:(p,g,u)=>{p.hemorrhagicBurst=true;p.hemorrhagicBurstBoost=1+.1*(u-1);}},
+    {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:(p,g,u)=>{p.hemorrhagicBurst=true;p.hemorrhagicBurstBoost=1+.1*(u-1);}},
     {id:'fire_power',icon:'fire_power',name:'FIRE POWER',can:p=>p.element==='fire'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
     {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',can:p=>p.element==='lightning'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
     {id:'poison_power',icon:'poison_power',name:'POISON POWER',can:p=>p.element==='poison'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)}
@@ -345,7 +345,7 @@
   const sprite = window.CrimsonSprites.get;
 
   const keys = new Set();
-  let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 10, sfxVolume = 5, sfx = null;
+  let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 10, sfxVolume = 1, sfx = null;
   let musicPlayer = null, currentTrack = 'caverns';
   // Four local CC0 Freesound samples: max 7 attack cues/s, max 2 voices.
   // One cue per attack action, NOT per multishot projectile or enemy hit.
@@ -887,7 +887,7 @@
     }
   }
   function eligiblePowers(){return POWERS.filter(opt=>!game.banned.has(opt.id) && (!opt.can||opt.can(game.player)));}
-  // Rare skills are weighted; Blood gets exclusive 40% Hemorrhagic Burst
+  // Rare skills are weighted; Blood gets exclusive 40% Hemorrhagic
   // as long as it is eligible. Everything respects bans and max ranks.
   function rollPowerShrineReward(){
     const eligible=eligiblePowers();
@@ -1283,7 +1283,7 @@
     const tiles=codexElement('div','codex-grid');
     const focus=codexFocus;codexFocus=null;
     const contents=[
-      ['blood','BLOOD','Slow piercing spear · 80 units/s','Direct = (21.6 × (1 + 0.05 × Blood Power units) + Brutality). Each contact adds 1 + Piercing Fangs stacks, up to 8 lasting 8s. One stack = actual hit damage / 8 damage per second. A single spear may hit again after 0.6s. Hemorrhagic Burst replaces the damage-over-time stacks with an instant 8-stack blast.'],
+      ['blood','BLOOD','Slow piercing spear · 80 units/s','Direct = (21.6 × (1 + 0.05 × Blood Power units) + Brutality). Each contact adds 1 + Piercing Fangs stacks, up to 8 lasting 8s. One stack = actual hit damage / 8 damage per second. A single spear may hit again after 0.6s. Hemorrhagic replaces the damage-over-time stacks with an instant 8-stack blast.'],
       ['fire','FIRE','Exploding fireball · 290 units/s','Direct = 43.2 × (1 + 0.05 × Fire Power units) + Brutality. First hit explodes, radius = 55 × (1 + 0.1 × Piercing Fangs). Every target in the radius burns for 2s. Burn DPS = base Fire direct damage (before crit), refreshed on subsequent hits. All Fireballs from the same attack share one direct-hit record, including secondary blasts: only one can damage each enemy per salvo. Poison orbs can still shotgun.'],
       ['lightning','LIGHTNING','Chain Lightning · 235 units/s','Direct = random integer 1–200 × (1 + 0.05 × Lightning Power units) + Brutality. Each impact can Shock (50% chance, 4s); Shock doubles incoming direct damage. Base 4 chain jumps, +1 per Piercing Fangs and +2 per Spread Shot, max 25. Forward Shot adds 1 random rear bolt, then 2 separately angled rear-flank bolts (up to 3 total); bonus bolts never share the same direction.'],
       ['poison','POISON','Toxic Orb · 210 units/s','The explosion radius = 55 × (1 + 0.1 × Piercing Fangs). Every victim gets a permanent stack worth 15 × (1 + 0.05 × Poison Power units) DPS, multiplied by crit strength if that stack crits. At 5+ stacks on enemy defeat, Poison spreads 5 stacks to up to 6 nearby targets.']
@@ -1305,7 +1305,7 @@
     const source=[
       ['XP CRYSTALS','Guaranteed on normal enemy defeat','Each normal enemy drops its XP value as a crystal. Collect crystals to level up and select one of four upgrade cards. XP needed for the next level after reaching level L: floor(12 + 8L + 1.5L²).'],
       ['LEVEL-UP CARDS','Rarity rolled separately per standard card','Common 54% · Magic 25% · Rare 15% · Legendary 5% · Mythic 1%. While eligible, each offer includes an offensive, defensive and two further cards. Exhausted categories or insufficient distinct perks are filled with repeatable Common Survival rewards. Individual regular power-up odds depend on eligible options, bans and caps.'],
-      ['POWER SHRINE','First at 02:00 · next 4–6 minutes after collection','Pick up a shrine for one immediate eligible upgrade without leveling up: 75% Legendary / 25% Mythic. With eligible Hemorrhagic Burst, it has a special 40% selection roll; otherwise eligible powers use weighted random choice.'],
+      ['POWER SHRINE','First at 02:00 · next 4–6 minutes after collection','Pick up a shrine for one immediate eligible upgrade without leveling up: 75% Legendary / 25% Mythic. With eligible Hemorrhagic, it has a special 40% selection roll; otherwise eligible powers use weighted random choice.'],
       ['LIFE SHRINE','A fountain, not an RNG item drop','Grants +1 HP/s for 30 seconds, with no instant heal. New fountains appear roughly every 42–64 seconds. Refreshes rather than stacks.'],
       ['MAGNET SHRINE','First offered at 00:45','Immediately collects all XP crystals, then automatically collects new XP globally for 15 seconds. The next shrine becomes available 90–150 seconds after pickup.'],
       ['ABOMINATION REWARD','Guaranteed on boss defeat','One instant eligible power-up: Rare 65% · Legendary 29% · Mythic 6%. This does not use XP or increase the player level.'],
