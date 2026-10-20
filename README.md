@@ -87,12 +87,13 @@ These are **total tier multipliers**, not multipliers compounded across earlier 
 - **Easy Mode:** selectable before **every run**. Multiplies enemy HP, damage, speed, spawn pressure and aggression by **0.5** for that run; selection resets on returning to the mode-selection screen. **Hardcore Mode:** uses **×1** scaling.
 - **Crimson Warden:** first appears after ~**51s** and may appear again from **119s** if the first is defeated. Its stats use the current difficulty multiplier.
 
-## Audio mechanics
+## Shrines
 
-- Each chosen element uses a distinct **CC0 Freesound** attack sample. Blood, Fire, Lightning and Poison play **one cue per attack action**, independent of multiple projectiles or pierce.
-- Normal attack sounds are capped at **7 playback starts per real second** (`1 / 7 ≈ 0.143s` minimum interval), regardless of Attack Speed. Actual projectiles and combat damage remain unchanged.
-- Attack samples last approximately **180ms (Blood)**, **190ms (Fire)**, **130ms (Lightning)** and **180ms (Poison)**, with adjusted loudness, a 25ms fade-out and randomized pitch **±4%**.
-- Up to **2 overlapping attack sample voices**; a compressor and final limiter control peaks. Special event sounds (hits, level-ups, shrines, deaths) remain independent of the attack rate cap. Until a local file loads, a capped synthesized attack sound acts as a fallback.
+| Shrine | Spawn timing | Mechanic |
+|---|---|---|
+| **Life Shrine** | **2** at run start, further spawn attempts every **42–64s**, max **4** active | Restores **1 HP/s for 30s**, capped at max HP; **no instant heal**. Collecting another refreshes duration rather than stacking. |
+| **Magnet Shrine** | **Guaranteed at 00:45**. After each collection, the next spawns randomly **90–150s later**; max **1** active. | Instantly collects **all unclaimed map XP** and grants **15s of global XP collection** for new drops. |
+| **Power Shrine** | **Guaranteed at 02:00**, then randomly **4–6 minutes after the previous pickup**; maximum **1** active. | Grants **1 Legendary (75%) or Mythic (25%) perk immediately**, without consuming XP or a level. **Hemorrhagic Burst has a 40% roll for Blood** until acquired; otherwise Element Power weighs **×5**, Critical Damage **×3**, and Forward Shot / Spread Shot / Piercing Fangs / Deadly Precision / Rapid Fire **×2**. Banned and capped perks cannot roll. |
 
 ## Music and sound credits
 
@@ -118,11 +119,3 @@ The background track is streamed directly from OpenGameArt as `https://opengamea
 These Freesound WAV / FLAC recordings were **cropped, converted into short mono MP3 samples, peak-normalized and faded in/out** for the game. Other in-game cues (e.g., pickups, hits, level-ups and deaths) are **procedurally synthesized with Web Audio API**, not externally sourced recordings.
 
 Full source and adaptation details: [assets/audio/SOURCES.md](assets/audio/SOURCES.md).
-
-## Shrines
-
-| Shrine | Spawn timing | Mechanic |
-|---|---|---|
-| **Life Shrine** | **2** at run start, further spawn attempts every **42–64s**, max **4** active | Restores **1 HP/s for 30s**, capped at max HP; **no instant heal**. Collecting another refreshes duration rather than stacking. |
-| **Magnet Shrine** | **Guaranteed at 00:45**. After each collection, the next spawns randomly **90–150s later**; max **1** active. | Instantly collects **all unclaimed map XP** and grants **15s of global XP collection** for new drops. |
-| **Power Shrine** | **Guaranteed at 02:00**, then randomly **4–6 minutes after the previous pickup**; maximum **1** active. | Grants **1 Legendary (75%) or Mythic (25%) perk immediately**, without consuming XP or a level. **Hemorrhagic Burst has a 40% roll for Blood** until acquired; otherwise Element Power weighs **×5**, Critical Damage **×3**, and Forward Shot / Spread Shot / Piercing Fangs / Deadly Precision / Rapid Fire **×2**. Banned and capped perks cannot roll. |
