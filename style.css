@@ -815,3 +815,12 @@ body:has(#intro:not(.hidden)) .topbar .audio-controls{gap:9px}
   #intro .intro-mode-button{min-height:0!important;width:100%!important}
   body:has(#intro:not(.hidden)) .topbar .audio-controls{transform:scale(.67)}
 }
+
+/* v0.29.1 — show the exact approved artwork at usable resolution. */
+#intro.intro.hidden{display:none!important}
+@media(min-width:721px){
+  #intro .intro-mode-choices{
+    left:4.5%!important;top:54%!important;width:91%!important;height:23%!important;
+    gap:4%!important;
+  }
+}
