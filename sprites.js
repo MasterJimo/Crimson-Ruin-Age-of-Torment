@@ -50,23 +50,10 @@
         p('#24232a',18,14,4,6); p('#c4a184',19,18,3,3); p('#d5d8de',21,17,2,4); p('#7b7f88',21,12,2,6);
       }
     }
-    if (kind==='heroPortrait') {
-      // Dedicated menu portrait, slightly brighter and more readable than the gameplay sprite.
-      p('#1a1b22',6,19,12,8); p('#313642',6,20,5,7); p('#565d6f',13,20,5,6); p('#9da6b8',8,21,2,5); p('#c4ccd7',16,20,2,5);
-      p('#28242a',6,4,12,13); p('#666d7c',6,2,11,10); p('#a7afbc',7,3,9,4); p('#e4e9f1',9,4,5,2);
-      p('#e3b58d',10,9,6,6); p('#f8e0c5',11,9,4,3); p('#272226',11,11,2,1); p('#272226',15,11,1,1); p('#8d6f68',12,13,3,1);
-      p('#82899a',8,6,8,2); p('#d6dbe4',8,7,2,1);
-      p('#555c69',5,7,3,10); p('#c6ccd7',6,7,2,8); p('#4b525d',16,8,2,9); p('#b6bcc8',16,8,2,7);
-      p('#5d6471',6,15,10,3); p('#b3bac6',8,15,6,1);
-      p('#7a838f',9,17,7,2); p('#ddd8df',13,17,3,2); p('#3a3f49',11,19,4,4); p('#f2ead8',12,18,2,2);
-      p('#8b7348',10,16,7,1); p('#d4c3ab',12,16,2,1);
-      p('#22242b',3,15,4,7); p('#c4a184',4,20,3,3); p('#23242d',18,14,4,6); p('#c4a184',19,18,3,3);
-      p('#d6dbe3',20,17,2,4); p('#7e858f',21,12,2,6);
-    }
     // The old procedural enemy fallbacks were removed with the placeholder roster.
 
     cache.set(key,c);
     return c;
   };
-  window.NoobSprites = { get:make };
+  window.CrimsonSprites = { get:make };
 })();

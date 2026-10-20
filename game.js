@@ -223,7 +223,7 @@
     caverns:{label:'Ancient Caverns',src:'https://opengameart.org/sites/default/files/caverns.ogg'}
   };
 
-  const sprite = window.NoobSprites.get;
+  const sprite = window.CrimsonSprites.get;
 
   const keys = new Set();
   let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 10, sfxVolume = 5, sfx = null;
@@ -624,9 +624,8 @@
       die(true);
     }
   }
-  // Image-first sprite renderer. If the optional supplied Death image was not
-  // yet uploaded as assets/death-reaper-v018.png, draw an original silhouette
-  // rather than falling back to either previously rejected artwork.
+  // Draw the current Reaper artwork, or a procedural silhouette if
+  // the image cannot load.
   function drawDeath(camX,camY,t){
     const d=game?.death;if(!d)return;
     const x=d.x-camX,y=d.y-camY,glow=.55+.45*Math.sin(t*11);
@@ -656,10 +655,13 @@
     }
     ctx.restore();
   }
+  // Direct hits grant 0.5s protection from further contact, projectiles
+  // and AoE damage; any existing damage-over-time remains independent.
+  const HUNTER_HIT_GRACE_SECONDS=0.5;
   function damagePlayer(value){
     const p=game.player;
     if(p.hitCd>0)return false;
-    const received=Math.max(1,Math.ceil(value*(1-p.armor)));p.hp=Math.max(0,p.hp-received);p.hitCd=.76;shake=Math.max(shake,6);flash=.18;
+    const received=Math.max(1,Math.ceil(value*(1-p.armor)));p.hp=Math.max(0,p.hp-received);p.hitCd=HUNTER_HIT_GRACE_SECONDS;shake=Math.max(shake,6);flash=.18;
     addBloodBurst(p.x,p.y,12,'#ad1339'); floatText(p.x,p.y-24,`-${received}`,'#ffc9cd');
     playSound('hurt');
     if(p.hp<=0) die(false);
@@ -1905,10 +1907,10 @@
     // Three opaque, painted side-view frames preserve the armour and cloak textures.
     const walkIndex=Math.floor(p.walk*0.55)%3;
     const art=p.moving ? ['hero_walk1','hero_walk2','hero_walk3'][walkIndex] : 'hero_idle';
-    const dimensions=window.NoobArt?.dimension(art);
+    const dimensions=window.CrimsonArt?.dimension(art);
     const height=78;
     const width=dimensions ? Math.max(40,Math.min(65, height*dimensions.w/dimensions.h)) : 43;
-    if(!window.NoobArt?.paint(ctx,art,-width/2,12-height,width,height))
+    if(!window.CrimsonArt?.paint(ctx,art,-width/2,12-height,width,height))
       ctx.drawImage(sprite('hero',p.moving?1:0),-20,-32,40,47);
     ctx.restore();
     if(game?.easyMode){
@@ -1990,7 +1992,7 @@
         const heights={blood:18,lightning:17,fire:36,poison:37};
         const w=(widths[b.element]||45)*size,h=(heights[b.element]||25)*size;
         if(!drawSkillFrame(b.element,0,-w/2,-h/2,w,h)){
-          if(!window.NoobArt?.paint(ctx,b.kind||'blood_bolt',-w/2,-h/2,w,h)){
+          if(!window.CrimsonArt?.paint(ctx,b.kind||'blood_bolt',-w/2,-h/2,w,h)){
             ctx.fillStyle='#fda0ae';ctx.fillRect(-9,-3,18,6);
           }
         }
@@ -2024,7 +2026,7 @@
       if(f.kind.startsWith('skill:')){
         const [,element,frame]=f.kind.split(':');
         drawSkillFrame(element,frame==='impact'?1:2,f.x-camX-s/2,f.y-camY-s/2,s,s,alpha);
-      }else window.NoobArt?.paint(ctx,f.kind,f.x-camX-s/2,f.y-camY-s/2,s,s*.78,alpha);
+      }else window.CrimsonArt?.paint(ctx,f.kind,f.x-camX-s/2,f.y-camY-s/2,s,s*.78,alpha);
     }
     for(const b of game.bolts){
       const opacity=clamp(b.life/b.max,0,1);
@@ -2038,7 +2040,7 @@
     const p=game.player;
     for(let i=0;i<p.orbits;i++){
       const a=game.worldTime*2.7+i*TAU/p.orbits,x=p.x+Math.cos(a)*42-camX,y=p.y+Math.sin(a)*42-camY;
-      if(!window.NoobArt?.paint(ctx,'holy',x-16,y-10,32,20)){
+      if(!window.CrimsonArt?.paint(ctx,'holy',x-16,y-10,32,20)){
         ctx.fillStyle='#f6dca3';ctx.fillRect(x-6,y-2,12,4);
       }
     }
@@ -2086,7 +2088,7 @@
       if(game.death)drawDeath(camX,camY,t);
       drawShots(camX,camY,t); drawMagic(camX,camY); drawPoisonBursts(camX,camY); drawSlashBursts(camX,camY); drawImpacts(camX,camY); drawFx(camX,camY);
     } else {
-      shadowAt(W/2,H/2+55,22,.5);if(!window.NoobArt?.paint(ctx,'hero_idle',W/2-32,H/2-55,64,85))ctx.drawImage(sprite('hero'),W/2-29,H/2-22,58,70);
+      shadowAt(W/2,H/2+55,22,.5);if(!window.CrimsonArt?.paint(ctx,'hero_idle',W/2-32,H/2-55,64,85))ctx.drawImage(sprite('hero'),W/2-29,H/2-22,58,70);
     }
     const vignette=ctx.createRadialGradient(W/2,H/2,80,W/2,H/2,405);
     vignette.addColorStop(0,'#0000'); vignette.addColorStop(.75,'#170f1a20'); vignette.addColorStop(1,'#050307a0'); ctx.fillStyle=vignette; ctx.fillRect(0,0,W,H);
@@ -2142,16 +2144,25 @@
     el.musicVolumeValue.textContent=`${musicVolume}%`;
     el.sfxVolumeValue.textContent=`${sfxVolume}%`;
   }
+  // Keep settings from the previous audio preferences key on first load.
+  const AUDIO_SETTINGS_KEY='crimson-ruin-audio-v06';
+  const LEGACY_AUDIO_SETTINGS_KEY='noob-survivors-audio-v06';
   function rememberAudio(){
-    try { localStorage.setItem('noob-survivors-audio-v06',JSON.stringify({muted,musicVolume,sfxVolume})); } catch(_){}
+    try {
+      localStorage.setItem(AUDIO_SETTINGS_KEY,JSON.stringify({muted,musicVolume,sfxVolume}));
+      localStorage.removeItem(LEGACY_AUDIO_SETTINGS_KEY);
+    }catch(_){}
   }
   try {
-    const saved=JSON.parse(localStorage.getItem('noob-survivors-audio-v06') || 'null');
+    const newSaved=localStorage.getItem(AUDIO_SETTINGS_KEY);
+    const oldSaved=!newSaved?localStorage.getItem(LEGACY_AUDIO_SETTINGS_KEY):null;
+    const saved=JSON.parse(newSaved||oldSaved||'null');
     if(saved && typeof saved==='object'){
       muted=Boolean(saved.muted);
       if(Number.isFinite(saved.musicVolume)) musicVolume=clamp(Math.round(saved.musicVolume),0,100);
       if(Number.isFinite(saved.sfxVolume)) sfxVolume=clamp(Math.round(saved.sfxVolume),0,100);
     }
+    if(oldSaved)rememberAudio();
   }catch(_){}
   updateAudioUI();
   changeTrack('caverns');

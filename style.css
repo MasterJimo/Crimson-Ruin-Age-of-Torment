@@ -200,7 +200,7 @@ body{padding:10px}
 .xp-strip .xp-fill{background:linear-gradient(90deg,#085dbd,#16b3fa,#cbfaff)!important;box-shadow:0 0 9px #13aeffbb!important}
 #upgrade .upgrade-card .ability-icon{
   display:block;flex:none;width:58px;height:58px;min-width:58px;
-  background-image:url('assets/ability-icons-v11.png');
+  background-image:none;
   background-size:348px 348px;
   background-position:calc(var(--ic)*-58px) calc(var(--ir)*-58px);
   image-rendering:auto;filter:drop-shadow(0 4px 10px #0009);
@@ -224,7 +224,7 @@ body{padding:10px}
 .footer-help .key-or{opacity:.55}
 #upgrade .upgrade-card .perk-art-frame{
   display:grid;place-items:center;flex:0 0 86px;width:86px;height:86px;min-width:86px;
-  background-image:url('assets/perk-frame-v013.png');background-size:100% 100%;
+  background-image:none;background-size:100% 100%;
   background-position:center;background-repeat:no-repeat;image-rendering:auto;
   align-self:center;justify-self:center;overflow:visible;
 }
@@ -238,12 +238,12 @@ body{padding:10px}
 /* v0.13 — ONE full gold frame, the user-supplied UNFRAMED icon centered inside. */
 #upgrade .upgrade-card .perk-art-frame{
   display:grid;place-items:center;width:92px;height:92px;min-width:92px;flex:0 0 92px;
-  background:url('assets/perk-frame-v013.png') center / contain no-repeat;
+  background:none;
   overflow:visible;filter:none;
 }
 #upgrade .perk-art-frame .ability-icon{
   width:62px;height:62px;min-width:62px;display:block;
-  background-image:url('assets/perk-icons-v013.png');
+  background-image:none;
   background-size:400% 500%;background-repeat:no-repeat;
   image-rendering:auto;filter:drop-shadow(0 2px 3px #0009);
 }
@@ -273,7 +273,7 @@ body{padding:10px}
 .inventory-close:hover,.inventory-close:focus-visible{background:#6b2b3f}
 .inventory-scroll{min-height:0;overflow:auto;padding:15px 18px 14px;overscroll-behavior:contain}
 .inventory-element{display:flex;align-items:center;gap:15px;background:#321a25a8;border:1px solid #745046;border-radius:12px;padding:10px;margin-bottom:14px}
-.inventory-gold-frame{display:grid;place-items:center;flex:0 0 86px;height:86px;background:url('assets/perk-frame-v013.png') center/contain no-repeat}
+.inventory-gold-frame{display:grid;place-items:center;flex:0 0 86px;height:86px;background:none}
 .inventory-element-copy{min-width:0}
 .inventory-element-title{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
 .inventory-element-title h3{font:900 22px system-ui,sans-serif;margin:4px 0;color:#ffdde3}
@@ -286,8 +286,8 @@ body{padding:10px}
 .inventory-section-heading span{font-size:10px;color:#ccaa87}
 .inventory-perks{display:grid;gap:7px}
 .inventory-perk{display:flex;align-items:center;gap:10px;background:#1d111be0;border:1px solid #563544;border-radius:10px;padding:7px 10px}
-.inventory-perk-icon{flex:0 0 51px;display:grid;place-items:center;width:51px;height:51px;background:url('assets/perk-frame-v013.png') center/contain no-repeat}
-.inventory-perk-icon .ability-icon{display:block;width:34px;height:34px;background-image:url('assets/perk-icons-v013.png');background-size:400% 500%;background-repeat:no-repeat}
+.inventory-perk-icon{flex:0 0 51px;display:grid;place-items:center;width:51px;height:51px;background:none}
+.inventory-perk-icon .ability-icon{display:block;width:34px;height:34px;background-image:none;background-size:400% 500%;background-repeat:no-repeat}
 .inventory-perk-copy{min-width:0;flex:1}
 .inventory-perk-heading{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .inventory-perk-heading strong{font-size:11px;color:#ffe2e5}
@@ -344,7 +344,7 @@ body{padding:10px}
    Earlier icon sizing rules only targeted #upgrade and the acquired-perks list. */
 .inventory-gold-frame .ability-icon{
   display:block;width:59px;height:59px;min-width:59px;flex:0 0 59px;
-  background-image:url('assets/perk-icons-v013.png');
+  background-image:none;
   background-size:400% 500%;
   background-repeat:no-repeat;
   image-rendering:auto;
@@ -641,12 +641,7 @@ body:has(#intro:not(.hidden)) .game-frame{aspect-ratio:16 / 9;min-height:min(680
   background:radial-gradient(ellipse at 50% 18%,#480d17 0%,#1e090d 45%,#050405 100%);
   backdrop-filter:none;overflow:hidden;
 }
-#intro.intro::before{
-  content:"";position:absolute;inset:-12px;z-index:-2;
-  width:auto;height:auto;border:0;border-radius:0;opacity:.82;box-shadow:none;
-  background:url('assets/intro-gothic-v028.webp') center center / cover no-repeat;
-  filter:none;pointer-events:none;
-}
+
 #intro.intro::after{
   content:"";position:absolute;inset:0;z-index:-1;opacity:1;
   background:

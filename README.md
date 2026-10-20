@@ -6,7 +6,7 @@
 
 - A run lasts up to **30:00**.
 - Select one of four elements before combat; attacks automatically target nearby enemies. Enemies arrive in two groups, and new bosses appear at fixed moments.
-- Starting stats: **100 HP**, movement speed **100**, **6% critical chance**, **×1.6 critical damage**. Base attack speed is determined by the selected element.
+- Starting stats: **100 HP**, movement speed **100**, **6% critical chance**, **×1.6 critical damage**. Base attack speed is determined by the selected element. Direct enemy hits grant **0.5 seconds** of immunity against further contact, ranged and area attacks; existing damage-over-time effects still tick.
 - Blue XP crystals grant levels. A level-up grants a power-up **without healing HP**. XP required for the next level after reaching level `L`: `floor(12 + 8L + 1.5L²)`.
 
 ## Elements
