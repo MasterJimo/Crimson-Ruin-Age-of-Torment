@@ -90,7 +90,7 @@
     return p.element==='lightning'?1+Math.min(2,p.forwardShots):
       (1+p.forwardShots)*(1+2*p.spreadShots);
   }
-  function perkDescription(id,tier){
+  function perkDescription(id,tier,elementOverride=null){
     const u=rarityScale(tier),percent=n=>Math.round(n*100)+'%';
     switch(id){
       case 'brutality':return '+'+(5*u)+' flat hit damage (also improves Bleed and Burn).';
@@ -101,15 +101,15 @@
       case 'armor':return 'Reduce incoming damage by '+(3*u)+'%.';
       case 'knowledge':return '+'+(8*u)+'% XP from crystals.';
       case 'magnet':return '+'+(10*u)+'% crystal pickup radius.';
-      case 'forward':return game?.player?.element==='lightning'?
-        '+'+shotBonus(u)+' independent Chain Lightning (max 3 active shots per attack).':
+      case 'forward':return (elementOverride||game?.player?.element)==='lightning'?
+        '+'+shotBonus(u)+' Chain Lightning projectile(s) fired backward (up to 3 total shots).':
         '+'+shotBonus(u)+' parallel projectile(s).';
-      case 'spread':return game?.player?.element==='lightning'?
+      case 'spread':return (elementOverride||game?.player?.element)==='lightning'?
         '+'+(2*spreadBonus(u))+' chain bounces (up to 25 total).':
         '+'+(2*spreadBonus(u))+' angled projectile(s).';
       case 'pierce':{
-        const amount=shotBonus(u),element=game?.player?.element;
-        if(element==='blood')return '+'+amount+' Bleed stack(s) per hit; adds to Hemorrhagic Burst.';
+        const amount=shotBonus(u),element=elementOverride||game?.player?.element;
+        if(element==='blood')return '+'+amount+' Bleed stack(s) per hit.';
         if(element==='lightning')return '+'+amount+' chain bounce(s), up to 25 total.';
         if(element==='fire'||element==='poison')return '+'+(10*amount)+'% explosion radius.';
         return '+'+amount+' extra pierce.';
@@ -178,7 +178,7 @@
   const ELEMENT_CHOICES = [
     {id:'blood',element:'blood',name:'BLOOD',desc:'21.6 DMG · Piercing spear',longDesc:'Very slow Blood Spear pierces every enemy. Each contact applies 1 Bleed stack (8s, up to 8); a slow enemy may be hit again by the same spear after 0.6s. Piercing Fangs adds Bleed stacks instead of pierce.',tier:'rare'},
     {id:'fire',element:'fire',name:'FIRE',desc:'43.2 DMG · Explosive fireball',longDesc:'Fast fireball detonates on the first target, dealing 43.2 direct damage. Its 55-unit blast applies 100% Burn to all nearby enemies for 2s. Piercing Fangs increases blast radius by 10% per point.',tier:'rare'},
-    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 4 chains',longDesc:'Lightning strikes the first target and chains to 4 additional enemies within 120 units. Each impact has a 50% chance to Shock. Piercing Fangs and Spread Shot add chains, up to 25 bounces. Forward Shot launches up to 3 independent Chain Lightning spells per attack.',tier:'rare'},
+    {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 4 chains',longDesc:'Lightning strikes the first target and chains to 4 additional enemies within 120 units. Each impact has a 50% chance to Shock. Piercing Fangs and Spread Shot add chains, up to 25 bounces. Forward Shot launches up to 2 additional spells backward, up to 3 shots per attack.',tier:'rare'},
     {id:'poison',element:'poison',name:'POISON',desc:'15 DPS · Toxic splash',longDesc:'Toxic Orb bursts on the first enemy and adds 1 permanent Poison stack to all enemies in a 55-unit radius, matching Fireball. Each stack may crit. Piercing Fangs extends the Toxic Orb and Poison Proliferate radius by 10% per point. Death with 5+ stacks causes Poison Proliferate.',tier:'rare'}
   ];
   const ELEMENT_DAMAGE={blood:21.6,fire:43.2,lightning:1,poison:0}; // +8% base Blood and Fire
@@ -1005,67 +1005,196 @@
       tile.append(caption,number);el.inventoryStats.appendChild(tile);
     }
   }
-  let inventorySection='powers';
+  // The paused Codex uses one navigation controller for all knowledge sections.
+  // All formulae and perk ranks below read existing gameplay functions / tables.
+  const CODEX_SECTIONS={
+    powers:['POWER-UPS','inventoryPowersTab','inventoryPowersPage'],
+    bestiary:['MONSTER BESTIARY','inventoryBestiaryTab','inventoryBestiaryPage'],
+    elements:['ELEMENTAL MECHANICS','inventoryElementsTab','inventoryElementsPage'],
+    acquisition:['ITEM ACQUISITION','inventoryAcquisitionTab','inventoryAcquisitionPage'],
+    catalog:['POWER-UP LIBRARY','inventoryCatalogTab','inventoryCatalogPage'],
+    scaling:['ENEMY SCALING','inventoryScalingTab','inventoryScalingPage']
+  };
+  let inventorySection='powers',bestiaryGroup='early',catalogGroup='offense',catalogRarity='common',codexFocus=null;
+  function codexElement(tag,className='',value=''){
+    const node=document.createElement(tag);
+    if(className)node.className=className;
+    if(value)node.textContent=value;
+    return node;
+  }
+  function codexIntro(root,title,body){
+    const heading=codexElement('h3','codex-page-title',title);
+    const text=codexElement('p','codex-page-lead',body);
+    root.append(heading,text);
+  }
+  function codexLink(root,section,label,focus=null){
+    const button=codexElement('button','codex-crosslink',label+' ↗');
+    button.type='button';
+    button.addEventListener('click',()=>{codexFocus=focus;switchInventorySection(section);});
+    root.append(button);return button;
+  }
+  function codexFilters(root,values,selected,change){
+    const nav=codexElement('div','codex-filters');nav.setAttribute('role','group');nav.setAttribute('aria-label','Filter entries');
+    for(const [value,label] of values){
+      const button=codexElement('button','codex-filter'+(value===selected?' selected':''),label);
+      button.type='button';button.setAttribute('aria-pressed',String(value===selected));
+      button.addEventListener('click',()=>change(value));nav.append(button);
+    }
+    root.append(nav);
+  }
+  function codexArticle(title,shortText,body,open=false){
+    const article=codexElement('details','codex-article');
+    article.open=open;
+    const summary=codexElement('summary','codex-article-heading',title);
+    summary.append(codexElement('span','codex-article-short',shortText));
+    const content=codexElement('div','codex-article-body',body);
+    article.append(summary,content);
+    return {article,content};
+  }
   function switchInventorySection(section){
     if(state!=='inventory')return;
-    inventorySection=section==='bestiary'?'bestiary':'powers';
-    const beast=inventorySection==='bestiary';
-    el.powersPage.hidden=beast;
-    el.bestiaryPage.hidden=!beast;
-    el.powersTab.classList.toggle('active',!beast);
-    el.bestiaryTab.classList.toggle('active',beast);
-    el.powersTab.setAttribute('aria-selected',String(!beast));
-    el.bestiaryTab.setAttribute('aria-selected',String(beast));
-    $('inventoryTitle').textContent=beast?'MONSTER BESTIARY':'POWER-UPS';
-    el.status.textContent=(beast?'MONSTER BESTIARY':'POWER-UPS')+' · PAUSED';
-    if(beast)renderBestiary();
-    else renderInventory();
+    inventorySection=CODEX_SECTIONS[section]?section:'powers';
+    for(const [key,[title,tabId,pageId]] of Object.entries(CODEX_SECTIONS)){
+      const active=key===inventorySection,tab=$(tabId),page=$(pageId);
+      tab.classList.toggle('active',active);
+      tab.setAttribute('aria-selected',String(active));
+      page.hidden=!active;
+    }
+    const title=CODEX_SECTIONS[inventorySection][0];
+    $('inventoryTitle').textContent=title;
+    el.status.textContent=title+' · PAUSED';
+    if(inventorySection==='powers')renderInventory();
+    else if(inventorySection==='bestiary')renderBestiary();
+    else if(inventorySection==='elements')renderElements();
+    else if(inventorySection==='acquisition')renderAcquisition();
+    else if(inventorySection==='catalog')renderPowerLibrary();
+    else if(inventorySection==='scaling')renderEnemyScaling();
   }
   function renderBestiary(){
-    const root=el.bestiaryPage;
-    root.replaceChildren();
-    const intro=document.createElement('p');
-    intro.className='bestiary-hint';
-    intro.textContent='BASE STATS before scaling · No enemy names are displayed in the arena. Enemies from the first group stop spawning after 10:00; survivors remain until defeated.';
-    root.append(intro);
-    const grid=document.createElement('div');grid.className='bestiary-grid';root.append(grid);
-    for(const [index,monster] of window.CrimsonMonsters.entries.entries()){
-      const card=document.createElement('article');card.className='bestiary-card';
-      const art=document.createElement('div');art.className='bestiary-art';
+    const root=el.bestiaryPage;root.replaceChildren();
+    codexIntro(root,'FIELD GUIDE · MONSTERS','Select a group, then a creature for its attacks and combat stats.');
+    codexFilters(root,[['early','00:00–10:00'],['late','AFTER 10:00'],['boss','BOSSES']],bestiaryGroup,value=>{bestiaryGroup=value;renderBestiary();});
+    const grid=codexElement('div','codex-grid');
+    const entries=window.CrimsonMonsters.entries.filter(m=>bestiaryGroup==='boss'?m.boss:bestiaryGroup==='early'?!m.boss&&m.phase===0:!m.boss&&m.phase===600);
+    for(const monster of entries){
+      const idx=window.CrimsonMonsters.entries.indexOf(monster);
+      const card=codexArticle(monster.name,'HP '+monster.hp+' · SPEED '+monster.speed+' · HIT '+monster.damage,
+        monster.attack+' every '+monster.interval+'s. '+monster.notes);
+      const art=codexElement('span','codex-monster-art');
       art.style.backgroundImage="url('assets/monsters-v031.png')";
       art.style.backgroundSize='1300% 100%';
-      art.style.backgroundPosition=(index*100/12)+'% center';
-      art.style.backgroundRepeat='no-repeat';
-      const data=document.createElement('div');data.className='bestiary-copy';
-      const title=document.createElement('h3');title.textContent=monster.name;
-      const when=document.createElement('p');when.className='bestiary-when';
-      when.textContent=monster.boss?'BOSS · '+timeText(monster.bossAt):monster.phase===0?'EARLY GROUP · 00:00–09:59':'LATE GROUP · 10:00–29:59';
-      const stats=document.createElement('p');stats.className='bestiary-stats';
-      stats.textContent='HP '+monster.hp+' · SPEED '+monster.speed+' · DAMAGE '+monster.damage;
-      const attack=document.createElement('p');attack.textContent=monster.attack+' · every '+monster.interval+'s'+(monster.projectileSpeed?' · projectile speed '+monster.projectileSpeed:'');
-      const notes=document.createElement('p');notes.className='bestiary-notes';notes.textContent=monster.notes;
-      data.append(title,when,stats,attack,notes);card.append(art,data);grid.append(card);
+      art.style.backgroundPosition=(idx*100/12)+'% center';
+      card.article.querySelector('summary').prepend(art);
+      const tag=codexElement('p','codex-article-detail',monster.boss?'Boss appears '+timeText(monster.bossAt):
+        'Spawn window: '+(monster.phase===0?'00:00–09:59':'10:00–29:59'));
+      card.content.prepend(tag);
+      if(monster.projectileSpeed)card.content.append(codexElement('p','codex-article-detail','Projectile speed: '+monster.projectileSpeed+' units/s'));
+      if(monster.id==='blood_slime')codexLink(card.content,'elements','Compare Bleed mechanics','blood');
+      grid.append(card.article);
     }
-    const header=document.createElement('h3');header.className='bestiary-scaling-title';
-    header.textContent='FIVE-MINUTE SCALING';root.append(header);
-    const helper=document.createElement('p');helper.className='bestiary-hint';
-    helper.textContent='Multipliers include each five-minute tier and the gradual minute-to-minute increase. Easy Mode halves these values.';
-    root.append(helper);
-    const table=document.createElement('table');table.className='bestiary-scale-table';
+    root.append(grid);
+    codexLink(root,'scaling','How monster stats scale every five minutes');
+  }
+  function renderElements(){
+    const root=$('inventoryElementsPage');root.replaceChildren();
+    codexIntro(root,'THE FOUR ELEMENTS','All four spells explained. Damage modifiers are additive to their base spell value; critical hits multiply direct damage.');
+    const tiles=codexElement('div','codex-grid');
+    const focus=codexFocus;codexFocus=null;
+    const contents=[
+      ['blood','BLOOD','Slow piercing spear · 80 units/s','Direct = (21.6 × (1 + 0.05 × Blood Power units) + Brutality). Each contact adds 1 + Piercing Fangs stacks, up to 8 lasting 8s. One stack = actual hit damage / 8 damage per second. A single spear may hit again after 0.6s. Hemorrhagic Burst replaces the damage-over-time stacks with an instant 8-stack blast.'],
+      ['fire','FIRE','Exploding fireball · 290 units/s','Direct = 43.2 × (1 + 0.05 × Fire Power units) + Brutality. First hit explodes, radius = 55 × (1 + 0.1 × Piercing Fangs). Every target in the radius burns for 2s. Burn DPS = base Fire direct damage (before crit), refreshed on subsequent hits.'],
+      ['lightning','LIGHTNING','Chain Lightning · 235 units/s','Direct = random integer 1–200 × (1 + 0.05 × Lightning Power units) + Brutality. Each impact can Shock (50% chance, 4s); Shock doubles incoming direct damage. Base 4 chain jumps, +1 per Piercing Fangs and +2 per Spread Shot, max 25. Forward Shot sends extra independent lightning projectiles BACKWARD (up to 3 total).'],
+      ['poison','POISON','Toxic Orb · 210 units/s','The explosion radius = 55 × (1 + 0.1 × Piercing Fangs). Every victim gets a permanent stack worth 15 × (1 + 0.05 × Poison Power units) DPS, multiplied by crit strength if that stack crits. At 5+ stacks on enemy defeat, Poison spreads 5 stacks to up to 6 nearby targets.']
+    ];
+    for(const [id,name,summary,body] of contents){
+      const item=codexArticle(name,summary,body,focus?id===focus:id===game.player.element);
+      codexLink(item.content,'catalog','Related '+name+' power-ups',id+'_power');
+      tiles.append(item.article);
+    }
+    root.append(tiles);
+    const formula=codexElement('p','codex-info-line','CRITICAL HITS: direct damage × current Crit Damage (starts ×1.6) when Crit Chance succeeds (starts at 6%). Poison stack crits are saved separately; Fire Burn is not increased by crits.');
+    root.append(formula);
+    codexLink(root,'acquisition','Where upgrades come from');
+  }
+  function renderAcquisition(){
+    const root=$('inventoryAcquisitionPage');root.replaceChildren();
+    codexIntro(root,'HOW REWARDS ARE FOUND','Real in-game probabilities. Percentages apply to the stated roll, not to individual monster kills.');
+    const grid=codexElement('div','codex-grid');
+    const source=[
+      ['XP CRYSTALS','Guaranteed on normal enemy defeat','Each normal enemy drops its XP value as a crystal. Collect crystals to level up and select one of four upgrade cards. XP needed for the next level after reaching level L: floor(12 + 8L + 1.5L²).'],
+      ['LEVEL-UP CARDS','Rarity rolled separately per card','Common 54% · Magic 25% · Rare 15% · Legendary 5% · Mythic 1%. Each offer contains one offensive, one defensive, and two additional eligible cards. Individual power-up odds depend on eligible options, bans and current limits.'],
+      ['POWER SHRINE','First at 02:00 · next 4–6 minutes after collection','Pick up a shrine for one immediate eligible upgrade without leveling up: 75% Legendary / 25% Mythic. With eligible Hemorrhagic Burst, it has a special 40% selection roll; otherwise eligible powers use weighted random choice.'],
+      ['LIFE SHRINE','A fountain, not an RNG item drop','Grants +1 HP/s for 30 seconds, with no instant heal. New fountains appear roughly every 42–64 seconds. Refreshes rather than stacks.'],
+      ['MAGNET SHRINE','First offered at 00:45','Immediately collects all XP crystals, then automatically collects new XP globally for 15 seconds. The next shrine becomes available 90–150 seconds after pickup.'],
+      ['ABOMINATION REWARD','Guaranteed on boss defeat','One instant eligible power-up: Rare 65% · Legendary 29% · Mythic 6%. This does not use XP or increase the player level.']
+    ];
+    for(const [name,shortText,description] of source){
+      const {article,content}=codexArticle(name,shortText,description);
+      if(name.includes('CARD')||name.includes('SHRINE')||name.includes('REWARD'))codexLink(content,'catalog','Browse available power-ups');
+      grid.append(article);
+    }
+    root.append(grid);codexLink(root,'elements','Understand the four elemental attacks');
+  }
+  function renderPowerLibrary(){
+    const root=$('inventoryCatalogPage');root.replaceChildren();
+    codexIntro(root,'UPGRADE CATALOG','Choose a group and rarity to preview its effects. Each pickup increases that perk rank by 1; its effect uses that roll’s rarity multiplier. Entries reflect the real game rules.');
+    const categories=[
+      ['offense','OFFENSE'],['defense','DEFENSE'],['utility','UTILITY'],['elemental','ELEMENTAL']
+    ];
+    const byGroup={
+      offense:['brutality','rapid_fire','forward','spread','pierce','crit','crit_damage'],
+      utility:['knowledge','magnet'],
+      defense:['movement','vitality','regen','armor'],
+      elemental:['blood_power','hemorrhagic_burst','fire_power','lightning_power','poison_power']
+    };
+    if(codexFocus){
+      const group=Object.keys(byGroup).find(k=>byGroup[k].includes(codexFocus));
+      if(group)catalogGroup=group;
+    }
+    codexFilters(root,categories,catalogGroup,v=>{catalogGroup=v;codexFocus=null;renderPowerLibrary();});
+    codexFilters(root,RARITY_TIERS.map(t=>[t,t.toUpperCase()]),catalogRarity,v=>{catalogRarity=v;renderPowerLibrary();});
+    const grid=codexElement('div','codex-grid');
+    for(const id of byGroup[catalogGroup]){
+      const perk=POWERS.find(p=>p.id===id);if(!perk)continue;
+      const focus=codexFocus===id;
+      const selectedElement=game?.player?.element||'blood';
+      const relatedElement=id.endsWith('_power')?id.replace('_power',''):id==='hemorrhagic_burst'?'blood':selectedElement;
+      const description=perkDescription(id,catalogRarity,relatedElement);
+      const item=codexArticle(perk.name,description,'',focus);
+      item.content.append(codexElement('p','codex-article-detail','Rarity: '+catalogRarity.toUpperCase()+' · magnitude ×'+rarityScale(catalogRarity)));
+      if(['forward','spread','pierce'].includes(id)){
+        item.content.append(codexElement('p','codex-article-detail','ELEMENT-SPECIFIC EFFECTS'));
+        for(const elName of ['blood','fire','lightning','poison']){
+          item.content.append(codexElement('p','codex-article-effect',elName.toUpperCase()+': '+perkDescription(id,catalogRarity,elName)));
+        }
+      }else item.content.append(codexElement('p','codex-article-effect',description));
+      if(id.endsWith('_power')||id==='hemorrhagic_burst'||['forward','spread','pierce'].includes(id))codexLink(item.content,'elements','Element interaction',relatedElement);
+      grid.append(item.article);
+      if(focus){item.article.open=true;codexFocus=null;}
+    }
+    root.append(grid);
+    codexLink(root,'acquisition','How rarity and upgrade acquisition work');
+  }
+  function renderEnemyScaling(){
+    const root=$('inventoryScalingPage');root.replaceChildren();
+    codexIntro(root,'TIME & SCALING','Enemies grow gradually each minute with bigger jumps at 05:00, 10:00, 15:00, 20:00 and 25:00.');
+    const detail=codexElement('p','codex-info-line','HP = base HP × tier HP × 1.045^minute. Damage = base damage × tier damage × 1.025^minute. Speed = base speed × tier speed × 1.018^minute. Easy Mode applies a ×0.5 modifier.');
+    root.append(detail);
+    const table=codexElement('table','bestiary-scale-table');
     table.innerHTML='<thead><tr><th>TIME</th><th>HP ×</th><th>DAMAGE ×</th><th>SPEED ×</th><th>SPAWN ×</th></tr></thead>';
-    const body=document.createElement('tbody');
+    const body=codexElement('tbody');
+    const base=difficultyAt(0,game?.easyMode||false);
     for(const minute of window.CrimsonMonsters.tierMinutes){
-      const at=difficultyAt(minute*60,game?.easyMode||false),base=difficultyAt(0,game?.easyMode||false);
-      const tr=document.createElement('tr');
-      for(const value of [minute.toString().padStart(2,'0')+':00',(at.hp/base.hp).toFixed(2),(at.damage/base.damage).toFixed(2),(at.speed/base.speed).toFixed(2),(at.spawn/base.spawn).toFixed(2)]){
-        const td=document.createElement('td');td.textContent=value;tr.append(td);
+      const at=difficultyAt(minute*60,game?.easyMode||false);
+      const row=codexElement('tr');
+      for(const value of [String(minute).padStart(2,'0')+':00',(at.hp/base.hp).toFixed(2),(at.damage/base.damage).toFixed(2),(at.speed/base.speed).toFixed(2),(at.spawn/base.spawn).toFixed(2)]){
+        row.append(codexElement('td','',value));
       }
-      body.append(tr);
+      body.append(row);
     }
     table.append(body);root.append(table);
-    const extra=document.createElement('p');extra.className='bestiary-hint';
-    extra.textContent='Watcher Eye shoots one additional projectile at each five-minute threshold. Bleed from Blood Slimes: up to eight stacks, 6s each, 0.65 + 0.11 × tier damage per second per stack.';
-    root.append(extra);
+    root.append(codexElement('p','codex-info-line','After 10:00, only the later monster group spawns; enemies already alive remain. Watcher Eye fires one extra bolt every five minutes.'));
+    codexLink(root,'bestiary','Open Monster Bestiary');
   }
   function openInventory(shouldFocus=true){
     if(state!=='playing'||!game?.elementChosen)return;
@@ -1113,12 +1242,13 @@
     const speed=baseSpeed*p.projectileSpeed;
     const directions=[0];
     const forwardCount=element==='lightning'?Math.min(2,p.forwardShots):p.forwardShots;
-    // Lightning Spread Shot extends EACH independent chain; it does not fire
-    // extra angled projectiles. Three parallel lightning spells are the max.
+    // Lightning extras fire exactly opposite the primary target direction;
+    // Spread Shot increases chain bounces, not angular projectiles.
     if(element!=='lightning')
       for(let k=1;k<=p.spreadShots;k++)directions.push(-.36*k,.36*k);
     for(const fan of directions)for(let i=0;i<=forwardCount;i++){
-      const angle=aim+fan,offset=(i-forwardCount/2)*9;
+      const angle=aim+fan+(element==='lightning'&&i>0?Math.PI:0);
+      const offset=(i-forwardCount/2)*9;
       const damage=element==='poison'?0:element==='lightning'?
         (1+Math.floor(Math.random()*200))*p.damage+p.flatDamage:p.damage+p.flatDamage;
       game.shots.push({
@@ -2135,6 +2265,9 @@
   el.inventoryClose.addEventListener('click',closeInventory);
   el.powersTab.addEventListener('click',()=>switchInventorySection('powers'));
   el.bestiaryTab.addEventListener('click',()=>switchInventorySection('bestiary'));
+  for(const section of ['elements','acquisition','catalog','scaling']){
+    $(CODEX_SECTIONS[section][1]).addEventListener('click',()=>switchInventorySection(section));
+  }
   function updateAudioUI(){
     el.sound.textContent=muted?'MUTE ON':'MUTE OFF';
     el.sound.setAttribute('aria-pressed',String(muted));

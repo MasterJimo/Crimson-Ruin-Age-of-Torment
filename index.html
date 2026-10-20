@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.31.1">
+  <meta name="game-version" content="0.31.2">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.31.1">
+  <link rel="stylesheet" href="style.css?v=0.31.2">
 </head>
 <body>
   <div class="site-shell">
@@ -51,6 +51,7 @@
 
       <section class="screen-overlay intro" id="intro" aria-labelledby="introTitle">
         <img class="intro-approved-art" src="assets/approved-menu-full-v0291.webp" alt="" aria-hidden="true" fetchpriority="high">
+        <div class="intro-audio-cleanup" aria-hidden="true"></div>
         <div class="intro-title">
           <span class="intro-ornament" aria-hidden="true">✦ &nbsp; THE NIGHT BEGINS &nbsp; ✦</span>
           <h1 id="introTitle">CRIMSON RUIN<em>AGE OF TORMENT</em></h1>
@@ -87,7 +88,7 @@
         <div class="intro-controls" aria-label="Keyboard controls">
           <span><strong>MOVE</strong> <kbd>WASD</kbd> <b>/</b> <kbd>↑ ← ↓ →</kbd></span>
           <span><strong>PAUSE</strong> <kbd>P</kbd></span>
-          <span><strong>POWER-UPS</strong> <kbd>O</kbd></span>
+          <span><strong>INVENTORY / CODEX</strong> <kbd>O</kbd></span>
         </div>
       </section>
 
@@ -150,6 +151,10 @@
           <nav class="inventory-tabs" role="tablist" aria-label="Paused game pages">
             <button type="button" class="inventory-tab active" id="inventoryPowersTab" role="tab" aria-selected="true">✦ POWER-UPS</button>
             <button type="button" class="inventory-tab" id="inventoryBestiaryTab" role="tab" aria-selected="false">☠ MONSTER BESTIARY</button>
+            <button type="button" class="inventory-tab" id="inventoryElementsTab" role="tab" aria-selected="false">✦ ELEMENTAL MECHANICS</button>
+            <button type="button" class="inventory-tab" id="inventoryAcquisitionTab" role="tab" aria-selected="false">◆ ITEM ACQUISITION</button>
+            <button type="button" class="inventory-tab" id="inventoryCatalogTab" role="tab" aria-selected="false">✚ POWER-UP LIBRARY</button>
+            <button type="button" class="inventory-tab" id="inventoryScalingTab" role="tab" aria-selected="false">⌛ ENEMY SCALING</button>
           </nav>
           <div class="inventory-scroll" id="inventoryPowersPage">
             <div class="inventory-element">
@@ -166,7 +171,11 @@
                 <div class="inventory-stats" id="inventoryStats"></div></section>
             </div>
           </div>
-          <div class="monster-bestiary" id="inventoryBestiaryPage" hidden></div>
+          <div class="monster-bestiary codex-page" id="inventoryBestiaryPage" hidden></div>
+          <div class="monster-bestiary codex-page" id="inventoryElementsPage" hidden></div>
+          <div class="monster-bestiary codex-page" id="inventoryAcquisitionPage" hidden></div>
+          <div class="monster-bestiary codex-page" id="inventoryCatalogPage" hidden></div>
+          <div class="monster-bestiary codex-page" id="inventoryScalingPage" hidden></div>
           <div class="inventory-footer">PRESS <kbd>P</kbd>, <kbd>O</kbd> OR <kbd>ESC</kbd> TO RESUME</div>
         </div>
       </section>
@@ -179,8 +188,8 @@
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="monsters.js?v=0.31.1" defer></script>
-  <script src="assets.js?v=0.31.1" defer></script>
-  <script src="game.js?v=0.31.1" defer></script>
+  <script src="monsters.js?v=0.31.2" defer></script>
+  <script src="assets.js?v=0.31.2" defer></script>
+  <script src="game.js?v=0.31.2" defer></script>
 </body>
 </html>
