@@ -739,3 +739,79 @@ body:has(#intro:not(.hidden)) .game-frame{aspect-ratio:16 / 9;min-height:min(680
   #intro .intro-controls{gap:6px 13px;font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){#intro .intro-mode-button{transition:none}}
+
+
+/* The approved title-screen ART is now the full menu, not an approximate CSS
+   reconstruction. Actual button hit areas and audio inputs remain interactive. */
+body:has(#intro:not(.hidden)) .site-shell{
+  width:min(1400px,100%);position:relative;border-color:#411724;
+  box-shadow:0 25px 70px #000d,0 0 42px #87133044;
+}
+body:has(#intro:not(.hidden)) .game-frame{
+  aspect-ratio:1573/1000;min-height:0;max-height:none;
+}
+body:has(#intro:not(.hidden)) .topbar{
+  position:absolute;top:2.6%;right:2.8%;left:auto;z-index:20;
+  border-radius:12px;border:1px solid #6b2e347a;
+  background:#14090fdd;box-shadow:0 5px 22px #0009;
+  padding:7px 11px;max-width:85%;
+}
+body:has(#intro:not(.hidden)) .topbar .audio-controls{gap:9px}
+#intro.intro{
+  display:block!important;inset:0;padding:0!important;overflow:hidden;
+  background:#110508!important;backdrop-filter:none!important;
+}
+#intro.intro::before,#intro.intro::after{content:none!important;display:none!important}
+#intro .intro-approved-art{
+  position:absolute;inset:0;display:block;width:100%;height:100%;
+  object-fit:fill;pointer-events:none;user-select:none;-webkit-user-drag:none;
+  image-rendering:auto;
+}
+#intro .intro-title{
+  position:absolute!important;left:0;top:0;width:100%;height:30%;
+  padding:0!important;margin:0!important;opacity:0!important;pointer-events:none;
+}
+#intro .intro-mode-choices{
+  position:absolute!important;left:8%;top:47%;width:84%;height:32%;
+  display:grid!important;grid-template-columns:1fr 1fr!important;gap:3.5%;
+  align-items:stretch!important;margin:0!important;padding:0!important;
+  max-width:none!important;
+}
+#intro .intro-mode-button{
+  display:block!important;position:relative!important;width:100%!important;
+  height:100%!important;min-height:0!important;padding:0!important;
+  border:0!important;border-radius:24px!important;
+  color:transparent!important;background:transparent!important;
+  box-shadow:none!important;outline-offset:3px;
+  transition:background .14s ease,box-shadow .14s ease,transform .14s ease!important;
+  cursor:pointer;
+}
+#intro .intro-mode-button::before{content:none!important}
+#intro .intro-mode-button > *{visibility:hidden!important}
+#intro .intro-mode-button:hover{
+  transform:none!important;filter:none!important;
+  background:#ffffff16!important;box-shadow:inset 0 0 25px #ffe6be16,0 0 30px #ff6c6c33!important;
+}
+#intro .intro-easy:hover{box-shadow:inset 0 0 28px #d3ffad29,0 0 30px #5eff9033!important}
+#intro .intro-mode-button:focus-visible{
+  outline:3px solid #ffefc2!important;background:#ffffff12!important;
+}
+#intro .intro-mode-button:active{transform:scale(.98)!important}
+#intro .intro-controls{
+  position:absolute!important;left:6%;bottom:2%;width:88%;height:11%;
+  visibility:hidden!important;pointer-events:none!important;margin:0!important;
+}
+@media(max-width:720px){
+  body:has(#intro:not(.hidden)) .game-frame{aspect-ratio:1573/1000!important;min-height:0!important}
+  body:has(#intro:not(.hidden)) .topbar{
+    top:1%;right:1%;padding:4px 6px;max-width:97%;
+  }
+  body:has(#intro:not(.hidden)) .topbar .audio-controls{transform:scale(.8);transform-origin:top right}
+  #intro .intro-mode-choices{left:5%;width:90%;top:44%;height:39%}
+}
+@media(max-width:460px){
+  body:has(#intro:not(.hidden)) .game-frame{aspect-ratio:1573/1000!important;min-height:0!important}
+  #intro .intro-mode-choices{display:grid!important;grid-template-columns:1fr 1fr!important;gap:4%;top:44%;height:40%}
+  #intro .intro-mode-button{min-height:0!important;width:100%!important}
+  body:has(#intro:not(.hidden)) .topbar .audio-controls{transform:scale(.67)}
+}
