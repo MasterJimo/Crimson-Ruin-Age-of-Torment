@@ -1,0 +1,73 @@
+name: Import approved CC0 attack audio
+on:
+  push:
+    paths:
+      - '.github/workflows/import-elemental-audio.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  download-four-cc0-sounds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Freesound previews and prepare short, levelled attack clips
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from urllib.request import Request, urlopen
+          from pathlib import Path
+          import subprocess, re, html
+          sounds = [
+            ("blood", "https://freesound.org/people/_stubb/sounds/406582/", .11),
+            ("fire", "https://freesound.org/people/qubodup/sounds/442871/", .14),
+            ("lightning", "https://freesound.org/people/JoelAudio/sounds/136542/", .08),
+            ("poison", "https://freesound.org/people/qubodup/sounds/751338/", .11),
+          ]
+          class MetaParser(HTMLParser):
+            def __init__(self):
+              super().__init__()
+              self.audio = None
+            def handle_starttag(self, tag, attrs):
+              if tag != "meta": return
+              d = dict(attrs)
+              if d.get("property") == "og:audio" or d.get("name") == "twitter:player:stream":
+                self.audio = d.get("content") or self.audio
+          out = Path("assets/audio")
+          out.mkdir(parents=True, exist_ok=True)
+          for element, page, duration in sounds:
+            request = Request(page, headers={"User-Agent": "Mozilla/5.0 (compatible; CrimsonRuinAudioImport/1.0)"})
+            with urlopen(request, timeout=30) as response:
+              body = response.read().decode("utf-8", "replace")
+            parser = MetaParser()
+            parser.feed(body)
+            urls = [parser.audio] if parser.audio else []
+            urls += re.findall(r'https?://cdn\\.freesound\\.org/previews/[^"\\s<>]+?\\.mp3', body)
+            preview = next((html.unescape(url) for url in urls if url and "cdn.freesound.org/previews/" in url and url.endswith(".mp3")), None)
+            if not preview:
+              raise RuntimeError(f"Freesound preview not found for {element}; refusing to substitute another sound")
+            preview = preview.replace("-lq.mp3", "-hq.mp3")
+            src = out / f"source-{element}.mp3"
+            with urlopen(Request(preview,headers={"User-Agent": "Mozilla/5.0"}), timeout=30) as response:
+              src.write_bytes(response.read())
+            if src.stat().st_size < 1000: raise RuntimeError(f"Preview unexpectedly small: {element}")
+            dst = out / f"attack-{element}.mp3"
+            fade = max(0, duration-.025)
+            subprocess.run(["ffmpeg","-nostdin","-hide_banner","-loglevel","error","-y",
+              "-i",str(src),"-t",str(duration),"-af",f"afade=t=out:st={fade}:d=.025",
+              "-ac","1","-ar","32000","-codec:a","libmp3lame","-qscale:a","5",str(dst)],check=True)
+            if dst.stat().st_size < 200: raise RuntimeError(f"Processed clip empty: {element}")
+            src.unlink()
+            print(f"{element}: CC0 {page} -> {dst.stat().st_size} bytes")
+          PY
+      - name: Commit playable local assets
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/audio/attack-*.mp3
+          git diff --cached --quiet && exit 0
+          git commit -m 'assets: import four Freesound CC0 attack samples'
+          git push
