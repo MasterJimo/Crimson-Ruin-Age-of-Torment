@@ -59,16 +59,10 @@
   const timeText = t => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
   const hash = (x, y) => { let h = Math.imul(x, 374761393) + Math.imul(y, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
 
-  const ENEMIES = {
-    skeleton:{name:'Skeleton',hp:40,speed:39,damage:9,xp:3,r:12,color:'#e6dbc3',blood:'#88233c',weight:50},
-    bat:{name:'Bat',hp:22,speed:84,damage:7,xp:2,r:10,color:'#9e5d94',blood:'#a81a45',weight:30},
-    slime:{name:'Flesh Slime',hp:66,speed:26,damage:11,xp:4,r:13,color:'#c52f5b',blood:'#8a0e2e',weight:24},
-    ghoul:{name:'Ghoul',hp:88,speed:46,damage:14,xp:5,r:12,color:'#b2a59b',blood:'#932245',weight:21},
-    cultist:{name:'Cultist',hp:72,speed:35,damage:10,xp:5,r:11,color:'#ab3244',blood:'#74001d',weight:16},
-    wraith:{name:'Wraith',hp:45,speed:68,damage:13,xp:6,r:11,color:'#8a7ed4',blood:'#66223d',weight:13},
-    warden:{name:'CRIMSON WARDEN',hp:480,speed:31,damage:17,xp:35,r:21,color:'#dcaeb1',blood:'#a71037',weight:0},
-    spider:{name:'Night Spider',hp:58,speed:61,damage:13,xp:5,r:12,color:'#6b3945',blood:'#9a1932',weight:14}
-  };
+  // The placeholder enemy roster is removed until replacement sprites and balance are approved.
+  // Re-enable spawning only after the new ENEMIES registry has been populated.
+  const ENEMIES = {};
+  const ENEMY_SPAWNING_ENABLED = false;
 
   // v0.13: sixteen curated perks. Twelve are universal and four are
   // element-specific; only the power corresponding to the chosen element rolls.
@@ -559,6 +553,7 @@
     return {x:player.x+vx*ahead-vy*flank,y:player.y+vy*ahead+vx*flank};
   }
   function spawnEnemy(type=null,distance=null,angle=null){
+    if(!ENEMY_SPAWNING_ENABLED)return;
     const p = game.player, t = game.time; let pool = ['skeleton'];
     if(t>14) pool.push('bat'); if(t>32) pool.push('slime'); if(t>53) pool.push('ghoul'); if(t>83) pool.push('cultist'); if(t>115) pool.push('wraith'); if(t>96) pool.push('spider');
     if(!type){ const weights=pool.map(k=>ENEMIES[k].weight); let q=Math.random()*weights.reduce((a,b)=>a+b,0); type = pool.find(k=>(q-=ENEMIES[k].weight)<=0) || pool[0]; }
@@ -574,6 +569,7 @@
 
   // Mid-run miniboss: two appearances, clear tells, readable health bar.
   function spawnWarden(){
+    if(!ENEMY_SPAWNING_ENABLED)return;
     const a=rand(0,TAU), p=game.player;
     const distance=245;
     const diff=difficultyAt(game.time,game.easyMode),hp=(480+game.bossWaves*240)*diff.hp;
@@ -827,8 +823,7 @@
       attackLastAt=-Infinity;attackVoices=[];
       state='playing';el.upgrade.classList.add('hidden');
       el.status.textContent=`${choice.name} ATTUNED`;
-      for(let i=0;i<5;i++)spawnEnemy('skeleton',rand(180,320),rand(0,TAU));
-      for(let i=0;i<2;i++)spawnEnemy('bat',rand(200,270),rand(0,TAU));
+      // No starter enemies until the new roster is introduced.
       flashMessage(`✦ ${choice.name} ATTUNED`,2200);playSound('start');syncMusic();updateHUD();return;
     }
     if(game.banishMode){
@@ -899,11 +894,12 @@
       badge.textContent=item;list.appendChild(badge);
     }
     $('runBest').textContent=
-      `BEST: ${timeText(best.time)}  ·  ${num(best.kills)} KILLS  ·  ${num(best.xp)} XP${survived?'  ·  REAPER REACHED':''}`;
+      `BEST: ${timeText(best.time)}  ·  ${num(best.kills)} KILLS  ·  ${num(best.xp)} XP${survived?(ENEMY_SPAWNING_ENABLED?'  ·  REAPER REACHED':'  ·  ARENA TEST COMPLETE'):''}`;
   }
   function die(won){
     if(state==='end')return;
     const survived=Boolean(won&&game.endingAt30);
+    const emptyArenaComplete=survived&&!ENEMY_SPAWNING_ENABLED;
     state='end';
     el.end.classList.remove('hidden');
     el.xpStrip.hidden=true;
@@ -912,9 +908,9 @@
     el.inventory.classList.add('hidden');
     el.inventoryBtn.hidden=true;
     el.bossBar.hidden=true;
-    $('endTitle').textContent=survived?'DEATH CLAIMS THE HUNTER':'YOU DIED';
-    $('endEyebrow').textContent=survived?'THIRTY MINUTES · THE REAPER ARRIVES':'THE NIGHT CLAIMS ANOTHER SOUL';
-    $('endSub').textContent=survived?
+    $('endTitle').textContent=emptyArenaComplete?'RUN COMPLETE':survived?'DEATH CLAIMS THE HUNTER':'YOU DIED';
+    $('endEyebrow').textContent=emptyArenaComplete?'THIRTY MINUTES · EMPTY ARENA':survived?'THIRTY MINUTES · THE REAPER ARRIVES':'THE NIGHT CLAIMS ANOTHER SOUL';
+    $('endSub').textContent=emptyArenaComplete?'Enemy roster is being rebuilt and rebalanced.':survived?
       'You endured 30 minutes. No one escapes the Reaper.':
       'The hunt ended before the Reaper appeared.';
     $('finalTime').textContent=timeText(game.time);
@@ -922,7 +918,7 @@
     $('finalLevel').textContent=game.player.level;
     const rank=game.kills>=1000?'CRIMSON LEGEND':game.kills>=300?'NIGHT REAPER':
       game.kills>=100?'BLOOD HUNTER':game.kills>=20?'CRYPT STALKER':'NOVICE HUNTER';
-    $('huntRank').textContent=survived?`REAPER'S WITNESS · ${rank}`:rank;
+    $('huntRank').textContent=emptyArenaComplete?`ARENA TEST · ${rank}`:survived?`REAPER'S WITNESS · ${rank}`:rank;
     const current={time:Math.floor(game.time),kills:game.kills,xp:Math.floor(game.totalXP)};
     const best={...current};
     try{
@@ -937,8 +933,8 @@
     $('runMode').textContent=game.easyMode?'EASY MODE USED':'HARDCORE MODE';
     // Easy Mode is available from the main menu on every new run.
     el.end.classList.toggle('victory',survived);
-    el.status.textContent=survived?'30:00 · REAPER HAS CLAIMED YOU':'HUNT FAILED';
-    playSound('death');
+    el.status.textContent=emptyArenaComplete?'30:00 · ARENA TEST COMPLETE':survived?'30:00 · REAPER HAS CLAIMED YOU':'HUNT FAILED';
+    playSound(emptyArenaComplete?'level':'death');
   }
   // O opens a paused grimoire. Values and ranks come from the active run.
   function renderInventory(){
@@ -1042,7 +1038,7 @@
     const aim=Math.atan2(target.y-p.y,target.x-p.x);
     p.face=Math.cos(aim)<0?-1:1;p.attackDir=aim;
     const element=p.element;
-    const baseSpeed={blood:40,lightning:235,fire:290,poison:210}[element]||142;
+    const baseSpeed={blood:80,lightning:235,fire:290,poison:210}[element]||142;
     const speed=baseSpeed*p.projectileSpeed;
     const directions=[0];
     for(let k=1;k<=p.spreadShots;k++)directions.push(-.36*k,.36*k);
@@ -1259,11 +1255,19 @@
   function update(dt){
     if(!game || state!=='playing') return;
     const g=game, p=g.player; g.time+=dt; g.worldTime+=dt;
-    if(g.time>=DURATION){g.time=DURATION;startDeathArrival();return;}
+    if(g.time>=DURATION){
+      g.time=DURATION;
+      if(ENEMY_SPAWNING_ENABLED)startDeathArrival();
+      else{g.endingAt30=true;die(true);} // A clean finish, with no Reaper in the empty arena.
+      return;
+    }
     const nextTier=difficultyTier(g.time),surgeStarted=nextTier>g.difficultyTier;
-    if(surgeStarted)applyDifficultySurge(g,nextTier);
-    if(g.time>=g.bossNext && !g.enemies.some(e=>e.type==='warden'))spawnWarden();
-    if(g.time>g.nextNotice){
+    if(surgeStarted){
+      if(ENEMY_SPAWNING_ENABLED)applyDifficultySurge(g,nextTier);
+      else g.difficultyTier=nextTier;
+    }
+    if(ENEMY_SPAWNING_ENABLED && g.time>=g.bossNext && !g.enemies.some(e=>e.type==='warden'))spawnWarden();
+    if(ENEMY_SPAWNING_ENABLED && g.time>g.nextNotice){
       if(!surgeStarted)flashMessage(g.time>=DURATION-60?'FINAL MINUTE!':'THE HORDE THICKENS...',2000);
       g.nextNotice+=35;
     }
@@ -1303,7 +1307,7 @@
     if(p.shotCd<=0){shoot(); p.shotCd=1/p.attackRate;}
 
     g.spawn-=dt;
-    if(g.spawn<=0){
+    if(ENEMY_SPAWNING_ENABLED && g.spawn<=0){
       const diff=difficultyAt(g.time,g.easyMode);
       const count=Math.min(12,Math.max(1,Math.round(diff.spawn*(1+Math.random()*.25))));
       const room=Math.max(0,230-g.enemies.length);

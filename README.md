@@ -2,6 +2,8 @@
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)**
 
+> **Temporary empty-arena build (v0.30.2):** Placeholder enemy sprites, their atlas, and their definitions have been removed. Normal waves, ambushes, the Warden, and the 30-minute Reaper appearance are disabled while the new enemy roster is being balanced. Blood projectiles now travel at **80 units/s** instead of **40 units/s**; the other elemental speeds are unchanged. Auto-aim shots require an enemy target, so no shots appear in this empty-arena build. The combat framework remains in place for the next update.
+
 ## Core mechanics
 
 - A run lasts up to **30:00**; at 30:00 an invulnerable **Reaper** kills the hunter.
