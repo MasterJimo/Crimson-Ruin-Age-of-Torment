@@ -1132,3 +1132,20 @@ body:has(#intro.hidden) .footer{
   body:has(#intro.hidden),
   body:has(#intro.hidden) .site-shell{height:100vh;}
 }
+
+/* v0.31.9 — pin the timer to the playfield midpoint independently of
+   HP/buff widths and the changing kill/level counters. */
+#hud .hud-center{
+  position:absolute;
+  top:0;
+  left:50%;
+  transform:translateX(-50%);
+  margin:0;
+  z-index:3;
+}
+/* Small screens: keep the centered clock clear of the left/right HUD. */
+@media(max-width:900px){
+  #hud .hud-center{top:47px;}
+  .boss-bar{top:120px;}
+  .float-messages{top:178px;}
+}
