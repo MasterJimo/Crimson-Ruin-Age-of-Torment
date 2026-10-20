@@ -4,8 +4,8 @@
 
 ## Core mechanics
 
-- A run lasts up to **30:00**; at 30:00 an invulnerable **Reaper** kills the hunter.
-- Select one of four elements before combat; attacks automatically target nearby enemies. **Enemy spawning and the Reaper are disabled in the current empty-arena test build**; without enemy targets, auto-attacks do not fire.
+- A run lasts up to **30:00**.
+- Select one of four elements before combat; attacks automatically target nearby enemies. Enemies arrive in two groups, and new bosses appear at fixed moments.
 - Starting stats: **100 HP**, movement speed **100**, **6% critical chance**, **×1.6 critical damage**. Base attack speed is determined by the selected element.
 - Blue XP crystals grant levels. A level-up grants a power-up **without healing HP**. XP required for the next level after reaching level `L`: `floor(12 + 8L + 1.5L²)`.
 
@@ -59,33 +59,39 @@ Every level-up offers **4 different cards**: one Attack, one Defense and two ran
 | Critical Damage | +`10u%` critical damage multiplier, no cap |
 | Blood / Fire / Lightning / Poison Power | +`5u%` of elemental base damage, additive, max **5 picks** for the chosen element |
 
-## Difficulty scaling
+## Enemies and Monster Bestiary
 
-Let `m = floor(elapsed seconds / 60)`, capped at **29**. Enemies scale every minute and gain an additional five-minute tier modifier:
+Pause the game with **P** or **O**, then select **MONSTER BESTIARY**. The catalogue shows base HP, movement speed, hit damage, attack pattern and five-minute scaling for every ordinary monster and the three announced bosses. Enemy names are **not** displayed beneath the creatures in combat.
 
-| Stat | Formula |
-|---|---|
-| Enemy HP | `base HP × 1.15^m × tier HP` |
-| Enemy damage | `base damage × 1.12^m × tier damage` |
-| Enemy speed | `base speed × 1.06^m × tier speed` |
-| Spawn pressure | `min(60, min(10, 2 × 1.18^m) × tier spawn)` |
-| Flanking aggression | `tier aggression multiplier` |
+**00:00–09:59 (early waves):** Skeleton Swordsman (simple sword melee), Plague Rat (weak but quick), Watcher Eye (slow caster, +1 projectile every 5 minutes), Skeleton Archer (high-damage slow arrow), Zombie (slow, heavy claw).
 
-| From | Tier HP | Tier damage | Tier speed | Tier spawn | Tier aggression | Additional ambush |
-|---|---:|---:|---:|---:|---:|---:|
-| 00:00 | ×1 | ×1 | ×1 | ×1 | ×1 | — |
-| **05:00** | ×2.8 | ×2.4 | ×1.4 | ×2 | ×1.4 | 14 |
-| **10:00** | ×4.8 | ×4.2 | ×1.65 | ×2.6 | ×1.7 | 18 |
-| **15:00** | ×8 | ×7.2 | ×1.9 | ×3.2 | ×2 | 22 |
-| **20:00** | ×13 | ×12 | ×2.1 | ×4 | ×2.3 | 26 |
-| **25:00** | ×20 | ×18 | ×2.3 | ×5 | ×2.6 | 30 |
+**10:00–29:59 (late waves):** Blood Slime (applies player Bleed up to 8 stacks), Succubus (swift melee), Imp (extremely fast melee), Hellhound (occasionally summons 1–2 more Hellhounds), Necromancer (slow caster with very fast heavy magic bolts).
 
-These are **total tier multipliers**, not multipliers compounded across earlier five-minute tiers. At each threshold, existing enemies gain the next tier's stats immediately (preserving their HP percentage), and a ring of additional enemies spawns if there is room.
+After **10:00**, no further early-wave monsters spawn. Any that are still alive remain on the map until defeated.
 
-- Regular enemy spawn distance: **225–345** before 05:00, **170–255** from 05:00 and **145–225** from 10:00.
-- Each spawn batch contains up to **12 enemies**. Interval: `max(0.045, 0.5 / sqrt(max(1, spawn pressure)))` seconds. Maximum **230 active enemies**.
-- **Easy Mode:** selectable before **every run**. Multiplies enemy HP, damage, speed, spawn pressure and aggression by **0.5** for that run; selection resets on returning to the mode-selection screen. **Hardcore Mode:** uses **×1** scaling.
-- **Crimson Warden:** first appears after ~**51s** and may appear again from **119s** if the first is defeated. Its stats use the current difficulty multiplier.
+### Bosses
+
+- **03:00 Gargoyle:** 2.6s red straight-line warning, followed by a fast charge along a 570-unit line. Direct charge damage base 55.
+- **08:00 Abomination:** very large HP pool and slow melee movement; warns for 1.8s before an AoE slam (radius 79). Defeating it awards **one Rare, Legendary or Mythic perk directly** without consuming XP or a level-up.
+- **17:00 Demon:** fast pursuit and three consecutive warned AoE blasts, radii **50, 94 and 142**, each able to hit separately.
+- The 08:00 and 17:00 boss times are provisional pending final balancing.
+
+### Enemy difficulty scaling
+
+Enemy stats are base values from the Bestiary times the following multiplier:
+
+| Time | HP tier | Damage tier | Speed tier | Spawn tier |
+| --- | ---: | ---: | ---: | ---: |
+| 00:00 | ×1 | ×1 | ×1 | ×1 |
+| 05:00 | ×1.5 | ×1.15 | ×1.12 | ×1.5 |
+| 10:00 | ×2.4 | ×1.35 | ×1.22 | ×2 |
+| 15:00 | ×3.5 | ×1.55 | ×1.32 | ×2.6 |
+| 20:00 | ×5 | ×1.8 | ×1.42 | ×3.2 |
+| 25:00 | ×7 | ×2.1 | ×1.55 | ×4 |
+
+On top of the tier: **HP × 1.045^minute**, **damage × 1.025^minute**, **speed × 1.018^minute**. Spawn pressure grows at **1.14^minute** up to its cap. Easy Mode halves all these resulting enemy values. Already-spawned enemies inherit new tier jumps without resetting their current HP percentage.
+
+**Blood Slime Bleed:** Each successful melee hit applies a 6-second stack, up to 8 at a time. One stack inflicts **0.65 + 0.11 × current five-minute tier HP/s** before armor. A small blood-droplet indicator near the HP bar displays active stacks.
 
 ## Shrines
 

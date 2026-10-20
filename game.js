@@ -40,6 +40,8 @@
 
   const $ = id => document.getElementById(id);
   const el = {
+    bleedBuff:$('bleedBuff'), powersTab:$('inventoryPowersTab'), bestiaryTab:$('inventoryBestiaryTab'),
+    powersPage:$('inventoryPowersPage'), bestiaryPage:$('inventoryBestiaryPage'),
     intro:$('intro'), upgrade:$('upgrade'), upgradeCards:$('upgradeCards'), end:$('endScreen'), pause:$('pauseOverlay'),
     inventory:$('inventoryOverlay'), inventoryBtn:$('inventoryBtn'), inventoryClose:$('inventoryClose'),
     easyStart:$('easyStartBtn'),
@@ -61,8 +63,10 @@
 
   // The placeholder enemy roster is removed until replacement sprites and balance are approved.
   // Re-enable spawning only after the new ENEMIES registry has been populated.
-  const ENEMIES = {};
-  const ENEMY_SPAWNING_ENABLED = false;
+  const ENEMIES=window.CrimsonMonsters.byId;
+  const ENEMY_SPAWNING_ENABLED=true;
+  const MONSTER_ART_ORDER=['skeleton','plague_rat','eye','skeleton_archer','zombie','blood_slime','succubus','imp','hellhound','necromancer','boss1','boss3','boss2'];
+  const monsterAtlas=new Image();monsterAtlas.src='assets/monsters-v031.png';
 
   // v0.13: sixteen curated perks. Twelve are universal and four are
   // element-specific; only the power corresponding to the chosen element rolls.
@@ -333,8 +337,8 @@
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
-      player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
-      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], poisonBursts:[], bolts:[], fountains:[], magnetShrines:[], powerShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:45, magnetSpawned:false, nextPowerShrineAt:120, powerShrineSpawned:false, kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
+      player:{enemyBleed:[],x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
+      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], poisonBursts:[], bolts:[], fountains:[], magnetShrines:[], powerShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:45, magnetSpawned:false, nextPowerShrineAt:120, powerShrineSpawned:false, kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0,bossNext:Infinity,bossSpawned:new Set(),rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
     spawnFountain(true);
@@ -501,54 +505,38 @@
   // ramp. Keeping a finite enemy cap protects performance under heavy pressure.
   const DIFFICULTY_SURGES=[
     {hp:1,damage:1,speed:1,spawn:1,aggression:1},
-    {hp:2.8,damage:2.4,speed:1.4,spawn:2,aggression:1.4},
-    {hp:4.8,damage:4.2,speed:1.65,spawn:2.6,aggression:1.7},
-    {hp:8,damage:7.2,speed:1.9,spawn:3.2,aggression:2},
-    {hp:13,damage:12,speed:2.1,spawn:4,aggression:2.3},
-    {hp:20,damage:18,speed:2.3,spawn:5,aggression:2.6}
+    {hp:1.5,damage:1.15,speed:1.12,spawn:1.5,aggression:1.15},
+    {hp:2.4,damage:1.35,speed:1.22,spawn:2,aggression:1.3},
+    {hp:3.5,damage:1.55,speed:1.32,spawn:2.6,aggression:1.45},
+    {hp:5,damage:1.8,speed:1.42,spawn:3.2,aggression:1.6},
+    {hp:7,damage:2.1,speed:1.55,spawn:4,aggression:1.8}
   ];
   const SURGE_TITLES=['','THE SLAUGHTER BEGINS','NIGHTMARE UNLEASHED','NO MERCY','THE ABYSS OPENS','FINAL ONSLAUGHT'];
   function difficultyTier(seconds){return Math.min(5,Math.floor(Math.max(0,seconds)/300));}
   function difficultyAt(seconds,easy=false){
     const minute=Math.min(29,Math.floor(Math.max(0,seconds)/60));
     const surge=DIFFICULTY_SURGES[difficultyTier(seconds)],factor=easy?.5:1;
-    return {
-      minute,
-      spawn:Math.min(60,Math.min(10,2*Math.pow(1.18,minute))*surge.spawn)*factor,
-      hp:Math.pow(1.15,minute)*surge.hp*factor,
-      damage:Math.pow(1.12,minute)*surge.damage*factor,
-      speed:Math.pow(1.06,minute)*surge.speed*factor,
-      aggression:surge.aggression*factor
-    };
+    return {minute,
+      hp:Math.pow(1.045,minute)*surge.hp*factor,
+      damage:Math.pow(1.025,minute)*surge.damage*factor,
+      speed:Math.pow(1.018,minute)*surge.speed*factor,
+      spawn:Math.min(40,Math.min(8,2*Math.pow(1.14,minute))*surge.spawn)*factor,
+      aggression:surge.aggression*factor};
   }
-  // Old enemies also gain the new stage bonus immediately. Their HP percentage
-  // is preserved; newly spawned enemies additionally use the current minute ramp.
   function applyDifficultySurge(g,newTier){
-    const previous=DIFFICULTY_SURGES[g.difficultyTier];
-    const next=DIFFICULTY_SURGES[newTier];
-    const hpRatio=next.hp/previous.hp;
-    const damageRatio=next.damage/previous.damage;
-    const speedRatio=next.speed/previous.speed;
-    const aggressionRatio=next.aggression/previous.aggression;
-    for(const enemy of g.enemies){
-      enemy.hp*=hpRatio;enemy.maxHp*=hpRatio;
-      enemy.damage*=damageRatio;enemy.speed*=speedRatio;
-      enemy.aggression*=aggressionRatio;
+    const previous=DIFFICULTY_SURGES[g.difficultyTier],next=DIFFICULTY_SURGES[newTier];
+    for(const e of g.enemies){
+      e.hp*=next.hp/previous.hp;e.maxHp*=next.hp/previous.hp;
+      e.damage*=next.damage/previous.damage;e.speed*=next.speed/previous.speed;
+      e.aggression*=next.aggression/previous.aggression;
     }
     g.difficultyTier=newTier;
-    // Visible encirclement at the milestone, not merely tougher distant spawns.
-    // Respect the global 230-enemy performance limit.
-    const ambushCount=Math.min(230-g.enemies.length,10+newTier*4);
-    const ambushTypes=['wraith','ghoul','cultist','spider'];
-    const ambushOffset=rand(0,TAU);
-    for(let i=0;i<ambushCount;i++){
-      spawnEnemy(ambushTypes[i%ambushTypes.length],rand(165,225),
-        ambushOffset+TAU*i/ambushCount);
-    }
-    g.spawn=Math.min(g.spawn,.08); // Regular pressure follows immediately.
-    flashMessage(`☠ ${SURGE_TITLES[newTier]} · ${timeText(newTier*300)}`,2800);
+    const pool=g.time<600?window.CrimsonMonsters.early:window.CrimsonMonsters.late;
+    const count=Math.min(230-g.enemies.length,10+newTier*4),offset=rand(0,TAU);
+    for(let i=0;i<count;i++)spawnEnemy(pool[i%pool.length],rand(165,225),offset+TAU*i/Math.max(1,count));
+    g.spawn=Math.min(g.spawn,.08);
+    flashMessage('☠ '+SURGE_TITLES[newTier],2000);
     shake=Math.max(shake,3+newTier);
-    playSound('boss');
   }
   function enemyTarget(enemy,player){
     const mode=enemy.aiRole||0,pressure=enemy.aggression||1;
@@ -564,35 +552,41 @@
     const flank=(mode%2?1:-1)*42*pressure;
     return {x:player.x+vx*ahead-vy*flank,y:player.y+vy*ahead+vx*flank};
   }
-  function spawnEnemy(type=null,distance=null,angle=null){
-    if(!ENEMY_SPAWNING_ENABLED)return;
-    const p = game.player, t = game.time; let pool = ['skeleton'];
-    if(t>14) pool.push('bat'); if(t>32) pool.push('slime'); if(t>53) pool.push('ghoul'); if(t>83) pool.push('cultist'); if(t>115) pool.push('wraith'); if(t>96) pool.push('spider');
-    if(!type){ const weights=pool.map(k=>ENEMIES[k].weight); let q=Math.random()*weights.reduce((a,b)=>a+b,0); type = pool.find(k=>(q-=ENEMIES[k].weight)<=0) || pool[0]; }
-    // Shorter approach distance at each survival wall.
-    const spawnRange=t>=600?[145,225]:t>=300?[170,255]:[225,345];
-    const def=ENEMIES[type],a=angle??rand(0,TAU),d=distance??rand(...spawnRange);
-    const diff=difficultyAt(t,game.easyMode),hp=def.hp*diff.hp;
-    game.enemies.push({type,x:p.x+Math.cos(a)*d,y:p.y+Math.sin(a)*d,
+  function spawnEnemy(type=null,distance=null,angle=null,source=null){
+    if(!ENEMY_SPAWNING_ENABLED||!game||game.enemies.length>=230)return null;
+    const t=game.time,p=game.player;
+    let pool=t<600?window.CrimsonMonsters.early:window.CrimsonMonsters.late;
+    if(t<145){
+      const unlock={skeleton:0,plague_rat:18,eye:48,skeleton_archer:85,zombie:135};
+      pool=pool.filter(id=>t>=unlock[id]);
+    }
+    if(!type){
+      let r=Math.random()*pool.reduce((n,id)=>n+ENEMIES[id].weight,0);
+      type=pool.find(id=>(r-=ENEMIES[id].weight)<=0)||pool[0];
+    }
+    const def=ENEMIES[type];if(!def)return null;
+    const origin=source||p,d=distance??rand(...(t>=600?[145,235]:[215,330])),a=angle??rand(0,TAU);
+    const diff=difficultyAt(t,game.easyMode),hp=Math.ceil(def.hp*diff.hp*(source?.summoned?.65:1));
+    const e={type,x:origin.x+Math.cos(a)*d,y:origin.y+Math.sin(a)*d,
       hp,maxHp:hp,speed:def.speed*diff.speed,damage:def.damage*diff.damage,r:def.r,
-      phase:rand(0,TAU),shot:rand(.8,2.3),hit:0,knockX:0,knockY:0,
-      aiRole:game.spawnCounter++%5,aggression:diff.aggression});
+      phase:rand(0,TAU),shot:rand(1,2),hit:0,knockX:0,knockY:0,
+      aiRole:game.spawnCounter++%5,aggression:diff.aggression,attackCd:rand(.4,1.5),
+      attackWindup:0,attackAnim:0,attackState:'',attackTimer:0,attackStage:0,
+      chargeAngle:0,chargeTravel:0,summonCd:def.summonEvery?rand(7,12):0,
+      summoned:Boolean(source?.summoned),chargeHit:false};
+    game.enemies.push(e);return e;
   }
-
-  // Mid-run miniboss: two appearances, clear tells, readable health bar.
-  function spawnWarden(){
-    if(!ENEMY_SPAWNING_ENABLED)return;
-    const a=rand(0,TAU), p=game.player;
-    const distance=245;
-    const diff=difficultyAt(game.time,game.easyMode),hp=(480+game.bossWaves*240)*diff.hp;
-    game.enemies.push({type:'warden',x:p.x+Math.cos(a)*distance,y:p.y+Math.sin(a)*distance,hp,maxHp:hp,
-      speed:(31+game.bossWaves*3)*diff.speed,damage:17*diff.damage,r:21,phase:0,shot:3.2,
-      hit:0,knockX:0,knockY:0,windup:0,slamRadius:77,pulse:0,attacks:0,aiRole:0,aggression:diff.aggression});
-    game.bossWaves++;
-    game.bossNext=game.bossWaves===1?119:Infinity;
-    el.bossBar.hidden=false; el.bossName.textContent=game.bossWaves===1?'CRIMSON WARDEN':'CRIMSON WARDEN · ENRAGED';
-    flashMessage('⚔ THE WARDEN AWAKENS',2600);
-    shake=Math.max(shake,5); playSound('boss');
+  function spawnBoss(type){
+    const def=ENEMIES[type];
+    if(!def||game.bossSpawned.has(type))return;
+    if(game.enemies.length>=230){const old=game.enemies.findIndex(e=>!ENEMIES[e.type]?.boss);if(old>=0)game.enemies.splice(old,1);}
+    const e=spawnEnemy(type,Math.max(250,def.r+190));
+    if(!e)return;
+    game.bossSpawned.add(type);
+    e.attackCd=type==='boss1'?3.3:2;
+    flashMessage('⚔ '+def.name.toUpperCase()+' APPEARS',2300);
+    shake=Math.max(shake,4);playSound('boss');
+    el.bossBar.hidden=false;
   }
 
   // Exactly at 30:00 normal combat stops. An invulnerable Death rushes in,
@@ -608,8 +602,8 @@
     keys.clear();
     el.inventoryBtn.hidden=true;
     el.bossBar.hidden=true;
-    el.status.textContent='DEATH HAS COME · 30:00';
-    flashMessage('THE REAPER COMES FOR ALL',1800);
+    el.status.textContent='30:00';
+    flashMessage('...',1000);
     shake=Math.max(shake,8);
     playSound('boss');
     updateHUD();
@@ -835,7 +829,7 @@
       attackLastAt=-Infinity;attackVoices=[];
       state='playing';el.upgrade.classList.add('hidden');
       el.status.textContent=`${choice.name} ATTUNED`;
-      // No starter enemies until the new roster is introduced.
+      for(let i=0;i<5;i++)spawnEnemy('skeleton',rand(175,285),rand(0,TAU));
       flashMessage(`✦ ${choice.name} ATTUNED`,2200);playSound('start');syncMusic();updateHUD();return;
     }
     if(game.banishMode){
@@ -906,7 +900,7 @@
       badge.textContent=item;list.appendChild(badge);
     }
     $('runBest').textContent=
-      `BEST: ${timeText(best.time)}  ·  ${num(best.kills)} KILLS  ·  ${num(best.xp)} XP${survived?(ENEMY_SPAWNING_ENABLED?'  ·  REAPER REACHED':'  ·  ARENA TEST COMPLETE'):''}`;
+      `BEST: ${timeText(best.time)}  ·  ${num(best.kills)} KILLS  ·  ${num(best.xp)} XP${survived?(ENEMY_SPAWNING_ENABLED?'  ·  RUN COMPLETE':'  ·  ARENA TEST COMPLETE'):''}`;
   }
   function die(won){
     if(state==='end')return;
@@ -920,10 +914,10 @@
     el.inventory.classList.add('hidden');
     el.inventoryBtn.hidden=true;
     el.bossBar.hidden=true;
-    $('endTitle').textContent=emptyArenaComplete?'RUN COMPLETE':survived?'DEATH CLAIMS THE HUNTER':'YOU DIED';
-    $('endEyebrow').textContent=emptyArenaComplete?'THIRTY MINUTES · EMPTY ARENA':survived?'THIRTY MINUTES · THE REAPER ARRIVES':'THE NIGHT CLAIMS ANOTHER SOUL';
+    $('endTitle').textContent=emptyArenaComplete?'RUN COMPLETE':survived?'RUN COMPLETE':'YOU DIED';
+    $('endEyebrow').textContent=emptyArenaComplete?'THIRTY MINUTES · EMPTY ARENA':survived?'THIRTY MINUTES COMPLETE':'THE NIGHT CLAIMS ANOTHER SOUL';
     $('endSub').textContent=emptyArenaComplete?'Enemy roster is being rebuilt and rebalanced.':survived?
-      'You endured 30 minutes. No one escapes the Reaper.':
+      'You endured thirty minutes.':
       'The hunt ended before the Reaper appeared.';
     $('finalTime').textContent=timeText(game.time);
     $('finalKills').textContent=game.kills;
@@ -945,7 +939,7 @@
     $('runMode').textContent=game.easyMode?'EASY MODE USED':'HARDCORE MODE';
     // Easy Mode is available from the main menu on every new run.
     el.end.classList.toggle('victory',survived);
-    el.status.textContent=emptyArenaComplete?'30:00 · ARENA TEST COMPLETE':survived?'30:00 · REAPER HAS CLAIMED YOU':'HUNT FAILED';
+    el.status.textContent=emptyArenaComplete?'30:00 · ARENA TEST COMPLETE':survived?'30:00 · RUN COMPLETE':'HUNT FAILED';
     playSound(emptyArenaComplete?'level':'death');
   }
   // O opens a paused grimoire. Values and ranks come from the active run.
@@ -1009,12 +1003,75 @@
       tile.append(caption,number);el.inventoryStats.appendChild(tile);
     }
   }
+  let inventorySection='powers';
+  function switchInventorySection(section){
+    if(state!=='inventory')return;
+    inventorySection=section==='bestiary'?'bestiary':'powers';
+    const beast=inventorySection==='bestiary';
+    el.powersPage.hidden=beast;
+    el.bestiaryPage.hidden=!beast;
+    el.powersTab.classList.toggle('active',!beast);
+    el.bestiaryTab.classList.toggle('active',beast);
+    el.powersTab.setAttribute('aria-selected',String(!beast));
+    el.bestiaryTab.setAttribute('aria-selected',String(beast));
+    $('inventoryTitle').textContent=beast?'MONSTER BESTIARY':'POWER-UPS';
+    el.status.textContent=(beast?'MONSTER BESTIARY':'POWER-UPS')+' · PAUSED';
+    if(beast)renderBestiary();
+    else renderInventory();
+  }
+  function renderBestiary(){
+    const root=el.bestiaryPage;
+    root.replaceChildren();
+    const intro=document.createElement('p');
+    intro.className='bestiary-hint';
+    intro.textContent='BASE STATS before scaling · No enemy names are displayed in the arena. Enemies from the first group stop spawning after 10:00; survivors remain until defeated.';
+    root.append(intro);
+    const grid=document.createElement('div');grid.className='bestiary-grid';root.append(grid);
+    for(const [index,monster] of window.CrimsonMonsters.entries.entries()){
+      const card=document.createElement('article');card.className='bestiary-card';
+      const art=document.createElement('div');art.className='bestiary-art';
+      art.style.backgroundImage="url('assets/monsters-v031.png')";
+      art.style.backgroundSize='1300% 100%';
+      art.style.backgroundPosition=(index*100/12)+'% center';
+      art.style.backgroundRepeat='no-repeat';
+      const data=document.createElement('div');data.className='bestiary-copy';
+      const title=document.createElement('h3');title.textContent=monster.name;
+      const when=document.createElement('p');when.className='bestiary-when';
+      when.textContent=monster.boss?'BOSS · '+timeText(monster.bossAt):monster.phase===0?'EARLY GROUP · 00:00–09:59':'LATE GROUP · 10:00–29:59';
+      const stats=document.createElement('p');stats.className='bestiary-stats';
+      stats.textContent='HP '+monster.hp+' · SPEED '+monster.speed+' · DAMAGE '+monster.damage;
+      const attack=document.createElement('p');attack.textContent=monster.attack+' · every '+monster.interval+'s'+(monster.projectileSpeed?' · projectile speed '+monster.projectileSpeed:'');
+      const notes=document.createElement('p');notes.className='bestiary-notes';notes.textContent=monster.notes;
+      data.append(title,when,stats,attack,notes);card.append(art,data);grid.append(card);
+    }
+    const header=document.createElement('h3');header.className='bestiary-scaling-title';
+    header.textContent='FIVE-MINUTE SCALING';root.append(header);
+    const helper=document.createElement('p');helper.className='bestiary-hint';
+    helper.textContent='Multipliers include each five-minute tier and the gradual minute-to-minute increase. Easy Mode halves these values.';
+    root.append(helper);
+    const table=document.createElement('table');table.className='bestiary-scale-table';
+    table.innerHTML='<thead><tr><th>TIME</th><th>HP ×</th><th>DAMAGE ×</th><th>SPEED ×</th><th>SPAWN ×</th></tr></thead>';
+    const body=document.createElement('tbody');
+    for(const minute of window.CrimsonMonsters.tierMinutes){
+      const at=difficultyAt(minute*60,game?.easyMode||false),base=difficultyAt(0,game?.easyMode||false);
+      const tr=document.createElement('tr');
+      for(const value of [minute.toString().padStart(2,'0')+':00',(at.hp/base.hp).toFixed(2),(at.damage/base.damage).toFixed(2),(at.speed/base.speed).toFixed(2),(at.spawn/base.spawn).toFixed(2)]){
+        const td=document.createElement('td');td.textContent=value;tr.append(td);
+      }
+      body.append(tr);
+    }
+    table.append(body);root.append(table);
+    const extra=document.createElement('p');extra.className='bestiary-hint';
+    extra.textContent='Watcher Eye shoots one additional projectile at each five-minute threshold. Bleed from Blood Slimes: up to eight stacks, 6s each, 0.65 + 0.11 × tier damage per second per stack.';
+    root.append(extra);
+  }
   function openInventory(shouldFocus=true){
     if(state!=='playing'||!game?.elementChosen)return;
     keys.clear();shake=0;
     renderInventory();
     state='inventory';
     el.inventory.classList.remove('hidden');
+    switchInventorySection('powers');
     if(shouldFocus)el.inventoryClose.focus();
     el.status.textContent='POWER-UPS · PAUSED';
   }
@@ -1080,32 +1137,42 @@
     playSound('shot');
   }
   function enemyDie(e){
-    const index=game.enemies.indexOf(e); if(index<0) return;
-    game.enemies.splice(index,1); game.kills++;
-    // Native Poison: a poisoned death can infect nearby enemies.
+    const index=game.enemies.indexOf(e);if(index<0)return;
+    game.enemies.splice(index,1);game.kills++;
     proliferatePoison(e);
     const def=ENEMIES[e.type];
-    if(e.type==='warden'){
-      for(let i=0;i<14;i++)game.drops.push({x:e.x+rand(-39,39),y:e.y+rand(-32,32),value:4,life:75,phase:rand(0,TAU)});
-      // The Warden drops XP only. It no longer gives unexplained healing.
+    if(e.type==='boss3'){
+      // One perk (Rare/Legendary/Mythic) granted immediately, without XP cost.
+      const perk=rollPowerShrineReward();
+      if(perk){
+        const roll=Math.random(),tier=roll<.65?'rare':roll<.94?'legendary':'mythic';
+        grantPowerUp({...perk,tier});
+        flashMessage('✦ '+tier.toUpperCase()+' POWER · ABOMINATION DEFEATED',2800);
+        addParticles(e.x,e.y,'#eebd8d',44,135,2,5);
+        playSound('level');
+      }
+    }else if(def.xp>0){
+      const count=def.boss?14:1;
+      for(let i=0;i<count;i++)game.drops.push({x:e.x+rand(-12,12),y:e.y+rand(-10,10),
+        value:Math.max(1,def.xp/count),life:75,phase:rand(0,TAU)});
+    }
+    if(def.boss){
       el.bossBar.hidden=true;
-      flashMessage('✦ WARDEN SLAIN · BONUS XP',2400);
-      addBloodBurst(e.x,e.y,52,'#b7103a');
-      for(let i=0;i<4;i++)addImpact(e.x,e.y,42+i*10,'#f391a6');
-    }else game.drops.push({x:e.x,y:e.y,value:def.xp,life:75,phase:rand(0,TAU)});
-    addBloodBurst(e.x,e.y,e.type==='warden'?30:e.type==='slime'?22:16,def.blood); addStain(e.x,e.y,e.type==='slime'?3:2);
-    game.corpses.push({type:e.type,x:e.x,y:e.y,phase:e.phase,frame:(Math.random()*2)|0,scale:e.type==='bat'?1.05:e.type==='slime'?1.15:1,rot:rand(-0.3,0.3),age:0});
-    if(game.corpses.length>44) game.corpses.shift();
-    spawnFragments(e);
-    addImpact(e.x,e.y,24,def.color);
-    shake=Math.max(shake,2.4);
-    playSound('hit');
-    if(game.kills%25===0) flashMessage(`☠ ${game.kills} SLAIN`,1700);
+      if(e.type!=='boss3')flashMessage('✦ '+def.name.toUpperCase()+' DEFEATED',2200);
+    }
+    addBloodBurst(e.x,e.y,def.boss?30:e.type==='blood_slime'?22:16,def.blood);
+    addStain(e.x,e.y,e.type==='blood_slime'?3:2);
+    game.corpses.push({type:e.type,x:e.x,y:e.y,phase:e.phase,frame:0,
+      scale:def.boss?1.45:1,rot:rand(-.3,.3),age:0});
+    if(game.corpses.length>44)game.corpses.shift();
+    spawnFragments(e);addImpact(e.x,e.y,def.boss?43:24,def.color);
+    shake=Math.max(shake,def.boss?5:2.4);playSound('hit');
+    if(game.kills%25===0)flashMessage('☠ '+game.kills+' SLAIN',1700);
   }
 
   function spawnFragments(e){
-    const type=e.type, kinds={skeleton:'bone',bat:'wing',slime:'flesh',ghoul:'flesh',cultist:'cloth',wraith:'ether',warden:'armour',spider:'wing'};
-    const count={skeleton:7,bat:5,slime:9,ghoul:6,cultist:6,wraith:7,warden:19,spider:7}[type];
+    const type=e.type,kinds={skeleton:'bone',skeleton_archer:'bone',plague_rat:'flesh',eye:'ether',zombie:'flesh',blood_slime:'flesh',succubus:'wing',imp:'wing',hellhound:'flesh',necromancer:'cloth',boss1:'armour',boss2:'wing',boss3:'flesh'};
+    const count=ENEMIES[type].boss?19:7;
     for(let i=0;i<count;i++){
       const a=rand(0,TAU),speed=rand(30,120),life=rand(9,17);
       game.gibs.push({type:kinds[type],color:ENEMIES[type].color,x:e.x+rand(-5,5),y:e.y+rand(-4,4),
@@ -1221,7 +1288,7 @@
       const next=candidates[0],fromX=current.x,fromY=current.y;
       hitSet.add(next);
       const crit=Math.random()<p.critChance;
-      const damage=applyHitDamage(next,shot.damage*(next.type==='warden'?p.bossDamage:1)*
+      const damage=applyHitDamage(next,shot.damage*(ENEMIES[next.type]?.boss?p.bossDamage:1)*
         (crit?p.critDamage:1));
       next.hit=.2;
       game.bolts.push({x:fromX,y:fromY,toX:next.x,toY:next.y,
@@ -1267,6 +1334,138 @@
     }
   }
 
+  function addHunterBleed(){
+    const p=game.player,stacks=p.enemyBleed;
+    if(stacks.length>=8)stacks.shift();
+    stacks.push({time:6,dps:.65+.11*difficultyTier(game.time)});
+    updateHUD();
+  }
+  function tickHunterBleed(dt){
+    const p=game.player;
+    for(let i=p.enemyBleed.length-1;i>=0;i--){
+      const b=p.enemyBleed[i],elapsed=Math.min(dt,b.time);
+      p.hp=Math.max(0,p.hp-b.dps*elapsed*(1-p.armor));
+      b.time-=dt;if(b.time<=0)p.enemyBleed.splice(i,1);
+    }
+    if(p.hp<=0)die(false);
+  }
+  function enemyFire(e,p,def){
+    const aim=Math.atan2(p.y-e.y,p.x-e.x),speed=def.projectileSpeed;
+    const count=e.type==='eye'?1+difficultyTier(game.time):1,spread=e.type==='eye'?.16:0;
+    for(let i=0;i<count;i++){
+      const a=aim+(i-(count-1)/2)*spread;
+      game.shots.push({hostile:true,enemyType:e.type,
+        x:e.x+Math.cos(a)*14,y:e.y+Math.sin(a)*14-6,
+        vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:3.3,
+        damage:e.damage,angle:a,hit:new Set()});
+    }
+    e.attackAnim=.3;addParticles(e.x,e.y-10,def.color,3,38,2,3);
+  }
+  function monsterStrike(e,p,def){
+    if(Math.hypot(p.x-e.x,p.y-e.y)>def.range+12)return;
+    if(damagePlayer(e.damage)&&e.type==='blood_slime')addHunterBleed();
+    const a=Math.atan2(p.y-e.y,p.x-e.x);
+    addSlashBurst(e.x+Math.cos(a)*16,e.y+Math.sin(a)*14,a);
+  }
+  function hitByCharge(e,p,startX,startY){
+    const vx=e.x-startX,vy=e.y-startY,len2=vx*vx+vy*vy||1;
+    const u=Math.max(0,Math.min(1,((p.x-startX)*vx+(p.y-startY)*vy)/len2));
+    if(dist2(startX+vx*u,startY+vy*u,p.x,p.y)<(e.r+7)**2&&!e.chargeHit){
+      e.chargeHit=true;damagePlayer(e.damage);
+    }
+  }
+  function triggerBossBlast(e,p,stage){
+    const radius=[50,94,142][stage],dmg=e.damage*[.85,1,1.15][stage];
+    addImpact(e.x,e.y,radius,'#ff395d');
+    addParticles(e.x,e.y,'#fc3156',17,100,2,4);
+    if(dist2(p.x,p.y,e.x,e.y)<(radius+8)**2)damagePlayer(dmg);
+  }
+  function updateMonsterAI(e,dt,p,g){
+    const def=ENEMIES[e.type];if(!def)return;
+    const d=Math.hypot(p.x-e.x,p.y-e.y),a=Math.atan2(p.y-e.y,p.x-e.x);
+    const move=()=>{
+      const slow=e.slowTime>0?.58:1;
+      e.x+=Math.cos(a)*e.speed*slow*dt;e.y+=Math.sin(a)*e.speed*slow*dt;
+    };
+    e.attackCd=Math.max(0,e.attackCd-dt);
+    e.attackAnim=Math.max(0,e.attackAnim-dt);
+    if(e.attackState==='chargeWarn'){
+      e.attackTimer-=dt;
+      if(e.attackTimer<=0){e.attackState='chargeDash';e.chargeTravel=0;e.chargeHit=false;}
+      return;
+    }
+    if(e.attackState==='chargeDash'){
+      const ox=e.x,oy=e.y,step=400*dt;
+      e.x+=Math.cos(e.chargeAngle)*step;e.y+=Math.sin(e.chargeAngle)*step;
+      e.chargeTravel+=step;hitByCharge(e,p,ox,oy);
+      if(e.chargeTravel>=570){e.attackState='';e.attackCd=5.5;}
+      return;
+    }
+    if(e.attackState==='abominationWindup'){
+      e.attackTimer-=dt;
+      if(e.attackTimer<=0){
+        e.attackState='';e.attackCd=5;
+        addImpact(e.x,e.y,79,'#ff476e');
+        if(dist2(p.x,p.y,e.x,e.y)<87*87)damagePlayer(e.damage*1.28);
+      }
+      return;
+    }
+    if(e.attackState==='demonBlast'){
+      e.attackTimer-=dt;
+      if(e.attackTimer<=0){
+        triggerBossBlast(e,p,e.attackStage);
+        e.attackStage++;
+        if(e.attackStage>=3){e.attackState='';e.attackCd=5.3;}
+        else e.attackTimer=1.05;
+      }
+      return;
+    }
+    if(e.attackState==='summon'){
+      e.attackTimer-=dt;
+      if(e.attackTimer<=0){
+        e.attackState='';e.summonCd=9.5;
+        const room=Math.min(2,230-g.enemies.length);
+        for(let i=0;i<room;i++)spawnEnemy('hellhound',20+i*9,rand(0,TAU),{x:e.x,y:e.y,summoned:true});
+        addImpact(e.x,e.y,28,'#fa683f');
+      }
+      return;
+    }
+    if(e.attackWindup>0){
+      e.attackWindup-=dt;
+      if(e.attackWindup<=0){e.attackWindup=0;monsterStrike(e,p,def);e.attackCd=def.interval;}
+      return;
+    }
+    if(e.type==='boss1'){
+      if(e.attackCd<=0&&d<370){e.attackState='chargeWarn';e.attackTimer=2.6;e.chargeAngle=a;e.attackCd=8;}
+      else move();
+      return;
+    }
+    if(e.type==='boss3'){
+      if(e.attackCd<=0&&d<115){e.attackState='abominationWindup';e.attackTimer=1.8;e.attackCd=6;}
+      else if(d>def.range+8)move();
+      else if(e.attackCd<=0)e.attackWindup=.55;
+      return;
+    }
+    if(e.type==='boss2'){
+      if(e.attackCd<=0&&d<160){e.attackState='demonBlast';e.attackTimer=1.05;e.attackStage=0;e.attackCd=7;}
+      else if(d>50)move();
+      return;
+    }
+    if(e.type==='hellhound'){
+      e.summonCd-=dt;
+      if(e.summonCd<=0&&g.enemies.length<225){e.attackState='summon';e.attackTimer=1.2;e.summonCd=12;return;}
+    }
+    if(def.projectileSpeed){
+      if(d>def.range*.75)move();
+      if(d<=def.range&&e.attackCd<=0){enemyFire(e,p,def);e.attackCd=def.interval;}
+      return;
+    }
+    if(d>def.range+4)move();
+    else if(e.attackCd<=0){
+      e.attackWindup=e.type==='zombie'?.52:e.type==='skeleton'?.34:.16;
+      e.attackAnim=e.attackWindup+.17;
+    }
+  }
   function update(dt){
     if(!game || state!=='playing') return;
     const g=game, p=g.player; g.time+=dt; g.worldTime+=dt;
@@ -1281,7 +1480,7 @@
       if(ENEMY_SPAWNING_ENABLED)applyDifficultySurge(g,nextTier);
       else g.difficultyTier=nextTier;
     }
-    if(ENEMY_SPAWNING_ENABLED && g.time>=g.bossNext && !g.enemies.some(e=>e.type==='warden'))spawnWarden();
+    for(const boss of window.CrimsonMonsters.bosses)if(g.time>=boss.bossAt)spawnBoss(boss.id);
     if(ENEMY_SPAWNING_ENABLED && g.time>g.nextNotice){
       if(!surgeStarted)flashMessage(g.time>=DURATION-60?'FINAL MINUTE!':'THE HORDE THICKENS...',2000);
       g.nextNotice+=35;
@@ -1321,10 +1520,12 @@
     p.shotCd -= dt; p.hitCd = Math.max(0,p.hitCd-dt); p.attackAnim=Math.max(0,p.attackAnim-dt);
     if(p.shotCd<=0){shoot(); p.shotCd=1/p.attackRate;}
 
+    tickHunterBleed(dt);
+    if(state!=='playing')return;
     g.spawn-=dt;
     if(ENEMY_SPAWNING_ENABLED && g.spawn<=0){
       const diff=difficultyAt(g.time,g.easyMode);
-      const count=Math.min(12,Math.max(1,Math.round(diff.spawn*(1+Math.random()*.25))));
+      const count=Math.min(8,Math.max(1,Math.round(diff.spawn*(.45+Math.random()*.30))));
       const room=Math.max(0,230-g.enemies.length);
       for(let i=0;i<Math.min(count,room);i++)spawnEnemy();
       // Higher-tier spawn multipliers keep accelerating the horde through 25:00.
@@ -1332,37 +1533,22 @@
     }
 
     for(const e of [...g.enemies]){
-      const aim=enemyTarget(e,p);
-      const a=Math.atan2(aim.y-e.y,aim.x-e.x), d=Math.hypot(p.x-e.x,p.y-e.y); e.phase+=dt*6; e.hit=Math.max(0,e.hit-dt);
+      e.phase+=dt*6;e.hit=Math.max(0,e.hit-dt);
       tickBleedStacks(e,dt);
-      if(e.burnTime>0){const elapsed=Math.min(dt,e.burnTime),dealt=(e.burnDps||0)*elapsed;e.hp-=dealt;g.totalDamage+=dealt;e.burnTime-=elapsed;}
-      if(e.poisonDps>0){const dealt=e.poisonDps*dt;e.hp-=dealt;g.totalDamage+=dealt;}
+      if(e.burnTime>0){
+        const elapsed=Math.min(dt,e.burnTime),dmg=(e.burnDps||0)*elapsed;
+        e.hp-=dmg;g.totalDamage+=dmg;e.burnTime-=elapsed;
+      }
+      if(e.poisonDps>0){const dmg=e.poisonDps*dt;e.hp-=dmg;g.totalDamage+=dmg;}
       if(e.hp<=0){enemyDie(e);continue;}
       if(e.slowTime>0)e.slowTime=Math.max(0,e.slowTime-dt);
       if(e.shockTime>0)e.shockTime=Math.max(0,e.shockTime-dt);
-      const slowed=e.slowTime>0?.58:1;
-      if(e.knockX||e.knockY){e.x+=e.knockX*dt;e.y+=e.knockY*dt;e.knockX*=Math.exp(-10*dt);e.knockY*=Math.exp(-10*dt);}
-      if(e.type==='warden'){
-        if(e.windup>0){
-          e.windup-=dt;
-          if(e.windup<=0){
-            e.windup=0;e.pulse=.34;e.attacks++;
-            addImpact(e.x,e.y,e.slamRadius,'#ed4262');
-            if(dist2(p.x,p.y,e.x,e.y)<(e.slamRadius+7)**2)damagePlayer(e.damage*(1+Math.min(8,e.attacks)/17));
-            addBloodBurst(e.x,e.y,15,'#9e143d');shake=Math.max(shake,3.6);
-          }
-        }else{
-          e.x+=Math.cos(a)*e.speed*slowed*dt; e.y+=Math.sin(a)*e.speed*slowed*dt;
-          e.shot-=dt;
-          if(e.shot<=0 && d<170){e.windup=1.18;e.shot=4.3+rand(0,.9);}
-        }
-        e.pulse=Math.max(0,e.pulse-dt);
-      }else{e.x += Math.cos(a)*e.speed*slowed*dt; e.y += Math.sin(a)*e.speed*slowed*dt;}
-      if(e.type==='bat'){ e.x+=Math.cos(g.worldTime*8+e.phase)*18*dt; e.y+=Math.sin(g.worldTime*6+e.phase)*12*dt; }
-      if(e.type==='slime'){ e.x+=Math.sin(g.worldTime*2+e.phase)*7*dt; }
-      if(e.type==='wraith'){ e.x+=Math.cos(g.worldTime*3+e.phase)*10*dt; e.y+=Math.sin(g.worldTime*2.8+e.phase)*10*dt; }
-      if(e.type==='cultist'){ e.shot-=dt; if(e.shot<=0 && d<270){ e.shot=(1.5+Math.random()*.6)/(e.aggression||1); g.shots.push({hostile:true,x:e.x,y:e.y-8,vx:Math.cos(a)*128,vy:Math.sin(a)*128,life:2.2,damage:e.damage,hit:new Set(),angle:a}); } }
-      if(d<e.r+9 && p.hitCd<=0){damagePlayer(e.damage); if(state==='end')return;}
+      if(e.knockX||e.knockY){
+        e.x+=e.knockX*dt;e.y+=e.knockY*dt;
+        e.knockX*=Math.exp(-10*dt);e.knockY*=Math.exp(-10*dt);
+      }
+      updateMonsterAI(e,dt,p,g);
+      if(state==='end')return;
     }
 
     for(let i=g.shots.length-1;i>=0;i--){
@@ -1392,7 +1578,7 @@
           b.hit.add(e);
           if(b.element==='blood')b.lastHit.set(e,g.time);
           const crit=Math.random()<p.critChance;
-          const dmg=applyHitDamage(e,b.damage*(e.type==='warden'?p.bossDamage:1)*
+          const dmg=applyHitDamage(e,b.damage*(ENEMIES[e.type]?.boss?p.bossDamage:1)*
             (crit?p.critDamage:1));
           e.hit=.18;
           if(b.element==='blood'){
@@ -1413,7 +1599,7 @@
           if(dmg>0)floatText(e.x,e.y-20,`${Math.ceil(dmg)}${crit?'!':''}`,
             crit?'#ffd274':'#ffe9d0');
           if(e.hp<=0)enemyDie(e);
-          else if(b.element==='blood')addBloodBurst(e.x,e.y,e.type==='warden'?11:6,ENEMIES[e.type].blood);
+          else if(b.element==='blood')addBloodBurst(e.x,e.y,ENEMIES[e.type]?.boss?11:6,ENEMIES[e.type].blood);
           shake=Math.max(shake,1.5);
           if(b.element!=='blood'){
             // Fire and Poison always detonate on the FIRST collision; Lightning
@@ -1471,6 +1657,12 @@
     if(!game) return;
     const p=game.player;
     el.hp.style.width=`${100*p.hp/p.maxHp}%`; el.hpText.textContent=`${Math.ceil(p.hp)} / ${p.maxHp}`;
+    const bleed=p.enemyBleed||[];
+    el.bleedBuff.hidden=!bleed.length;
+    if(bleed.length){
+      el.bleedBuff.textContent='🩸 ×'+bleed.length;
+      el.bleedBuff.title='Bleed: '+bleed.length+'/8 stacks · '+bleed.reduce((sum,b)=>sum+b.dps,0).toFixed(1)+' DPS';
+    }
     el.fountainBuff.hidden=p.fountainRegenTime<=0;
     if(p.fountainRegenTime>0){
       const remaining=Math.ceil(p.fountainRegenTime);
@@ -1486,8 +1678,9 @@
     const xpPct=clamp(100*p.xp/p.next,0,100);
     el.xp.style.width=`${xpPct}%`; el.xpStrip.setAttribute('aria-valuenow',String(Math.round(xpPct)));
     el.level.textContent=p.level; el.kills.textContent=game.kills; el.time.textContent=timeText(game.time);
-    const boss=game.enemies.find(e=>e.type==='warden');
+    const boss=game.enemies.find(e=>ENEMIES[e.type]?.boss);
     el.bossBar.hidden=!boss;
+    if(boss)el.bossName.textContent=ENEMIES[boss.type].name.toUpperCase();
     if(boss)el.bossFill.style.width=`${clamp(boss.hp/boss.maxHp*100,0,100)}%`;
   }
 
@@ -1652,18 +1845,21 @@
     ctx.globalAlpha=1;
   }
   function drawCorpses(camX,camY){
-    // Fallen enemies collapse and flatten onto the floor rather than standing upright.
     for(const c of game.corpses){
-      const x=c.x-camX,y=c.y-camY+10;
+      const x=c.x-camX,y=c.y-camY+10,def=ENEMIES[c.type];
+      if(!def)continue;
+      const wide=def.boss?46:c.type==='plague_rat'?32:26,flat=def.boss?16:10;
       shadowAt(x,y+3,18*c.scale,.42);
       ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.rotate(c.rot);
-      ctx.globalAlpha=Math.min(.84,.5+c.age*1.8);
-      if(c.type==='wraith') ctx.globalAlpha*=.48;
-      const wide=c.type==='bat'?36:c.type==='slime'?31:26;
-      const flat=c.type==='bat'?13:c.type==='slime'?11:9;
-      if(!window.NoobArt?.paint(ctx,c.type,-wide/2,-flat/2,wide,flat,.65))ctx.drawImage(sprite(c.type==='spider'?'bat':c.type,c.frame),-wide/2,-flat/2,wide,flat);
-      ctx.fillStyle=c.type==='skeleton'?'#b3a8a1':c.type==='wraith'?'#685681':'#4b1023';
-      ctx.fillRect(-4,1,9,2);ctx.restore();
+      ctx.globalAlpha=Math.min(.75,.4+c.age*1.8);
+      const idx=MONSTER_ART_ORDER.indexOf(c.type);
+      if(idx>=0&&monsterAtlas.complete&&monsterAtlas.naturalWidth){
+        ctx.drawImage(monsterAtlas,idx*40,0,40,40,-wide/2,-flat/2,wide,flat);
+      }else{
+        ctx.fillStyle=def.color;ctx.fillRect(-wide/2,-flat/2,wide,flat);
+      }
+      ctx.fillStyle='#431022';ctx.fillRect(-4,1,9,2);
+      ctx.restore();
     }
     ctx.globalAlpha=1;
   }
@@ -1728,84 +1924,67 @@
     for(let i=0;i<3;i++){ const a=t*1.8+i*TAU/3; ctx.fillStyle=i===0?'#ffc7d2':'#f1607f'; ctx.fillRect(Math.round(x+Math.cos(a)*20),Math.round(y-8+Math.sin(a)*11),2,2); }
   }
   function drawEnemy(e,camX,camY,t){
-    const x=Math.round(e.x-camX), y=Math.round(e.y-camY), w=e.type==='bat', hover=e.type==='wraith';
-    const bob=w?Math.sin(e.phase)*4:hover?Math.sin(t*3+e.phase)*3:Math.sin(e.phase)*1.2;
-    shadowAt(x,y+9,e.r+1,w?.2:.37);
-    if(e.type==='warden'){
-      ctx.save();ctx.globalAlpha=.25+Math.sin(t*4)*.06;ctx.fillStyle='#d34765';
-      ctx.beginPath();ctx.ellipse(x,y+8,33,13,0,0,TAU);ctx.fill();ctx.restore();
-      if(e.windup>0){
-        const prog=1-e.windup/1.18;
-        ctx.save();ctx.globalAlpha=.25+prog*.45;ctx.strokeStyle='#ff728c';ctx.lineWidth=1.5+prog*2;
-        ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(x,y,e.slamRadius,0,TAU);ctx.stroke();ctx.setLineDash([]);
-        ctx.globalAlpha=.08+prog*.22;ctx.fillStyle='#e12850';ctx.beginPath();ctx.arc(x,y,e.slamRadius,0,TAU);ctx.fill();ctx.restore();
-      }
-      if(e.pulse>0){
-        ctx.save();ctx.globalAlpha=e.pulse/.34*.52;ctx.strokeStyle='#ffd6df';ctx.lineWidth=4;
-        ctx.beginPath();ctx.arc(x,y,e.slamRadius*(1-e.pulse/.34),0,TAU);ctx.stroke();ctx.restore();
-      }
+    const def=ENEMIES[e.type];if(!def)return;
+    const x=Math.round(e.x-camX),y=Math.round(e.y-camY);
+    shadowAt(x,y+8,e.r*(def.boss?1.28:1),def.boss?.48:.34);
+    ctx.save();
+    const floating=['eye','succubus','imp','boss1','boss2'].includes(e.type);
+    ctx.translate(x,Math.round(y+(floating?Math.sin(e.phase)*2.3:Math.sin(e.phase)*.9)));
+    const wobble=e.type==='blood_slime'?1+Math.sin(e.phase*1.2)*.035:1;
+    ctx.scale(wobble,1/wobble);
+    if(e.hit>0){ctx.globalAlpha=.68;ctx.shadowColor='#fff0e9';ctx.shadowBlur=10;}
+    else if(def.boss){ctx.shadowColor='#b74155';ctx.shadowBlur=7;}
+    const width=def.boss?e.type==='boss3'?111:99:e.type==='plague_rat'?66:e.type==='hellhound'?74:61;
+    const height=def.boss?e.type==='boss3'?113:104:e.type==='plague_rat'?46:e.type==='blood_slime'?55:72;
+    const idx=MONSTER_ART_ORDER.indexOf(e.type);
+    if(monsterAtlas.complete&&monsterAtlas.naturalWidth&&idx>=0){
+      ctx.imageSmoothingEnabled=true;
+      ctx.drawImage(monsterAtlas,idx*40,0,40,40,-width/2,-height+13,width,height);
+    }else{
+      ctx.fillStyle=def.color;
+      ctx.beginPath();ctx.ellipse(0,-height*.47,width*.31,height*.42,0,0,TAU);ctx.fill();
+      ctx.fillStyle='#f3b1ae';ctx.fillRect(-7,-height*.66,5,3);ctx.fillRect(4,-height*.66,5,3);
     }
-    ctx.save(); ctx.translate(x,Math.round(y+bob));
-    if(e.hit>0){ ctx.globalAlpha=.62; ctx.shadowColor='#ffe8eb'; ctx.shadowBlur=12; }
-    else if(hover){ ctx.globalAlpha=.82+Math.sin(t*4+e.phase)*.10;ctx.shadowColor='#a38ffc'; ctx.shadowBlur=13; }
-    else if(e.type==='cultist' && e.shot<.42){ctx.shadowColor='#f5689f';ctx.shadowBlur=8;}
-    const sc=(e.type==='warden'?2.45:e.type==='slime'?1.85:e.type==='bat'?1.95:1.7);
-    if(e.type==='slime'){const squash=1+Math.sin(e.phase*1.1)*.055;ctx.scale(1/squash,squash);}
-    if(e.type==='warden' && e.windup>0){ctx.shadowColor='#ff789a';ctx.shadowBlur=14;}
-    const size=e.type==='warden'?83:e.type==='slime'?57:e.type==='wraith'?64:e.type==='bat'?58:58;
-    const bodyH=size*(e.type==='bat'||e.type==='ghoul'||e.type==='spider'?.8:1.08);
-    if(!window.NoobArt?.paint(ctx,e.type,-size/2,-bodyH+14,size,bodyH))ctx.drawImage(sprite(e.type==='spider'?'bat':e.type,Math.floor(e.phase/3)%2),-Math.round(12*sc),-Math.round(18*sc),Math.round(24*sc),Math.round(28*sc));ctx.restore();
-    if(e.type==='warden'&&e.hit>0){ctx.fillStyle='#ffe7db55';ctx.fillRect(x-23,y-41,46,36);}
-    // Persistent, readable status overlays; colour belongs to the status effect.
-    const statusSize=e.type==='warden'?36:22;
-    if(e.poisonDps>0){
-      ctx.save();ctx.globalAlpha=.25+.12*Math.sin(t*4+e.phase);
-      ctx.fillStyle='#4cf14d';ctx.shadowColor='#6dff45';ctx.shadowBlur=14;
-      ctx.beginPath();ctx.ellipse(x,y-13,statusSize,statusSize*.95,0,0,TAU);ctx.fill();
-      for(let j=0;j<3;j++){const yy=(t*(8+j*3)+j*12+e.phase*2)%31;
-        ctx.fillRect(x-10+j*9,y+9-yy,2,3);}
-      ctx.restore();
-      ctx.save();
-      ctx.textAlign='center';ctx.font='bold 10px sans-serif';
-      ctx.lineWidth=3;ctx.strokeStyle='#102310';ctx.fillStyle='#b1ff83';
-      const stacks=`×${e.poisonStacks||1}`;
-      ctx.strokeText(stacks,x,y-43);ctx.fillText(stacks,x,y-43);
-      ctx.restore();
+    ctx.restore();
+    if(e.attackState==='chargeWarn'){
+      ctx.save();ctx.translate(x,y);ctx.rotate(e.chargeAngle);
+      const pulse=.5+.5*Math.sin(t*12);
+      ctx.strokeStyle='rgba(255,36,58,'+(.64+pulse*.3)+')';
+      ctx.lineWidth=8+pulse*3;ctx.shadowColor='#ff2944';ctx.shadowBlur=12;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(570,0);ctx.stroke();
+      ctx.strokeStyle='#ffd0ce';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(570,0);ctx.stroke();ctx.restore();
     }
-    if(e.bleedStacks?.length){
-      ctx.save();ctx.textAlign='center';ctx.font='bold 10px sans-serif';
-      ctx.lineWidth=3;ctx.strokeStyle='#300d1d';ctx.fillStyle='#ff9fb6';
-      const stackLabel=`×${e.bleedStacks.length}`;
-      ctx.strokeText(stackLabel,x,y-52);ctx.fillText(stackLabel,x,y-52);
-      ctx.restore();
-      ctx.save();ctx.globalAlpha=.31+.17*Math.sin(t*9+e.phase);
-      ctx.fillStyle='#ef214a';ctx.shadowColor='#ff174c';ctx.shadowBlur=9;
-      ctx.beginPath();ctx.ellipse(x,y-14,statusSize*.75,statusSize*.95,0,0,TAU);ctx.fill();ctx.restore();
+    if(e.attackState==='abominationWindup'||e.attackState==='demonBlast'){
+      const radius=e.attackState==='abominationWindup'?79:[50,94,142][e.attackStage];
+      ctx.save();ctx.strokeStyle='#ff536b';ctx.lineWidth=2.7;ctx.shadowColor='#ff274d';ctx.shadowBlur=11;
+      ctx.globalAlpha=.75+.2*Math.sin(t*13);
+      ctx.beginPath();ctx.arc(x,y,radius,0,TAU);ctx.stroke();
+      ctx.fillStyle='rgba(231,43,75,.08)';ctx.fill();ctx.restore();
     }
-    if(e.burnTime>0){
-      ctx.save();ctx.globalAlpha=.68+.14*Math.sin(t*14+e.phase);
-      ctx.fillStyle='#ff8a16';ctx.shadowColor='#ff560c';ctx.shadowBlur=12;
-      for(let j=0;j<3;j++){
-        const xx=x-11+j*11, rise=Math.sin(t*13+j*2+e.phase)*5;
-        ctx.beginPath();ctx.moveTo(xx-3,y+5);ctx.lineTo(xx,y-19+rise);ctx.lineTo(xx+4,y+3);ctx.closePath();ctx.fill();
-      }ctx.restore();
+    if(e.attackState==='summon'){
+      ctx.save();ctx.strokeStyle='#ff9b60';ctx.lineWidth=2;ctx.shadowColor='#ff6637';ctx.shadowBlur=7;
+      ctx.beginPath();ctx.arc(x,y,34,0,TAU);ctx.stroke();ctx.restore();
     }
-    if(e.shockTime>0){
-      ctx.save();ctx.shadowColor='#6dbdff';ctx.shadowBlur=8;
-      ctx.strokeStyle='#67c8ff';ctx.lineWidth=1.3;
-      ctx.globalAlpha=.65+.2*Math.sin(t*13+e.phase);
-      ctx.beginPath();ctx.arc(x,y-14,e.r+5,0,TAU);ctx.stroke();ctx.restore();
-    }
-    if(e.hit>0 && e.type!=='warden'){ ctx.fillStyle='#45111d'; ctx.fillRect(x-12,y-29,24,3); ctx.fillStyle='#d8506d'; ctx.fillRect(x-12,y-29,24*e.hp/e.maxHp,3); }
+    const size=def.boss?34:20;
+    if(e.poisonDps>0){ctx.save();ctx.globalAlpha=.19;ctx.fillStyle='#4cf14d';ctx.shadowColor='#6dff45';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(x,y-18,size,0,TAU);ctx.fill();ctx.restore();}
+    if(e.burnTime>0){ctx.save();ctx.globalAlpha=.4;ctx.fillStyle='#ff7716';ctx.shadowColor='#ff4b12';ctx.shadowBlur=9;ctx.beginPath();ctx.arc(x,y-18,size*.85,0,TAU);ctx.fill();ctx.restore();}
+    if(e.bleedStacks?.length){ctx.save();ctx.textAlign='center';ctx.strokeStyle='#350c19';ctx.lineWidth=3;ctx.fillStyle='#ff8da9';ctx.font='bold 10px sans-serif';ctx.strokeText('×'+e.bleedStacks.length,x,y-49);ctx.fillText('×'+e.bleedStacks.length,x,y-49);ctx.restore();}
+    if(e.shockTime>0){ctx.save();ctx.strokeStyle='#67c8ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y-15,size+5,0,TAU);ctx.stroke();ctx.restore();}
+    if(e.hit>0&&!def.boss){ctx.fillStyle='#310e1b';ctx.fillRect(x-13,y-42,26,3);ctx.fillStyle='#d74b6c';ctx.fillRect(x-13,y-42,26*Math.max(0,e.hp/e.maxHp),3);}
   }
   function drawShots(camX,camY){
     for(const b of game.shots){
       const x=b.x-camX,y=b.y-camY;
       ctx.save();ctx.translate(x,y);ctx.rotate(b.angle);
       if(b.hostile){
-        ctx.fillStyle='#7d233840';ctx.fillRect(-12,-7,23,14);
-        ctx.fillStyle='#a02f4b';ctx.fillRect(-5,-3,11,6);
-        ctx.fillStyle='#ffc1cd';ctx.fillRect(-2,-2,5,4);
+        const eye=b.enemyType==='eye',arrow=b.enemyType==='skeleton_archer',necro=b.enemyType==='necromancer';
+        ctx.shadowColor=eye?'#ff506c':arrow?'#fbd6a9':'#e949b4';
+        ctx.shadowBlur=necro?12:5;
+        ctx.fillStyle=eye?'#d72c55':arrow?'#a88b68':'#a63180';
+        ctx.fillRect(-10,-3,20,6);
+        ctx.fillStyle=arrow?'#ffe4b6':eye?'#ffbec7':'#eec6f8';
+        ctx.fillRect(4,-2,6,4);
       }else{
         const size=b.size||1;
         const widths={blood:55,lightning:47,fire:39,poison:44};
@@ -1953,6 +2132,8 @@
   el.resume.addEventListener('click',togglePause);
   el.inventoryBtn.addEventListener('click',togglePause);
   el.inventoryClose.addEventListener('click',closeInventory);
+  el.powersTab.addEventListener('click',()=>switchInventorySection('powers'));
+  el.bestiaryTab.addEventListener('click',()=>switchInventorySection('bestiary'));
   function updateAudioUI(){
     el.sound.textContent=muted?'MUTE ON':'MUTE OFF';
     el.sound.setAttribute('aria-pressed',String(muted));

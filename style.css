@@ -824,3 +824,28 @@ body:has(#intro:not(.hidden)) .topbar .audio-controls{gap:9px}
     gap:4%!important;
   }
 }
+
+/* v0.31 — pause Monster Bestiary and player Bleed indicator */
+.bleed-buff{color:#ff8595;background:#491222;border:1px solid #d45272;border-radius:7px;padding:2px 6px;white-space:nowrap;font:800 11px system-ui,sans-serif;text-shadow:0 0 6px #db2d58}
+.bleed-buff[hidden]{display:none!important}
+.inventory-tabs{display:flex;flex-wrap:wrap;gap:7px;padding:10px 18px;border-bottom:1px solid #5d3545;background:#160d16}
+.inventory-tab{background:#20131c;color:#bc9ea2;border:1px solid #654050;border-radius:8px;padding:9px 13px;cursor:pointer;font:800 11px system-ui,sans-serif;letter-spacing:.07em}
+.inventory-tab.active,.inventory-tab[aria-selected="true"]{color:#ffe5cd;background:#522134;border-color:#bd6a68;box-shadow:inset 0 -2px #d04a62}
+.inventory-tab:focus-visible{outline:2px solid #ffdba8;outline-offset:2px}
+.monster-bestiary{min-height:0;flex:1;overflow:auto;padding:13px 18px 20px;overscroll-behavior:contain}
+.monster-bestiary[hidden],#inventoryPowersPage[hidden]{display:none!important}
+.bestiary-hint{margin:0 0 12px;color:#cbaeb3;font:12px/1.6 system-ui,sans-serif}
+.bestiary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 16px}
+.bestiary-card{display:flex;gap:11px;background:linear-gradient(120deg,#281621,#161018);border:1px solid #744554;border-radius:10px;padding:10px;min-width:0}
+.bestiary-art{flex:0 0 85px;height:85px;background-color:#150e18;border:1px solid #583449;border-radius:8px;background-position:center;background-repeat:no-repeat}
+.bestiary-copy{min-width:0}
+.bestiary-copy h3{font:800 15px system-ui,sans-serif;letter-spacing:.025em;color:#fbe0ce;margin:1px 0 5px}
+.bestiary-copy p{font:11px/1.45 system-ui,sans-serif;color:#e0cbd0;margin:3px 0}
+.bestiary-copy .bestiary-when{color:#ff98a6;font-weight:800}
+.bestiary-copy .bestiary-stats{color:#fff0cc;font-weight:800}
+.bestiary-copy .bestiary-notes{color:#bbacb0}
+.bestiary-scaling-title{color:#ffe0c2;font:900 16px system-ui,sans-serif;margin:12px 0 7px}
+.bestiary-scale-table{width:100%;border-collapse:collapse;text-align:left;margin:6px 0 12px}
+.bestiary-scale-table th,.bestiary-scale-table td{padding:8px 10px;border-bottom:1px solid #5a3443;font:12px system-ui,sans-serif;color:#e8d3cc}
+.bestiary-scale-table th{color:#f6ac9e;background:#391d29;font-weight:800}
+@media (max-width:730px){.bestiary-grid{grid-template-columns:1fr}.bestiary-art{flex-basis:66px;height:66px}.bestiary-scale-table th,.bestiary-scale-table td{padding:6px 4px;font-size:10px}}

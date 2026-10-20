@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.30.3">
+  <meta name="game-version" content="0.31.0">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.30.3">
+  <link rel="stylesheet" href="style.css?v=0.31.0">
 </head>
 <body>
   <div class="site-shell">
@@ -38,13 +38,13 @@
       <canvas id="game" width="1280" height="720" aria-label="Crimson Ruin: Age of Torment game"></canvas>
       <div class="hud" id="hud" hidden>
         <div class="hud-row">
-          <div class="hp-zone"><span class="hp-icon">♥</span><div class="hp-track"><div id="hpFill" class="hp-fill"></div></div><span class="hp-num" id="hpText">100 / 100</span><span class="fountain-buff" id="fountainBuff" hidden>✚ 30s</span><span class="magnet-buff" id="magnetBuff" hidden>🧲 15s</span></div>
+          <div class="hp-zone"><span class="hp-icon">♥</span><div class="hp-track"><div id="hpFill" class="hp-fill"></div></div><span class="hp-num" id="hpText">100 / 100</span><span class="bleed-buff" id="bleedBuff" hidden title="Bleeding stacks">🩸 ×1</span><span class="fountain-buff" id="fountainBuff" hidden>✚ 30s</span><span class="magnet-buff" id="magnetBuff" hidden>🧲 15s</span></div>
           <div class="hud-center"><strong id="timeText">00:00</strong></div>
           <div class="hud-right"><span class="skull">☠</span> <strong id="killText">0</strong><span class="divider-v"></span> <span>LVL</span> <strong id="levelText">1</strong></div>
         </div>
       </div>
       <div class="boss-bar" id="bossBar" aria-label="Boss health" hidden>
-        <div class="boss-heading"><span>✦</span> <strong id="bossName">CRIMSON WARDEN</strong> <span>✦</span></div>
+        <div class="boss-heading"><span>✦</span> <strong id="bossName">BOSS</strong> <span>✦</span></div>
         <div class="boss-track"><div class="boss-fill" id="bossFill"></div></div>
       </div>
       <div class="float-messages" id="message"></div>
@@ -147,7 +147,11 @@
             <div><span class="inventory-eyebrow">THE HUNTER'S GRIMOIRE</span><h2 id="inventoryTitle">POWER-UPS</h2><span class="inventory-subtitle">The hunt is paused while reading</span></div>
             <button class="inventory-close" id="inventoryClose" type="button" aria-label="Close power-ups">✕ <span>CLOSE</span></button>
           </header>
-          <div class="inventory-scroll">
+          <nav class="inventory-tabs" role="tablist" aria-label="Paused game pages">
+            <button type="button" class="inventory-tab active" id="inventoryPowersTab" role="tab" aria-selected="true">✦ POWER-UPS</button>
+            <button type="button" class="inventory-tab" id="inventoryBestiaryTab" role="tab" aria-selected="false">☠ MONSTER BESTIARY</button>
+          </nav>
+          <div class="inventory-scroll" id="inventoryPowersPage">
             <div class="inventory-element">
               <div class="inventory-gold-frame" id="inventoryElementIcon"></div>
               <div class="inventory-element-copy"><span class="inventory-section-kicker">YOUR ELEMENT</span>
@@ -162,6 +166,7 @@
                 <div class="inventory-stats" id="inventoryStats"></div></section>
             </div>
           </div>
+          <div class="monster-bestiary" id="inventoryBestiaryPage" hidden></div>
           <div class="inventory-footer">PRESS <kbd>P</kbd>, <kbd>O</kbd> OR <kbd>ESC</kbd> TO RESUME</div>
         </div>
       </section>
@@ -174,7 +179,8 @@
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="assets.js?v=0.30.3" defer></script>
-  <script src="game.js?v=0.30.3" defer></script>
+  <script src="monsters.js?v=0.31.0" defer></script>
+  <script src="assets.js?v=0.31.0" defer></script>
+  <script src="game.js?v=0.31.0" defer></script>
 </body>
 </html>
