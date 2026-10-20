@@ -2070,8 +2070,9 @@
 
   function drawFloor(cameraX,cameraY,t){
     if(courtyard.complete && courtyard.naturalWidth){
-      // Repeat the arena outside the starting tile so exploration stays endless.
-      // Alternate mirroring avoids a hard visual edge between repeat tiles.
+      // Repeat the arena beyond the starting tile for endless exploration.
+      // Horizontal mirroring joins side edges, but NEVER mirror vertically:
+      // baked-in tombstones, crypts and monuments must remain upright.
       const tile = 1254, origin = -tile/2;
       const minX = Math.floor((cameraX-origin)/tile);
       const minY = Math.floor((cameraY-origin)/tile);
@@ -2083,8 +2084,8 @@
       for(let gy=minY;gy<=maxY;gy++)for(let gx=minX;gx<=maxX;gx++){
         const x=Math.round(origin+gx*tile-cameraX), y=Math.round(origin+gy*tile-cameraY);
         ctx.save();
-        ctx.translate(x+(gx%2!==0?tile:0),y+(gy%2!==0?tile:0));
-        ctx.scale(gx%2!==0?-1:1,gy%2!==0?-1:1);
+        ctx.translate(x+(gx%2!==0?tile:0),y);
+        ctx.scale(gx%2!==0?-1:1,1);
         ctx.drawImage(courtyard,0,0,tile,tile);
         ctx.restore();
       }
@@ -2412,6 +2413,8 @@
   }
 
   document.addEventListener('keydown',e=>{
+    // Never treat OS/browser shortcuts (e.g. Alt+P, Ctrl+O) as game hotkeys.
+    if(e.altKey||e.ctrlKey||e.metaKey)return;
     const k=e.key.toLowerCase();
     if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();
     if((k==='o'||k==='p'||k==='escape')&&(state==='playing'||state==='inventory')){
@@ -2427,7 +2430,12 @@
     if(state==='intro'&&k==='e'&&!e.repeat)startGame(true);
     if(state==='end'&&k==='enter'&&e.target?.tagName!=='BUTTON')returnToModeSelect();
   });
-  window.addEventListener('blur',()=>{keys.clear();if(state==='playing')openInventory(false);});
+  // Only Escape / P / O (or the in-game buttons) may toggle pause.
+  // Changing browser focus, Alt+Tab or moving to another monitor must
+  // NOT open the pause menu. Clear movement keys to prevent stuck walking
+  // when the browser does not deliver a matching keyup event.
+  window.addEventListener('blur',()=>keys.clear());
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)keys.clear();});
   document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);

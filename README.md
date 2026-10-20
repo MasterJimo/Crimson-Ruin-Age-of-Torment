@@ -6,6 +6,12 @@
 
 All 13 ordinary enemies and bosses now use the original 192 × 192 transparent art frames, packed into one animated WebP atlas (`assets/monsters-hd-v032.webp`). Each enemy has four idle frames and six walking frames. The combat renderer selects the correct source frame at runtime and uses restrained silhouette lighting so creatures remain legible against the gothic courtyard. Visual sizes, damage, speeds, collision radii, spawns, and rewards are unchanged. A compact legacy atlas remains as a fallback if the HD texture has not loaded yet. The same high-resolution artwork appears in the Monster Bestiary.
 
+## Manual pause and upright courtyard
+
+**Escape**, **P**, or **O** toggle the paused Character Stats / Encyclopedia screen. Switching browser tabs, using Alt+Tab, or moving the pointer to another monitor does not automatically pause the game. On window blur or a hidden tab, held movement keys are cleared to avoid stuck movement; browsers may throttle animation in background tabs, so elapsed simulation time can advance more slowly there.
+
+The endlessly repeated courtyard texture mirrors **horizontally only**. Vertical mirroring has been removed so painted gravestones, crypts, monuments, and their shadows remain upright throughout the map.
+
 ## Full-screen responsive playfield
 
 Once a mode is selected, the arena fills the browser viewport instead of sitting inside a fixed-width 16:9 frame. The canvas backing resolution updates automatically on window resize and high-DPI displays (with a performance cap). The game uses a uniform world-to-screen scale: 16:9 shows the original 640 × 360 world units, ultrawide monitors show more horizontally, and taller monitors show more vertically. Sprites, hitboxes, projectiles, and movement do not stretch. The illustrated main menu keeps its original aspect ratio.
@@ -69,7 +75,7 @@ Every level-up offers **4 different cards**: one Attack, one Defense and two ran
 
 ## Enemies and Monster Bestiary
 
-Pause with **P** or **O** to open two main tabs: **Character Stats** (your current main spell and equipped power-ups on the left, real-time combat stats on the right) and **Encyclopedia**. Opening Encyclopedia reveals five chapters: **Monster Bestiary** (early/late/boss filters), **Elemental Mechanics** (all four spells and exact damage formulas), **Item Acquisition** (shrine timing, drops and rarity odds), **Power-Up Library** (18 perks, rarity and element-specific effects) and **Enemy Scaling** (five-minute stat table). Crosslinks jump between related articles. Enemy names are **not** displayed beneath creatures during combat.
+Pause deliberately with **Escape**, **P**, or **O** (or the game's pause/inventory button) to open two main tabs: **Character Stats** (your current main spell and equipped power-ups on the left, real-time combat stats on the right) and **Encyclopedia**. Opening Encyclopedia reveals five chapters: **Monster Bestiary** (early/late/boss filters), **Elemental Mechanics** (all four spells and exact damage formulas), **Item Acquisition** (shrine timing, drops and rarity odds), **Power-Up Library** (18 perks, rarity and element-specific effects) and **Enemy Scaling** (five-minute stat table). Crosslinks jump between related articles. Enemy names are **not** displayed beneath creatures during combat.
 
 **00:00–09:59 (early waves):** Skeleton Swordsman (simple sword melee), Plague Rat (weak but quick), Watcher Eye (slow caster, +1 projectile every 5 minutes), Skeleton Archer (high-damage slow arrow), Zombie (slow, heavy claw).
 
