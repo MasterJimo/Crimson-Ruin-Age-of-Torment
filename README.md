@@ -1,136 +1,36 @@
+<!-- MAINTAINER NOTE: Keep README focused on gameplay, controls and asset credits. Do not add version histories, "what's new", changelogs, release notes, or numbered update announcements here. Use GitHub Releases or CHANGELOG.md for those instead. -->
+
 # Crimson Ruin: Age of Torment
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)**
 
-## v0.33.2 — Unified in-game top utility bar
+A free, single-player **dark-fantasy arena survival roguelike** for desktop and mobile browsers, created by **MrJim** ([MasterJimo](https://github.com/MasterJimo)). Fight escalating hordes, defeat bosses, collect experience and shape a build around **Blood, Fire, Lightning or Poison**.
 
-The in-game top HUD is now a **single functional bar**, with no separate
-rounded boxes, panels, shadows or outlines surrounding kills, level, earned
-Oath title, HP, clock, or desktop sound controls. The health meter and volume
-sliders still have their recognizable fill tracks. Thin dividers distinguish
-sections without creating standalone boxes. The clock remains centered,
-the stats group still opens Character Stats / Encyclopedia, and all values,
-sounds, mobile touch controls and game mechanics are unchanged. The illustrated
-main menu is not affected.
+**Content notice:** 18+ creator advisory for gothic horror, dark themes, frightening creatures and stylised fantasy violence.
 
-## v0.33.1 — Play on phones (portrait and landscape)
+## How to play
 
-**Mobile phones and tablets now use an analog on-screen joystick**: drag
-from the center in any direction, including diagonally. A separate touch
-control dock sits below the arena, keeping the battle visible. Release your
-finger to stop. The **PAUSE** button opens Character Stats and the
-Encyclopedia; existing keyboard controls remain unchanged on desktop.
+1. Choose **Easy** or **Hardcore**, then pick your element.
+2. Move around the courtyard and avoid enemy attacks. **Spells fire automatically** at nearby enemies.
+3. Collect blue XP crystals, choose power-ups on level-up and use shrines, reliquaries and elemental Ascensions to strengthen your build.
+4. Survive as long as you can (up to **30 minutes**). Hardcore gets substantially more difficult as the run continues.
 
-Mobile HUD: kills/level and HP remain at the top, the clock stays in a fixed
-topbar cell, and the **SOUND** control expands the existing Music/SFX/Mute
-settings without consuming a permanent second header row. On portrait
-phones the title menu displays readable, native buttons instead of shrinking
-the entire landscape illustration. Landscape retains the approved art.
+### Controls
 
-The canvas reacts to viewport changes using its measured size and a
-uniform world scale, so players, monsters, attacks and collisions never
-stretch when rotating between portrait and landscape. The virtual stick
-is reset on release, cancel, orientation changes, lost focus and pause.
-The same touchscreen works with both **Easy** and **Hardcore**, including
-level-up choices, Reliquaries, Ascensions, inventory and Codex.
-
-**Browser limitation:** ordinary mobile web pages cannot reliably lock a
-phone's screen orientation. Instead, this game dynamically adapts to
-portrait and landscape and keeps navigation usable in either direction.
-
-## v0.33.0 — Four Torment Systems (review build)
-
-The v0.32.7 baseline is preserved at [backup/v0.32.7-before-new-mechanics-2026-10-20](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment/tree/backup/v0.32.7-before-new-mechanics-2026-10-20). The following systems are playable in both Easy and Hardcore, with all game UI in English.
-
-### Cursed Reliquaries & marked champions
-
-- Starting after 04:00, selected ordinary monster spawns become **Cursed Champions**, approximately once per 100 seconds (maximum one active at a time). Champions have **3.2× maximum HP, 1.35× damage, and 1.07× speed** and display a gold seal in the world. Bosses also drop reliquaries.
-- Champions and defeated bosses drop a glowing **Cursed Reliquary**, which can be collected by walking close. A maximum of three may be on the ground at once; each lasts **150 seconds**.
-- **CLAIM:** receive one eligible **Rare** power-up without a drawback.
-- **DESECRATE:** receive one eligible **Legendary (75%)** or **Mythic (25%)** power-up but take **15% increased damage** for **180 seconds**. The curse applies to normal hits and enemy Bleed, and picking another curse **refreshes rather than stacks** its timer.
-- Both choices grant one **Ascension Sigil** until an Ascension is selected. No unlimited sigil stacking. If no standard perk remains eligible, the reward switches to an existing **Survival Reward**.
-- The Abomination's existing free rare/legendary/mythic power-up on defeat remains intact and independent of this system.
-
-### Torment Ascension — 8 evolution choices
-
-Acquire an Ascension Sigil and reach **Element Rank 4**, meaning three Element Power upgrades. A selection screen offers exactly **two paths for the current element**, and only one Ascension may be chosen per run. Buffs persist even if you take more Element Power ranks later.
-
-| Element | Path A | Path B |
+| Action | Desktop | Phone / tablet |
 |---|---|---|
-| Blood | **Crimson Covenant:** +25% Blood damage; heal 3 HP every 20 kills | **Exsanguination:** +55% Blood damage but -15% maximum HP permanently |
-| Fire | **Ember Crown:** +30% attack rate, +15% Fire damage | **Cinder Aegis:** +20% Fire damage, +12% armor effectiveness; heal 1 HP for kills on burning foes |
-| Lightning | **Tempest Oracle:** +3 chain jumps and +20% attack rate | **Iron Thunder:** +35% Lightning damage and +10% armor effectiveness |
-| Poison | **Plague Sovereign:** +40% poison DPS | **Verdant Vow:** +15% poison DPS and +0.7 HP/s regeneration |
+| Move | **W / A / S / D** or **arrow keys** | Drag the **on-screen analog joystick** in any direction |
+| Pause / resume and open Character Stats / Encyclopedia | **P**, **O** or **Esc** | **PAUSE** button |
+| Music, SFX and mute | On-screen sound controls | **SOUND** settings |
 
-Ascension is a separate choice from normal level-up cards, does not consume a level, and cannot be reversed within the same run.
+The browser version supports portrait and landscape layouts. The **Encyclopedia** explains monsters, elemental mechanics, items, power-ups, scaling and Hunter's Oaths. For a shorter introduction, see [About & Controls](about.html).
 
-### Combat Clarity
+### Special systems
 
-Pause the hunt (**P**, **O**, or **Esc**) → **Encyclopedia → Combat Clarity** and choose a persistent preset:
-
-| Preset | Cosmetic particle count | Max simultaneous damage numbers |
-|---|---:|---:|
-| **Cinematic** | 100% | 125 |
-| **Balanced** (default) | 58% | 70 |
-| **Performance** | 22% | 20 |
-
-The change is visual only. Enemy attack warning lines, circles, projectiles, XP, shrines and boss health remain visible; damage and collision calculations are untouched. The preference is saved to browser local storage under `crimson-ruin-clarity-v033`.
-
-### Hunter's Oaths
-
-Pause → **Encyclopedia → Hunter's Oaths**. There are eight persistent, optional achievements: kill 100 enemies, kill 500, defeat the Gargoyle without receiving damage during the encounter, survive 15 minutes in Hardcore, survive 20 minutes in Hardcore, desecrate 3 reliquaries in one run, select an Ascension, and reach 30:00. Each oath unlocks a **cosmetic title** displayed on the hunter HUD; none improves combat stats. Unlocks are saved locally under `crimson-ruin-oaths-v033`. Browser storage may be cleared by the user and is not synced between devices. No account required.
-
-## Ability-name and audio-default update
-
-The Blood-exclusive perk is now named **Hemorrhagic** in all player-facing text, including the power-up card, the encyclopedia and documentation. Its combat effects and internal identifier remain unchanged. New players begin with **SFX at 1%**. Existing saved sound preferences are respected and will not be reset.
-
-## Single-row utility HUD
-
-During gameplay, the upper bar now contains a clickable **kills / level** display on
-the left (opens Character Stats / Encyclopedia), the **HP meter** immediately
-beside it, a smaller **fixed centered clock**, and the audio controls at the
-right. The old chest icon and duplicate arena overlays are gone. Large kill
-totals are compacted (for example `12.4K` or `1.2M`); the full count is still
-available via hover, and the original value is used for scoring. On narrower
-screens the audio controls wrap into a second header row, while the timer
-remains in a stable grid cell.
-
-## Courtyard texture clarity
-
-The original gothic courtyard artwork remains unchanged. Once its WebP texture
-loads, the game builds a **slightly sharper version** in a temporary Canvas
-using a weak five-sample unsharp mask (strength `0.18`) and a small contrast
-increase (`1.025`). The enhanced texture is cached and reused when drawing
-the infinitely tiled courtyard, so there is **no extra image processing per
-frame**. Characters, enemies, spells, HUD, hitboxes and gameplay are untouched.
-If browser pixel access or memory is unavailable, the game continues with the
-original texture automatically.
-
-## Sharper animated monster sprites
-
-All 13 ordinary enemies and bosses now use the original 192 × 192 transparent art frames, packed into one animated WebP atlas (`assets/monsters-hd-v032.webp`). Each enemy has four idle frames and six walking frames. The combat renderer selects the correct source frame at runtime and uses restrained silhouette lighting so creatures remain legible against the gothic courtyard. Visual sizes, damage, speeds, collision radii, spawns, and rewards are unchanged. A compact legacy atlas remains as a fallback if the HD texture has not loaded yet. The same high-resolution artwork appears in the Monster Bestiary.
-
-## Manual pause and upright courtyard
-
-**Escape**, **P**, or **O** toggle the paused Character Stats / Encyclopedia screen. Switching browser tabs, using Alt+Tab, or moving the pointer to another monitor does not automatically pause the game. On window blur or a hidden tab, held movement keys are cleared to avoid stuck movement; browsers may throttle animation in background tabs, so elapsed simulation time can advance more slowly there.
-
-The endlessly repeated courtyard texture mirrors **horizontally only**. Vertical mirroring has been removed so painted gravestones, crypts, monuments, and their shadows remain upright throughout the map.
-
-## Full-screen responsive playfield
-
-Once a mode is selected, the arena fills the browser viewport instead of sitting inside a fixed-width 16:9 frame. The canvas backing resolution updates automatically on window resize and high-DPI displays (with a performance cap). The game uses a uniform world-to-screen scale: 16:9 shows the original 640 × 360 world units, ultrawide monitors show more horizontally, and taller monitors show more vertically. Sprites, hitboxes, projectiles, and movement do not stretch. The illustrated main menu keeps its original aspect ratio.
-
-## Hardcore escalation at 15:00
-
-Hardcore receives an additional, deliberately severe enemy-scaling curve starting **exactly at 15:00**. Earlier Hardcore gameplay (before 15:00) and **all of Easy Mode, including late waves, remain unchanged**. The existing base enemy stats and boss spawn times remain unchanged.
-
-| Time | Hardcore HP stage | Damage stage | Speed stage | Spawn stage | Special surge group |
-|---|---:|---:|---:|---:|---:|
-| 15:00–19:59 | ×8 | ×2.25 | ×1.45 | ×5.2 | +8 extra enemies |
-| 20:00–24:59 | ×15.5 | ×3.15 | ×1.58 | ×8 | +14 extra enemies |
-| 25:00–29:59 | ×29 | ×4.5 | ×1.70 | ×11 | +20 extra enemies |
-
-These are **total stage multipliers**, applied together with the original minute-by-minute HP/Damage/Speed formulas (not extra multiplicative stacks). Existing enemies gain the stage adjustment when a five-minute surge begins. Hardcore spawn pressure can reach 72 instead of 40, but the **maximum number of active enemies stays 230** to control performance. The horde's attack and movement behavior is otherwise unchanged. The Enemy Scaling page displays the appropriate live Hardcore or Easy values.
+- **Cursed champions and reliquaries:** Defeat marked enemies or bosses to receive a reliquary; choose a safer **CLAIM** reward or a stronger **DESECRATE** reward with a temporary damage-taken curse.
+- **Torment Ascensions:** Acquire a sigil and develop an element to choose one of two special evolutions for that element (one Ascension per run).
+- **Hunter's Oaths:** Optional achievements that unlock cosmetic titles; they do not increase combat power.
+- **Combat Clarity:** Cinematic, Balanced and Performance effect presets to reduce visual clutter without changing gameplay.
 
 ## Core mechanics
 
@@ -236,10 +136,6 @@ Four fixed **Common** replacement rewards are offered only when standard eligibl
 
 A Phoenix revival triggers before death from a direct hit or bleeding, consumes one charge, restores **35% maximum HP**, clears enemy Bleed stacks, and gives **2 seconds** of damage immunity. The amount of XP collected remains unrestricted for scorekeeping, but leveling stops at level **150**.
 
-## Smooth XP magnet movement
-
-Normal blue XP crystals begin to accelerate when entering your effective **84 × Soul Magnet** pickup radius. Their attraction speed ramps positively from **130 to 640 units/s in 0.7 seconds**, with movement clamped to the remaining distance to prevent bouncing or overshooting. A crystal is collected when it reaches the hunter. The global Magnet Shrine still collects XP instantly. A cap of **140 simultaneous floating combat texts** limits visual spam without limiting damage.
-
 ## Shrines
 
 | Shrine | Spawn timing | Mechanic |
@@ -248,19 +144,47 @@ Normal blue XP crystals begin to accelerate when entering your effective **84 ×
 | **Magnet Shrine** | **Guaranteed at 00:45**. After each collection, the next spawns randomly **90–150s later**; max **1** active. | Instantly collects **all unclaimed map XP** and grants **15s of global XP collection** for new drops. |
 | **Power Shrine** | **Guaranteed at 02:00**, then randomly **4–6 minutes after the previous pickup**; maximum **1** active. | Grants **1 Legendary (75%) or Mythic (25%) perk immediately**, without consuming XP or a level. **Hemorrhagic has a 40% roll for Blood** until acquired; otherwise Element Power weighs **×5**, Critical Damage **×3**, and Forward Shot / Spread Shot / Piercing Fangs / Deadly Precision / Rapid Fire **×2**. Banned and capped perks cannot roll. |
 
-## Music Credits
+## Assets and Credits
+
+Credits below refer to materials actually loaded by the game, with the original authors and source links preserved from the existing README and [audio source notes](assets/audio/SOURCES.md). **CC0 applies only to the individual works labelled CC0; it is not a license for the entire game.**
 
 ### Music
 
-| Track | Artist | Source | License |
-|---|---|---|---|
-| Ancient Caverns | [congusbongus](https://opengameart.org/content/ancient-caverns-horror-ambient-loop) | [OpenGameArt](https://opengameart.org/content/ancient-caverns-horror-ambient-loop) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Music | Composer / artist | Original source | Used in game | License |
+|---|---|---|---|---|
+| **Ancient Caverns (horror ambient loop)** | **[congusbongus](https://opengameart.org/users/congusbongus)** (published under this creator name; legal name not listed) | [OpenGameArt — Ancient caverns](https://opengameart.org/content/ancient-caverns-horror-ambient-loop) | Streamed from [`caverns.ogg`](https://opengameart.org/sites/default/files/caverns.ogg), referenced by [`game.js`](game.js) → `MUSIC_TRACKS.caverns`; **not stored in this repository** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 
-### Sound Effects
+### Sound effects (third-party recordings)
 
-| Element | Artist | Source | License |
-|---|---|---|---|
-| Blood | [_stubb](https://freesound.org/people/_stubb/) | [Freesound](https://freesound.org/people/_stubb/sounds/406582/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| Fire | [qubodup](https://freesound.org/people/qubodup/) | [Freesound](https://freesound.org/people/qubodup/sounds/442871/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| Lightning | [JoelAudio](https://freesound.org/people/JoelAudio/) | [Freesound](https://freesound.org/people/JoelAudio/sounds/136542/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| Poison | [qubodup](https://freesound.org/people/qubodup/) | [Freesound](https://freesound.org/people/qubodup/sounds/751338/) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+The four in-game elemental attack samples are **short edited derivatives** of these Freesound recordings. Their local MP3 versions are under [`assets/audio/`](assets/audio/); the full conversion/edit details are in [`assets/audio/SOURCES.md`](assets/audio/SOURCES.md).
+
+| In-game effect | Creator (Freesound) | Original recording and link | Local file | License |
+|---|---|---|---|---|
+| **Blood attack** | **[_stubb](https://freesound.org/people/_stubb/)** | [Blood Spatter_Squelch_Near_Mono](https://freesound.org/people/_stubb/sounds/406582/) | [`assets/audio/attack-blood.mp3`](assets/audio/attack-blood.mp3) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| **Fire attack** | **[qubodup](https://freesound.org/people/qubodup/)** | [Fire Spell](https://freesound.org/people/qubodup/sounds/442871/) | [`assets/audio/attack-fire.mp3`](assets/audio/attack-fire.mp3) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| **Lightning attack** | **[JoelAudio](https://freesound.org/people/JoelAudio/)** | [ELECTRIC_ZAP_001.wav](https://freesound.org/people/JoelAudio/sounds/136542/) | [`assets/audio/attack-lightning.mp3`](assets/audio/attack-lightning.mp3) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| **Poison attack** | **[qubodup](https://freesound.org/people/qubodup/)** | [Slime Attack 1](https://freesound.org/people/qubodup/sounds/751338/) | [`assets/audio/attack-poison.mp3`](assets/audio/attack-poison.mp3) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+
+**Additional source-layer credits:** The Freesound description for qubodup's **Fire Spell** also credits CC0 inputs by **[SoundCollectah](https://freesound.org/people/SoundCollectah/sounds/109360/)**, **[qubodup](https://freesound.org/people/qubodup/sounds/176724/)**, **[Leandri140029](https://freesound.org/people/Leandri140029/sounds/437547/)** and **[hellonyou](https://freesound.org/people/hellonyou/sounds/426852/)**. qubodup's **Slime Attack 1** combines the creator's own [Slime](https://freesound.org/people/qubodup/sounds/127449/) and [Chicken Meat Slime](https://freesound.org/people/qubodup/sounds/211605/) recordings. These are **credits for source recordings used to create the published Freesound effects**, not separate audio files included in Crimson Ruin.
+
+All four shipped MP3 clips were converted/cropped, normalised and faded for gameplay use, as detailed in [the audio source notes](assets/audio/SOURCES.md). Other UI/combat cues created by the browser's **Web Audio API** are generated in [`game.js`](game.js), so they have no external sound-file attribution.
+
+### Artwork and visual assets
+
+The following images are stored locally in [`assets/`](assets/) and loaded by the game. **Their original artists, download pages and usage licenses are not identified in the checked-in documentation.** The [`assets.js`](assets.js) header states that some artwork was assembled from project-supplied transparent PNG contact sheets, but this does not establish the original artist or license. No unverified third-party ownership or CC0 license is claimed.
+
+| Artwork / usage | Files in the repository | Source / artist status |
+|---|---|---|
+| Main menu and courtyard | [`approved-menu-full-v0291.webp`](assets/approved-menu-full-v0291.webp), [`courtyard-new-v021.webp`](assets/courtyard-new-v021.webp) | Not documented in repository |
+| Hunter, creatures and bosses | [`veilwarden-opaque-v103.png`](assets/veilwarden-opaque-v103.png), [`monsters-hd-v032.webp`](assets/monsters-hd-v032.webp), [`monsters-v031.png`](assets/monsters-v031.png), [`death-reaper-v019.webp`](assets/death-reaper-v019.webp) | Not documented in repository |
+| Elemental spells, particles and skill icons | [`effects.png`](assets/effects.png), [`elemental-projectiles-v11.png`](assets/elemental-projectiles-v11.png), [`elemental-skills-v0301.webp`](assets/elemental-skills-v0301.webp), [`skill-icons-v0231.webp`](assets/skill-icons-v0231.webp) | Not documented in repository |
+| Shrines, fountain and interface ribbon | [`blood-fountain-v014.png`](assets/blood-fountain-v014.png), [`magnet-shrine-v020.webp`](assets/magnet-shrine-v020.webp), [`power-shrine-v025.png`](assets/power-shrine-v025.png), [`easy-ribbon-v019.webp`](assets/easy-ribbon-v019.webp) | Not documented in repository |
+
+**Artwork attribution still to verify:** If any of these images came from an outside artist, marketplace, asset pack or image-generation service, the owner should add its **original creator, source URL, applicable license/terms and corresponding file(s)** when that information becomes available. Please do not invent credits or assume the artwork is public domain.
+
+### Game and technology
+
+- **Game creator:** **MrJim** ([MasterJimo](https://github.com/MasterJimo)).
+- **Implementation:** JavaScript, HTML, CSS, Canvas 2D and browser Web Audio API; see [`game.js`](game.js), [`sprites.js`](sprites.js), [`assets.js`](assets.js), [`monsters.js`](monsters.js) and [`style.css`](style.css).
+- **Privacy information:** [Privacy Policy](privacy.html).
+
