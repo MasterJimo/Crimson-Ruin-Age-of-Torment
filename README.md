@@ -94,6 +94,31 @@ These are **total tier multipliers**, not multipliers compounded across earlier 
 - Attack samples last approximately **180ms (Blood)**, **190ms (Fire)**, **130ms (Lightning)** and **180ms (Poison)**, with adjusted loudness, a 25ms fade-out and randomized pitch **±4%**.
 - Up to **2 overlapping attack sample voices**; a compressor and final limiter control peaks. Special event sounds (hits, level-ups, shrines, deaths) remain independent of the attack rate cap. Until a local file loads, a capped synthesized attack sound acts as a fallback.
 
+## Music and sound credits
+
+All externally sourced audio currently used by the game comes from **OpenGameArt.org** and **Freesound.org**. These five recordings are published under **[Creative Commons CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/)**. Attribution is not legally required by CC0, but the creators and original sources are credited here voluntarily.
+
+### Music
+
+| In-game music | Artist | Source website / original recording | License |
+|---|---|---|---|
+| **Ancient Caverns** (looping background ambience) | **[congusbongus](https://opengameart.org/content/ancient-caverns-horror-ambient-loop)** | **[OpenGameArt — Ancient caverns (horror ambient loop)](https://opengameart.org/content/ancient-caverns-horror-ambient-loop)** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+
+The background track is streamed directly from OpenGameArt as `https://opengameart.org/sites/default/files/caverns.ogg`.
+
+### Elemental sound effects
+
+| Attack sound | Artist | Source website / original recording | License |
+|---|---|---|---|
+| **Blood** | **[_stubb](https://freesound.org/people/_stubb/)** | **[Freesound — Blood Spatter_Squelch_Near_Mono](https://freesound.org/people/_stubb/sounds/406582/)** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| **Fire** | **[qubodup](https://freesound.org/people/qubodup/)** | **[Freesound — Fire Spell](https://freesound.org/people/qubodup/sounds/442871/)** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| **Lightning** | **[JoelAudio](https://freesound.org/people/JoelAudio/)** | **[Freesound — ELECTRIC_ZAP_001.wav](https://freesound.org/people/JoelAudio/sounds/136542/)** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| **Poison** | **[qubodup](https://freesound.org/people/qubodup/)** | **[Freesound — Slime Attack 1](https://freesound.org/people/qubodup/sounds/751338/)** | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+
+These Freesound WAV / FLAC recordings were **cropped, converted into short mono MP3 samples, peak-normalized and faded in/out** for the game. Other in-game cues (e.g., pickups, hits, level-ups and deaths) are **procedurally synthesized with Web Audio API**, not externally sourced recordings.
+
+Full source and adaptation details: [assets/audio/SOURCES.md](assets/audio/SOURCES.md).
+
 ## Shrines
 
 | Shrine | Spawn timing | Mechanic |
