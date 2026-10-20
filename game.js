@@ -202,6 +202,77 @@
   const keys = new Set();
   let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 10, sfxVolume = 5, sfx = null;
   let musicPlayer = null, currentTrack = 'caverns';
+  // Four local CC0 Freesound samples: max 7 attack cues/s, max 2 voices.
+  // One cue per attack action, NOT per multishot projectile or enemy hit.
+  const ATTACK_AUDIO_PATHS=Object.freeze({
+    blood:'assets/audio/attack-blood.mp3',
+    fire:'assets/audio/attack-fire.mp3',
+    lightning:'assets/audio/attack-lightning.mp3',
+    poison:'assets/audio/attack-poison.mp3'
+  });
+  const ATTACK_AUDIO_MAX_RATE=7,ATTACK_AUDIO_MAX_VOICES=2;
+  const ATTACK_AUDIO_CUTS={blood:.11,fire:.14,lightning:.08,poison:.11};
+  let attackBuffers=Object.create(null),attackAudioLoading=false,attackLastAt=-Infinity,attackVoices=[];
+  let sfxCompressor=null,sfxLimiter=null;
+  function ensureSfx(){
+    if(!sfx){
+      sfx=new (window.AudioContext||window.webkitAudioContext)();
+      sfxCompressor=sfx.createDynamicsCompressor();
+      sfxCompressor.threshold.value=-21;
+      sfxCompressor.knee.value=10;
+      sfxCompressor.ratio.value=4;
+      sfxCompressor.attack.value=.003;
+      sfxCompressor.release.value=.13;
+      sfxLimiter=sfx.createDynamicsCompressor();
+      sfxLimiter.threshold.value=-4;
+      sfxLimiter.knee.value=0;
+      sfxLimiter.ratio.value=18;
+      sfxLimiter.attack.value=.001;
+      sfxLimiter.release.value=.07;
+      sfxCompressor.connect(sfxLimiter);sfxLimiter.connect(sfx.destination);
+    }
+    if(sfx.state==='suspended')sfx.resume().catch(()=>{});
+    return sfx;
+  }
+  async function loadAttackAudio(){
+    if(attackAudioLoading||Object.keys(attackBuffers).length===4)return;
+    attackAudioLoading=true;
+    try{
+      const audio=ensureSfx();
+      await Promise.all(Object.entries(ATTACK_AUDIO_PATHS).map(async ([element,path])=>{
+        if(attackBuffers[element])return;
+        try{
+          const response=await fetch(path);
+          if(!response.ok)throw new Error('Audio '+response.status);
+          attackBuffers[element]=await audio.decodeAudioData(await response.arrayBuffer());
+        }catch(err){console.warn('Attack audio unavailable:',element,err);}
+      }));
+    }finally{attackAudioLoading=false;}
+  }
+  function playAttackSample(element){
+    const audio=ensureSfx(),now=audio.currentTime;
+    if(now-attackLastAt+0.002<1/ATTACK_AUDIO_MAX_RATE)return 'skip';
+    attackVoices=attackVoices.filter(voice=>voice.endAt>now);
+    if(attackVoices.length>=ATTACK_AUDIO_MAX_VOICES)return 'skip';
+    attackLastAt=now;
+    const buffer=attackBuffers[element];
+    if(!buffer)return 'fallback';
+    const source=audio.createBufferSource(),gain=audio.createGain();
+    source.buffer=buffer;
+    source.playbackRate.value=.96+Math.random()*.08; // Subtle +/-4% pitch variation.
+    const length=Math.min(ATTACK_AUDIO_CUTS[element]||.11,buffer.duration/source.playbackRate.value);
+    const fadeStart=Math.max(.004,length-.025);
+    gain.gain.setValueAtTime(0,now);
+    gain.gain.linearRampToValueAtTime(.70*sfxVolume/100,now+.004);
+    gain.gain.setValueAtTime(.70*sfxVolume/100,now+fadeStart);
+    gain.gain.linearRampToValueAtTime(0,now+length);
+    source.connect(gain);gain.connect(sfxCompressor);
+    const voice={endAt:now+length};
+    attackVoices.push(voice);
+    source.onended=()=>{const i=attackVoices.indexOf(voice);if(i>=0)attackVoices.splice(i,1);source.disconnect();gain.disconnect();};
+    source.start(now);source.stop(now+length);
+    return 'played';
+  }
 
   function ensureMusicPlayer(){
     if (musicPlayer) return musicPlayer;
@@ -602,14 +673,18 @@
   function playSound(kind){
     if(muted || sfxVolume === 0) return;
     try {
-      sfx ||= new (window.AudioContext||window.webkitAudioContext)();
-      if(sfx.state==='suspended') sfx.resume();
-      const o=sfx.createOscillator(), g=sfx.createGain(), now=sfx.currentTime;
+      if(kind==='start')void loadAttackAudio();
+      if(kind==='shot'&&game?.player?.element){
+        // Throttle only the audio: gameplay and shot frequency are unchanged.
+        if(playAttackSample(game.player.element)!=='fallback')return;
+      }
+      const audio=ensureSfx();
+      const o=audio.createOscillator(), g=audio.createGain(), now=audio.currentTime;
       const tone={shot:[280,105,.12,.053],hit:[96,45,.15,.065],pickup:[740,1100,.11,.045],level:[520,980,.45,.08],start:[180,390,.24,.05],hurt:[170,70,.2,.09],death:[300,55,.7,.065],boss:[110,52,.5,.11],crack:[380,95,.09,.07]}[kind]||[280,180,.1,.03];
       o.type = kind==='hit'||kind==='hurt' ? 'sawtooth' : 'triangle';
       o.frequency.setValueAtTime(tone[0],now); o.frequency.exponentialRampToValueAtTime(tone[1],now+tone[2]);
       g.gain.setValueAtTime(tone[3] * sfxVolume / 100,now); g.gain.exponentialRampToValueAtTime(.0001,now+tone[2]);
-      o.connect(g); g.connect(sfx.destination); o.start(now); o.stop(now+tone[2]);
+      o.connect(g); g.connect(sfxCompressor); o.start(now); o.stop(now+tone[2]);
     } catch(_){}
   }
 
@@ -725,6 +800,7 @@
       game.player.attackRate=ELEMENT_ATTACK_RATE[choice.element];
       if(choice.element==='lightning')game.player.projectileSpeed*=1.25;
       game.player.shotCd=0;
+      attackLastAt=-Infinity;attackVoices=[];
       state='playing';el.upgrade.classList.add('hidden');
       el.status.textContent=`${choice.name} ATTUNED`;
       for(let i=0;i<5;i++)spawnEnemy('skeleton',rand(180,320),rand(0,TAU));
