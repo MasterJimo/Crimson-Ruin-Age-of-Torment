@@ -2,6 +2,10 @@
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)**
 
+## Sharper animated monster sprites
+
+All 13 ordinary enemies and bosses now use the original 192 × 192 transparent art frames, packed into one animated WebP atlas (`assets/monsters-hd-v032.webp`). Each enemy has four idle frames and six walking frames. The combat renderer selects the correct source frame at runtime and uses restrained silhouette lighting so creatures remain legible against the gothic courtyard. Visual sizes, damage, speeds, collision radii, spawns, and rewards are unchanged. A compact legacy atlas remains as a fallback if the HD texture has not loaded yet. The same high-resolution artwork appears in the Monster Bestiary.
+
 ## Full-screen responsive playfield
 
 Once a mode is selected, the arena fills the browser viewport instead of sitting inside a fixed-width 16:9 frame. The canvas backing resolution updates automatically on window resize and high-DPI displays (with a performance cap). The game uses a uniform world-to-screen scale: 16:9 shows the original 640 × 360 world units, ultrawide monitors show more horizontally, and taller monitors show more vertically. Sprites, hitboxes, projectiles, and movement do not stretch. The illustrated main menu keeps its original aspect ratio.

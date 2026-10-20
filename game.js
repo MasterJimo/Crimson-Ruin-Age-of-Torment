@@ -91,7 +91,29 @@
   const ENEMIES=window.CrimsonMonsters.byId;
   const ENEMY_SPAWNING_ENABLED=true;
   const MONSTER_ART_ORDER=['skeleton','plague_rat','eye','skeleton_archer','zombie','blood_slime','succubus','imp','hellhound','necromancer','boss1','boss3','boss2'];
+  // Keep the tiny atlas as a fallback for slow/offline asset loads.
+  const MONSTER_ART_INDEX=Object.fromEntries(MONSTER_ART_ORDER.map((id,index)=>[id,index]));
   const monsterAtlas=new Image();monsterAtlas.src='assets/monsters-v031.png';
+  // High-detail atlas: 13 monster rows × 10 animation frames, 192 px per frame.
+  // One cached texture for the entire horde instead of dozens of image requests.
+  const MONSTER_HD_TILE=192,MONSTER_HD_FRAMES=10;
+  const monsterHDAtlas=new Image();
+  monsterHDAtlas.decoding='async';
+  monsterHDAtlas.src='assets/monsters-hd-v032.webp';
+  function monsterHDReady(){
+    return monsterHDAtlas.complete&&monsterHDAtlas.naturalWidth===MONSTER_HD_TILE*MONSTER_HD_FRAMES
+      &&monsterHDAtlas.naturalHeight===MONSTER_HD_TILE*MONSTER_ART_ORDER.length;
+  }
+  const MONSTER_FAST_ANIMS=new Set(['plague_rat','succubus','imp','hellhound','eye']);
+  const MONSTER_IDLE_STATES=new Set(['chargeWarn','abominationWindup','demonBlast','summon']);
+  function monsterHDFrame(e){
+    // The supplied sheets contain 4 idle frames (3 fps) and 6 walk frames
+    // (8 fps, 10 fps for faster creatures). Phase already advances at 6/s.
+    const idle=e.attackWindup>0||MONSTER_IDLE_STATES.has(e.attackState);
+    if(idle)return Math.floor(e.phase*.5)%4;
+    const rate=MONSTER_FAST_ANIMS.has(e.type)?10/6:8/6;
+    return 4+Math.floor(e.phase*rate)%6;
+  }
 
   // v0.13: sixteen curated perks. Twelve are universal and four are
   // element-specific; only the power corresponding to the chosen element rolls.
@@ -1119,9 +1141,10 @@
       const card=codexArticle(monster.name,'HP '+monster.hp+' · SPEED '+monster.speed+' · HIT '+monster.damage,
         monster.attack+' every '+monster.interval+'s. '+monster.notes);
       const art=codexElement('span','codex-monster-art');
-      art.style.backgroundImage="url('assets/monsters-v031.png')";
-      art.style.backgroundSize='1300% 100%';
-      art.style.backgroundPosition=(idx*100/12)+'% center';
+      // The original mini atlas remains visible until the HD artwork loads.
+      art.style.backgroundImage="url('assets/monsters-hd-v032.webp'), url('assets/monsters-v031.png')";
+      art.style.backgroundSize='1000% 1300%, 1300% 100%';
+      art.style.backgroundPosition='0% '+(idx*100/12)+'%, '+(idx*100/12)+'% center';
       card.article.querySelector('summary').prepend(art);
       const tag=codexElement('p','codex-article-detail',monster.boss?'Boss appears '+timeText(monster.bossAt):
         'Spawn window: '+(monster.phase===0?'00:00–09:59':'10:00–29:59'));
@@ -2038,8 +2061,13 @@
       shadowAt(x,y+3,18*c.scale,.42);
       ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.rotate(c.rot);
       ctx.globalAlpha=Math.min(.75,.4+c.age*1.8);
-      const idx=MONSTER_ART_ORDER.indexOf(c.type);
-      if(idx>=0&&monsterAtlas.complete&&monsterAtlas.naturalWidth){
+      const idx=MONSTER_ART_INDEX[c.type]??-1;
+      if(idx>=0&&monsterHDReady()){
+        ctx.imageSmoothingEnabled=true;
+        // A still frame for dead enemies: animation is only for living sprites.
+        ctx.drawImage(monsterHDAtlas,0,idx*MONSTER_HD_TILE,MONSTER_HD_TILE,MONSTER_HD_TILE,
+          -wide/2,-flat/2,wide,flat);
+      }else if(idx>=0&&monsterAtlas.complete&&monsterAtlas.naturalWidth){
         ctx.drawImage(monsterAtlas,idx*40,0,40,40,-wide/2,-flat/2,wide,flat);
       }else{
         ctx.fillStyle=def.color;ctx.fillRect(-wide/2,-flat/2,wide,flat);
@@ -2123,8 +2151,18 @@
     else if(def.boss){ctx.shadowColor='#b74155';ctx.shadowBlur=7;}
     const width=def.boss?e.type==='boss3'?111:99:e.type==='plague_rat'?66:e.type==='hellhound'?74:61;
     const height=def.boss?e.type==='boss3'?113:104:e.type==='plague_rat'?46:e.type==='blood_slime'?55:72;
-    const idx=MONSTER_ART_ORDER.indexOf(e.type);
-    if(monsterAtlas.complete&&monsterAtlas.naturalWidth&&idx>=0){
+    const idx=MONSTER_ART_INDEX[e.type]??-1;
+    if(idx>=0&&monsterHDReady()){
+      ctx.imageSmoothingEnabled=true;
+      // Preserve source detail at any monitor resolution while keeping
+      // identical on-screen sprite sizes, foot anchors and collision radii.
+      // A restrained rim-light helps silhouettes stand off the dark courtyard.
+      ctx.shadowColor=def.boss?'rgba(255,194,179,.40)':'rgba(255,224,192,.23)';
+      ctx.shadowBlur=def.boss?4:2;
+      const frame=monsterHDFrame(e);
+      ctx.drawImage(monsterHDAtlas,frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,
+        MONSTER_HD_TILE,MONSTER_HD_TILE,-width/2,-height+13,width,height);
+    }else if(monsterAtlas.complete&&monsterAtlas.naturalWidth&&idx>=0){
       ctx.imageSmoothingEnabled=true;
       ctx.drawImage(monsterAtlas,idx*40,0,40,40,-width/2,-height+13,width,height);
     }else{

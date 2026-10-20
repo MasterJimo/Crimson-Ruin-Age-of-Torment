@@ -1149,3 +1149,13 @@ body:has(#intro.hidden) .footer{
   .boss-bar{top:120px;}
   .float-messages{top:178px;}
 }
+
+/* v0.32.0 — crisp high-definition enemies in combat and bestiary. */
+.codex-monster-art{
+  flex:0 0 58px;
+  height:58px;
+  background-color:#120a11;
+  background-repeat:no-repeat;
+  image-rendering:auto;
+}
+@media(max-width:730px){.codex-monster-art{flex-basis:49px;height:49px;}}
