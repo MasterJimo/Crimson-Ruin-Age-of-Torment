@@ -1115,7 +1115,7 @@
     const focus=codexFocus;codexFocus=null;
     const contents=[
       ['blood','BLOOD','Slow piercing spear · 80 units/s','Direct = (21.6 × (1 + 0.05 × Blood Power units) + Brutality). Each contact adds 1 + Piercing Fangs stacks, up to 8 lasting 8s. One stack = actual hit damage / 8 damage per second. A single spear may hit again after 0.6s. Hemorrhagic Burst replaces the damage-over-time stacks with an instant 8-stack blast.'],
-      ['fire','FIRE','Exploding fireball · 290 units/s','Direct = 43.2 × (1 + 0.05 × Fire Power units) + Brutality. First hit explodes, radius = 55 × (1 + 0.1 × Piercing Fangs). Every target in the radius burns for 2s. Burn DPS = base Fire direct damage (before crit), refreshed on subsequent hits.'],
+      ['fire','FIRE','Exploding fireball · 290 units/s','Direct = 43.2 × (1 + 0.05 × Fire Power units) + Brutality. First hit explodes, radius = 55 × (1 + 0.1 × Piercing Fangs). Every target in the radius burns for 2s. Burn DPS = base Fire direct damage (before crit), refreshed on subsequent hits. All Fireballs from the same attack share one direct-hit record, including secondary blasts: only one can damage each enemy per salvo. Poison orbs can still shotgun.'],
       ['lightning','LIGHTNING','Chain Lightning · 235 units/s','Direct = random integer 1–200 × (1 + 0.05 × Lightning Power units) + Brutality. Each impact can Shock (50% chance, 4s); Shock doubles incoming direct damage. Base 4 chain jumps, +1 per Piercing Fangs and +2 per Spread Shot, max 25. Forward Shot adds 1 random rear bolt, then 2 separately angled rear-flank bolts (up to 3 total); bonus bolts never share the same direction.'],
       ['poison','POISON','Toxic Orb · 210 units/s','The explosion radius = 55 × (1 + 0.1 × Piercing Fangs). Every victim gets a permanent stack worth 15 × (1 + 0.05 × Poison Power units) DPS, multiplied by crit strength if that stack crits. At 5+ stacks on enemy defeat, Poison spreads 5 stacks to up to 6 nearby targets.']
     ];
@@ -1253,6 +1253,9 @@
     const element=p.element;
     const baseSpeed={blood:80,lightning:235,fire:290,poison:210}[element]||142;
     const speed=baseSpeed*p.projectileSpeed;
+    // A Fireball salvo shares its hit record: one damaging Fireball per enemy.
+    // Poison orbs intentionally keep independent hit records and can shotgun.
+    const fireSalvoHits=element==='fire'?new Set():null;
     const directions=[0];
     const forwardCount=element==='lightning'?Math.min(2,p.forwardShots):p.forwardShots;
       // Every bonus lightning bolt chooses a different angle on EACH attack.
@@ -1283,7 +1286,7 @@
           Math.max(1.5,420/Math.max(1,speed)),
         damage,kind:element,fire:element==='fire',poison:element==='poison',
         lightning:element==='lightning',size:p.projectileSize,
-        hit:new Set(),lastHit:new Map()
+        fireSalvoHits,hit:new Set(),lastHit:new Map()
       });
     }
     addParticles(p.x+Math.cos(aim)*13,p.y+Math.sin(aim)*13,
@@ -1727,9 +1730,12 @@
             // permits a second hit while an enemy remains inside the spear.
             const last=b.lastHit.get(e);
             if(last!==undefined&&g.time-last<.60)continue;
-          }else if(b.hit.has(e))continue;
+          }else if(b.hit.has(e)||b.fireSalvoHits?.has(e))continue;
           if(dist2(b.x,b.y,e.x,e.y-4)>(e.r+5*(b.size||1))**2)continue;
           b.hit.add(e);
+          // Prevent direct/secondary Fireball hits from the same attack
+          // from dealing damage to this enemy a second time.
+          if(b.fireSalvoHits)b.fireSalvoHits.add(e);
           if(b.element==='blood')b.lastHit.set(e,g.time);
           const crit=Math.random()<p.critChance;
           const dmg=applyHitDamage(e,b.damage*(ENEMIES[e.type]?.boss?p.bossDamage:1)*
@@ -1749,7 +1755,8 @@
           }else if(b.element==='fire'||b.element==='poison'){
             elementalSplash(b.element,e,p);
           }
-          if(Math.random()<p.blastChance)explodeAt(e.x,e.y,dmg*.48,e,b.hit);
+          if(Math.random()<p.blastChance)
+            explodeAt(e.x,e.y,dmg*.48,e,b.fireSalvoHits||b.hit);
           if(dmg>0)floatText(e.x,e.y-20,`${Math.ceil(dmg)}${crit?'!':''}`,
             crit?'#ffd274':'#ffe9d0');
           if(e.hp<=0)enemyDie(e);
