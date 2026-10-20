@@ -241,17 +241,179 @@
     p.elementRank++;
     p.elementDamageBonus=(p.elementDamageBonus||0)+.05*rarityUnits;
     const multiplier=1+p.elementDamageBonus;
-    if(p.element!=='poison')p.damage=ELEMENT_DAMAGE[p.element]*multiplier;
+    // Permanent ascension bonuses must survive subsequent Element Power cards.
+    const ascensionBoost=({crimson_covenant:1.25,exsanguination:1.55,
+      ember_crown:1.15,cinder_aegis:1.2,iron_thunder:1.35})[p.ascension]||1;
+    if(p.element!=='poison')p.damage=ELEMENT_DAMAGE[p.element]*multiplier*ascensionBoost;
     // Existing elemental DoT scales by the same single damage modifier.
     // Existing Burn immediately benefits from Fire Power as well as Brutality.
     if(p.element==='fire')syncActiveBurn(p,g);
     if(p.element==='poison'){
-      p.poisonMultiplier=multiplier;
+      p.poisonMultiplier=multiplier*(({plague_sovereign:1.4,verdant_vow:1.15})[p.ascension]||1);
       for(const enemy of g.enemies){
-        if(enemy.poisonStacks>0)enemy.poisonDps=(enemy.poisonStackStrength||enemy.poisonStacks)*POISON_DPS*multiplier;
+        if(enemy.poisonStacks>0)enemy.poisonDps=(enemy.poisonStackStrength||enemy.poisonStacks)*POISON_DPS*p.poisonMultiplier;
       }
     }
   }
+
+  // v0.33.0 — four interconnected optional systems.
+  // All persistent rewards from Oaths are cosmetic: no account-level power creep.
+  const CLARITY_SETTINGS_KEY='crimson-ruin-clarity-v033';
+  const OATHS_KEY='crimson-ruin-oaths-v033';
+  const CLARITY_PRESETS={
+    cinematic:{name:'CINEMATIC',particles:1,texts:125},
+    balanced:{name:'BALANCED',particles:.58,texts:70},
+    performance:{name:'PERFORMANCE',particles:.22,texts:20}
+  };
+  let clarityMode='balanced';
+  try{
+    const saved=localStorage.getItem(CLARITY_SETTINGS_KEY);
+    if(saved&&CLARITY_PRESETS[saved])clarityMode=saved;
+  }catch(_){}
+  const OATHS=[
+    {id:'first_blood',name:'FIRST BLOOD',title:'BLOOD INITIATE',desc:'Slay 100 foes in one hunt.',test:g=>g.kills>=100,progress:g=>Math.min(g.kills,100)+'/100'},
+    {id:'grave_reaper',name:'GRAVE REAPER',title:'CRYPT REAPER',desc:'Slay 500 foes in one hunt.',test:g=>g.kills>=500,progress:g=>Math.min(g.kills,500)+'/500'},
+    {id:'gargoyle_untouched',name:'STONE UNBROKEN',title:'STONEWARD',desc:'Defeat the Gargoyle without taking a hit while it is alive.',test:g=>g.cleanGargoyle,progress:g=>g.cleanGargoyle?'CLEARED':g.gargoyleHit?'FAILED THIS RUN':'BOSS CHALLENGE'},
+    {id:'fifteen_hardcore',name:'CRUEL MIDNIGHT',title:'TORMENT WALKER',desc:'Survive 15 minutes in Hardcore Mode.',test:g=>!g.easyMode&&g.time>=900,progress:g=>g.easyMode?'HARDCORE ONLY':timeText(Math.min(g.time,900))+'/15:00'},
+    {id:'twenty_hardcore',name:'NO MERCY',title:'ABYSS WALKER',desc:'Survive 20 minutes in Hardcore Mode.',test:g=>!g.easyMode&&g.time>=1200,progress:g=>g.easyMode?'HARDCORE ONLY':timeText(Math.min(g.time,1200))+'/20:00'},
+    {id:'cursed_three',name:'DESECRATOR',title:'OATHBREAKER',desc:'Desecrate three reliquaries in one run.',test:g=>g.desecrations>=3,progress:g=>Math.min(g.desecrations,3)+'/3'},
+    {id:'ascend',name:'THE TRANSFIGURED',title:'ASCENDANT',desc:'Choose an elemental Torment Ascension.',test:g=>!!g.player.ascension,progress:g=>g.player.ascension?'ASCENDED':'NOT YET'},
+    {id:'complete_run',name:'ENDURE THE NIGHT',title:'NIGHTBOUND',desc:'Reach the end of a 30-minute hunt.',test:g=>g.time>=DURATION,progress:g=>timeText(Math.min(g.time,DURATION))+'/30:00'}
+  ];
+  const oathUnlocks=new Set();
+  try{
+    const value=JSON.parse(localStorage.getItem(OATHS_KEY)||'[]');
+    if(Array.isArray(value))for(const id of value)if(OATHS.some(o=>o.id===id))oathUnlocks.add(id);
+  }catch(_){}
+  let oathToastCooldown=0;
+  function unlockOath(id){
+    if(oathUnlocks.has(id))return false;
+    const oath=OATHS.find(o=>o.id===id);if(!oath)return false;
+    oathUnlocks.add(id);
+    try{localStorage.setItem(OATHS_KEY,JSON.stringify([...oathUnlocks]));}catch(_){}
+    if(game){game.oathsUnlockedThisRun.push(id);flashMessage('✦ OATH FULFILLED: '+oath.name,2600);}
+    return true;
+  }
+  function checkOaths(){
+    if(!game)return;
+    for(const oath of OATHS)if(!oathUnlocks.has(oath.id)&&oath.test(game))unlockOath(oath.id);
+  }
+  function changeClarity(mode){
+    if(!CLARITY_PRESETS[mode])return;
+    clarityMode=mode;
+    try{localStorage.setItem(CLARITY_SETTINGS_KEY,mode);}catch(_){}
+    if(game&&state==='inventory'&&inventorySection==='clarity')renderClarity();
+  }
+  const ASCENSIONS={
+    blood:[
+      {id:'crimson_covenant',name:'CRIMSON COVENANT',desc:'Blood hits become 25% stronger. Every 20 kills restores 3 HP.',apply:p=>{p.damage*=1.25;}},
+      {id:'exsanguination',name:'EXSANGUINATION',desc:'Blood damage +55%, but max HP permanently falls by 15%.',apply:p=>{p.damage*=1.55;p.maxHp=Math.max(1,Math.ceil(p.maxHp*.85));p.hp=Math.min(p.hp,p.maxHp);}}
+    ],
+    fire:[
+      {id:'ember_crown',name:'EMBER CROWN',desc:'Fire attacks 30% faster and deals 15% more direct damage.',apply:p=>{p.attackRate*=1.30;p.damage*=1.15;}},
+      {id:'cinder_aegis',name:'CINDER AEGIS',desc:'Fire damage +20%, armor +12%; burning kills heal 1 HP.',apply:p=>{p.damage*=1.2;p.armor=Math.min(.8,1-(1-p.armor)*.88);}}
+    ],
+    lightning:[
+      {id:'tempest_oracle',name:'TEMPEST ORACLE',desc:'Lightning gains 3 chain jumps and attacks 20% faster.',apply:p=>{p.stormBonus+=3;p.attackRate*=1.2;}},
+      {id:'iron_thunder',name:'IRON THUNDER',desc:'Lightning power +35% and armor +10%.',apply:p=>{p.damage*=1.35;p.armor=Math.min(.8,1-(1-p.armor)*.9);}}
+    ],
+    poison:[
+      {id:'plague_sovereign',name:'PLAGUE SOVEREIGN',desc:'Every poison stack deals 40% more DPS.',apply:p=>{p.poisonMultiplier*=1.4;}},
+      {id:'verdant_vow',name:'VERDANT VOW',desc:'Poison DPS +15%, permanent regeneration +0.7 HP/s.',apply:p=>{p.poisonMultiplier*=1.15;p.regen+=.7;}}
+    ]
+  };
+  function ascensionAvailable(){
+    return game&&game.elementChosen&&!game.player.ascension&&
+      game.player.elementRank>=3&&game.ascensionSigils>0;
+  }
+  function tryOpenAscension(){
+    if(state!=='playing'||!ascensionAvailable())return false;
+    const options=ASCENSIONS[game.player.element];
+    if(!options)return false;
+    state='ascension';keys.clear();
+    const panel=$('ascensionOverlay'),cards=$('ascensionCards');cards.replaceChildren();
+    for(const [i,opt] of options.entries()){
+      const button=document.createElement('button');button.className='dark-choice';
+      button.type='button';
+      const title=document.createElement('strong');title.textContent=opt.name;
+      const detail=document.createElement('span');detail.textContent=opt.desc;
+      button.append(title,detail);button.addEventListener('click',()=>chooseAscension(i));cards.append(button);
+    }
+    panel.classList.remove('hidden');el.status.textContent='TORMENT ASCENSION · CHOOSE A PATH';
+    cards.children[0]?.focus();
+    return true;
+  }
+  function chooseAscension(index){
+    if(state!=='ascension'||!ascensionAvailable())return;
+    const option=ASCENSIONS[game.player.element]?.[index];if(!option)return;
+    game.ascensionSigils--;game.player.ascension=option.id;game.player.ascensionName=option.name;
+    option.apply(game.player);
+    // Reflect poison bonus immediately on stacks already applied.
+    if(game.player.element==='poison')for(const e of game.enemies)
+      if(e.poisonStacks>0)e.poisonDps=POISON_DPS*(e.poisonStackStrength||e.poisonStacks)*game.player.poisonMultiplier;
+    $('ascensionOverlay').classList.add('hidden');state='playing';keys.clear();
+    addParticles(game.player.x,game.player.y,'#ffbc72',44,120,2,4);
+    flashMessage('✦ ASCENDED: '+option.name,2800);playSound('level');
+    checkOaths();updateHUD();
+  }
+  // Mark one of the regular spawns as a stronger champion every ~100 s.
+  // Elites and bosses alone can leave reliquaries (never ordinary kills).
+  function markElite(enemy){
+    if(!enemy||ENEMIES[enemy.type]?.boss||enemy.summoned||game.time<240||
+      game.time<game.nextEliteAt)return;
+    if(game.enemies.some(e=>e.elite))return;
+    enemy.elite=true;enemy.maxHp=Math.ceil(enemy.maxHp*3.2);
+    enemy.hp=enemy.maxHp;enemy.damage*=1.35;enemy.speed*=1.07;
+    game.nextEliteAt=game.time+100;
+    flashMessage('✦ A CURSED CHAMPION EMERGES',1850);
+  }
+  function dropReliquary(x,y){
+    if(game.reliquaries.length>=3)return;
+    game.reliquaries.push({x,y,life:150,phase:0});
+    flashMessage('◆ CURSED RELIQUARY DROPPED',2250);
+  }
+  function checkReliquaryPickup(dt){
+    for(let i=game.reliquaries.length-1;i>=0;i--){
+      const item=game.reliquaries[i];item.phase+=dt*3;item.life-=dt;
+      if(item.life<=0){game.reliquaries.splice(i,1);continue;}
+      if(dist2(item.x,item.y,game.player.x,game.player.y)<38*38){
+        game.reliquaries.splice(i,1);openReliquary();break;
+      }
+    }
+  }
+  function openReliquary(){
+    if(state!=='playing')return;
+    state='reliquary';keys.clear();$('reliquaryOverlay').classList.remove('hidden');
+    $('reliquaryClaim').focus();
+    el.status.textContent='CURSED RELIQUARY · CHOOSE YOUR PRICE';
+  }
+  function chooseReliquary(desecrate){
+    if(state!=='reliquary')return;
+    const g=game,p=g.player;
+    g.reliquariesOpened++;if(!p.ascension)g.ascensionSigils=Math.min(1,g.ascensionSigils+1);
+    const pool=eligiblePowers();
+    if(pool.length){
+      const perk=pool[Math.floor(Math.random()*pool.length)];
+      const tier=desecrate?(Math.random()<.25?'mythic':'legendary'):'rare';
+      grantPowerUp({...perk,tier});
+      flashMessage('◆ '+tier.toUpperCase()+' '+perk.name+(desecrate?' · CURSED':''),2500);
+    }else{
+      const boon=SURVIVAL_BOONS[Math.floor(Math.random()*SURVIVAL_BOONS.length)];
+      grantPowerUp({...boon,tier:'common'});
+      flashMessage('◆ '+boon.name+(desecrate?' · CURSED':''),2400);
+    }
+    if(desecrate){
+      g.desecrations++;
+      // 15% increased incoming damage for a 3-minute window; reapplication
+      // refreshes the timer instead of stacking multiplicatively.
+      g.curseTime=180;
+    }
+    $('reliquaryOverlay').classList.add('hidden');state='playing';
+    addParticles(p.x,p.y,desecrate?'#fd5971':'#ffc47e',22,85,2,4);
+    checkOaths();updateHUD();
+    if(!tryOpenAscension())el.status.textContent='HUNT IN PROGRESS';
+  }
+
   const POWERS = [
     {id:'brutality',icon:'brutality',name:'BRUTALITY',can:p=>p.element!=='poison',apply:(p,g,u)=>{p.flatDamage+=5*u;syncActiveBurn(p,g);}},
     {id:'rapid_fire',icon:'rapid_fire',name:'RAPID FIRE',apply:(p,g,u)=>p.attackRate*=1+.06*u},
@@ -449,6 +611,7 @@
     el.intro.classList.remove('hidden');
     el.hud.hidden=true;el.xpStrip.hidden=true;el.bossBar.hidden=true;
     el.inventory.classList.add('hidden');el.inventoryBtn.hidden=true;
+    $('ascensionOverlay').classList.add('hidden');$('reliquaryOverlay').classList.add('hidden');
     el.msg.textContent='';el.status.textContent='CHOOSE YOUR MODE';
     el.start.focus();
   }
@@ -456,7 +619,8 @@
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
-      player:{enemyBleed:[],x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,reviveCharges:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
+      reliquaries:[],ascensionSigils:0,reliquariesOpened:0,desecrations:0,curseTime:0,nextEliteAt:240,oathsUnlockedThisRun:[],gargoyleHit:false,cleanGargoyle:false,
+      player:{enemyBleed:[],x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,reviveCharges:0,ascension:null,ascensionName:null,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], poisonBursts:[], bolts:[], fountains:[], magnetShrines:[], powerShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:45, magnetSpawned:false, nextPowerShrineAt:120, powerShrineSpawned:false, kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0,bossNext:Infinity,bossSpawned:new Set(),rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
@@ -465,6 +629,7 @@
     shake=0;flash=0;keys.clear();
     el.intro.classList.add('hidden'); el.end.classList.add('hidden'); el.pause.classList.add('hidden');
     el.inventory.classList.add('hidden');el.inventoryBtn.hidden=true;
+    $('ascensionOverlay').classList.add('hidden');$('reliquaryOverlay').classList.add('hidden');
     el.hud.hidden = false; el.xpStrip.hidden = false; el.bossBar.hidden = true; el.msg.textContent = ''; el.status.textContent = 'CHOOSE YOUR STARTING ELEMENT';
     updateHUD();
     openUpgrade();
@@ -710,7 +875,7 @@
       attackWindup:0,attackAnim:0,attackState:'',attackTimer:0,attackStage:0,
       chargeAngle:0,chargeTravel:0,summonCd:def.summonEvery?rand(7,12):0,
       summoned:Boolean(source?.summoned),chargeHit:false};
-    game.enemies.push(e);return e;
+    game.enemies.push(e);markElite(e);return e;
   }
   function spawnBoss(type){
     const def=ENEMIES[type];
@@ -810,7 +975,9 @@
   function damagePlayer(value){
     const p=game.player;
     if(p.hitCd>0)return false;
-    const received=Math.max(1,Math.ceil(value*(1-p.armor)));p.hp=Math.max(0,p.hp-received);p.hitCd=HUNTER_HIT_GRACE_SECONDS;shake=Math.max(shake,6);flash=.18;
+    if(game.enemies.some(e=>e.type==='boss1'))game.gargoyleHit=true;
+    const multiplier=game.curseTime>0?1.15:1;
+    const received=Math.max(1,Math.ceil(value*multiplier*(1-p.armor)));p.hp=Math.max(0,p.hp-received);p.hitCd=HUNTER_HIT_GRACE_SECONDS;shake=Math.max(shake,6);flash=.18;
     addBloodBurst(p.x,p.y,12,'#ad1339'); floatText(p.x,p.y-24,`-${received}`,'#ffc9cd');
     playSound('hurt');
     if(p.hp<=0&&!tryPhoenixRevive()) die(false);
@@ -825,6 +992,7 @@
   }
 
   function addParticles(x,y,color,count=7,power=55,sizeA=2,sizeB=3,gravity=0){
+    count=Math.max(1,Math.ceil(count*CLARITY_PRESETS[clarityMode].particles));
     for(let i=0;i<count;i++){
       if(game.particles.length>360) break;
       const a=rand(0,TAU), spd=rand(power*.25,power);
@@ -832,6 +1000,7 @@
     }
   }
   function addBloodBurst(x,y,amount=16,base='#8d0d29'){
+    amount=Math.max(1,Math.ceil(amount*CLARITY_PRESETS[clarityMode].particles));
     const palette=[base,'#bc163d','#e0536f','#4f0012'];
     for(let i=0;i<amount;i++){
       if(game.particles.length>520)break;
@@ -848,7 +1017,7 @@
   }
   function floatText(x,y,text,color='#ffd8df',size=10){
     // Bound damage-number spam in late-game hordes; visual only, no lost damage.
-    if(game.texts.length>=140)return;
+    if(game.texts.length>=CLARITY_PRESETS[clarityMode].texts)return;
     game.texts.push({x,y,text,color,size,life:.75,max:.75});
   }
 
@@ -1019,8 +1188,8 @@
     flashMessage(`✦ ${choice.tier.toUpperCase()} ${choice.name}`,1800);
     // The magnet shrine may collect enough XP for multiple levels at once:
     // present every earned upgrade in sequence instead of losing levels.
-    if(game.player.xp>=game.player.next)gainXP(0);
-    updateHUD();
+    if(game.player.xp>=game.player.next){gainXP(0);if(state!=='playing')return;}
+    if(!tryOpenAscension())updateHUD();
   }
   function flashMessage(text,ms=1750){ el.msg.textContent=text; clearTimeout(flashMessage.timer); flashMessage.timer=setTimeout(()=>el.msg.textContent='',ms); }
 
@@ -1042,7 +1211,11 @@
       ['TOTAL XP',num(game.totalXP)],
       ['LEVEL',p.level],
       ['HP RESTORED',num(game.totalHealing)],
-      ['DAMAGE DEALT',num(game.totalDamage)]
+      ['DAMAGE DEALT',num(game.totalDamage)],
+      ['RELIQUARIES OPENED',game.reliquariesOpened],
+      ['DESECRATIONS',game.desecrations],
+      ['ASCENSION',p.ascensionName||'NONE'],
+      ['OATHS COMPLETED',game.oathsUnlockedThisRun.length]
     ],'run-summary-tile');
     addScoreRows($('runStats'),[
       ['ELEMENT',(p.element||'NONE').toUpperCase()],
@@ -1074,6 +1247,7 @@
   function die(won){
     if(state==='end')return;
     const survived=Boolean(won&&game.endingAt30);
+    checkOaths();
     const emptyArenaComplete=survived&&!ENEMY_SPAWNING_ENABLED;
     state='end';
     el.end.classList.remove('hidden');
@@ -1081,6 +1255,7 @@
     $('runRibbon').hidden=!game.easyMode;
     $('endModeBadge').classList.toggle('is-easy',Boolean(game.easyMode));
     el.inventory.classList.add('hidden');
+    $('ascensionOverlay').classList.add('hidden');$('reliquaryOverlay').classList.add('hidden');
     el.inventoryBtn.hidden=true;
     el.bossBar.hidden=true;
     $('endTitle').textContent=emptyArenaComplete?'RUN COMPLETE':survived?'RUN COMPLETE':'YOU DIED';
@@ -1137,13 +1312,22 @@
         <p>Latest: ${perkDescription(id,latest)}</p></div>`;
       el.inventoryPerks.appendChild(row);
     }
+    if(p.ascensionName){
+      const title=document.createElement('p');title.className='character-ascension-summary';
+      title.textContent='✦ TORMENT ASCENSION: '+p.ascensionName;
+      el.inventoryPerks.appendChild(title);
+    }
     if(!game.perkOrder.length){
       const empty=document.createElement('p');empty.className='inventory-empty';
       empty.textContent='No passive upgrades yet. Collect blue crystals to level up.';
       el.inventoryPerks.appendChild(empty);
     }
-    el.inventoryPerkCount.textContent=perkTotal+' PICKED · '+game.perkOrder.length+' TYPES';
+    el.inventoryPerkCount.textContent=perkTotal+' PICKED · '+game.perkOrder.length+' TYPES'+(p.ascensionName?' · '+p.ascensionName:'');
     const shots=attackProjectileCount(p);
+    const seal=$('oathSeal');
+    const newest=OATHS.filter(o=>oathUnlocks.has(o.id)).at(-1);
+    seal.hidden=!newest;
+    if(newest){seal.textContent='✦ '+newest.title;seal.title='Hunter\'s Oath: '+newest.name;}
     const fmt=(n,d=1)=>Number(n).toFixed(d);
     const stats=[
       ...damageStatRows(p),
@@ -1166,6 +1350,7 @@
       ['BLEED CAP',p.element==='blood'?'8':'—']
     ];
     el.inventoryStats.replaceChildren();
+    stats.push(['ASCENSION',p.ascensionName||'—'],['CURSE',game.curseTime>0?Math.ceil(game.curseTime)+'s · +15% damage taken':'—'],['RELIC SIGILS',String(game.ascensionSigils)],['OATH TITLE',OATHS.filter(o=>oathUnlocks.has(o.id)).at(-1)?.title||'—']);
     for(const [label,value] of stats){
       const tile=document.createElement('div');tile.className='inventory-stat';
       const caption=document.createElement('span');caption.textContent=label;
@@ -1181,7 +1366,9 @@
     elements:['ELEMENTAL MECHANICS','inventoryElementsTab','inventoryElementsPage'],
     acquisition:['ITEM ACQUISITION','inventoryAcquisitionTab','inventoryAcquisitionPage'],
     catalog:['POWER-UP LIBRARY','inventoryCatalogTab','inventoryCatalogPage'],
-    scaling:['ENEMY SCALING','inventoryScalingTab','inventoryScalingPage']
+    scaling:['ENEMY SCALING','inventoryScalingTab','inventoryScalingPage'],
+    clarity:['COMBAT CLARITY','inventoryClarityTab','inventoryClarityPage'],
+    oaths:['HUNTER\'S OATHS','inventoryOathsTab','inventoryOathsPage']
   };
   let inventorySection='powers',lastCodexSection='bestiary',bestiaryGroup='early',catalogGroup='offense',catalogRarity='common',codexFocus=null;
   function codexElement(tag,className='',value=''){
@@ -1250,6 +1437,8 @@
     else if(section==='acquisition')renderAcquisition();
     else if(section==='catalog')renderPowerLibrary();
     else if(section==='scaling')renderEnemyScaling();
+    else if(section==='clarity')renderClarity();
+    else if(section==='oaths')renderOaths();
   }
   function renderBestiary(){
     const root=el.bestiaryPage;root.replaceChildren();
@@ -1294,6 +1483,17 @@
       tiles.append(item.article);
     }
     root.append(tiles);
+    const ascension=codexElement('div','codex-grid');
+    for(const element of ['blood','fire','lightning','poison']){
+      const [first,second]=ASCENSIONS[element];
+      const item=codexArticle('✦ '+element.toUpperCase()+' ASCENSION','Rank 4+ · 1 Reliquary Sigil · choose one path',
+        first.name+': '+first.desc+'   OR   '+second.name+': '+second.desc);
+      ascension.append(item.article);
+    }
+    root.append(codexElement('h3','codex-page-title','TORMENT ASCENSIONS'));
+    root.append(codexElement('p','codex-info-line','Obtain a Reliquary Sigil from a defeated boss or marked Cursed Champion, then reach element rank 4 (three matching Element Power upgrades). The choice screen opens automatically. Exactly one Ascension per run; no retroactive perk resets.'));
+    root.append(ascension);
+    codexLink(root,'acquisition','Find Cursed Reliquaries');
     const formula=codexElement('p','codex-info-line','CRITICAL HITS: direct damage × current Crit Damage (starts ×1.6) when Crit Chance succeeds (starts at 6%). Poison stack crits are saved separately; Fire Burn is not increased by crits.');
     root.append(formula);
     codexLink(root,'acquisition','Where upgrades come from');
@@ -1309,14 +1509,17 @@
       ['LIFE SHRINE','A fountain, not an RNG item drop','Grants +1 HP/s for 30 seconds, with no instant heal. New fountains appear roughly every 42–64 seconds. Refreshes rather than stacks.'],
       ['MAGNET SHRINE','First offered at 00:45','Immediately collects all XP crystals, then automatically collects new XP globally for 15 seconds. The next shrine becomes available 90–150 seconds after pickup.'],
       ['ABOMINATION REWARD','Guaranteed on boss defeat','One instant eligible power-up: Rare 65% · Legendary 29% · Mythic 6%. This does not use XP or increase the player level.'],
-      ['ENDGAME SURVIVAL','When standard perks cannot fill a four-card offer','Four repeatable Common survival rewards become available only as replacements for unavailable normal cards: Field Medic (+4 maximum HP and heal 25%/at least 24), Enduring Heart (+12 maximum HP and heal 12), Mending Vigor (+0.15 permanent HP/s and heal 10), and Phoenix Sigil (up to 2 revival charges; additional sigils give +8 maximum HP). Each revival restores 35% HP and gives 2 seconds of protection. Level 150 is the cap: further crystals still add to total XP scored without forcing more upgrade screens.']
+      ['ENDGAME SURVIVAL','When standard perks cannot fill a four-card offer','Four repeatable Common survival rewards become available only as replacements for unavailable normal cards: Field Medic (+4 maximum HP and heal 25%/at least 24), Enduring Heart (+12 maximum HP and heal 12), Mending Vigor (+0.15 permanent HP/s and heal 10), and Phoenix Sigil (up to 2 revival charges; additional sigils give +8 maximum HP). Each revival restores 35% HP and gives 2 seconds of protection. Level 150 is the cap: further crystals still add to total XP scored without forcing more upgrade screens.'],
+      ['CURSED RELIQUARIES','Guaranteed boss drops and special Cursed Champion kills','First champions can appear after 04:00, then approximately every 100 seconds. They are tougher and marked by a golden seal. Relics expire after 150 seconds. CLAIM grants a Rare eligible perk without a curse; DESECRATE grants a Legendary (75%) or Mythic (25%) perk with +15% incoming damage for 180s. Repeated curses refresh but do not stack. Both choices grant 1 Ascension Sigil until your evolution is chosen. When all regular perks are capped, a fixed Survival reward replaces the perk.'],
+      ['TORMENT ASCENSION','Rank 4+ element and a Reliquary Sigil','Each of the four elements has two evolution choices. The hunter may select exactly one Ascension each run; its bonuses remain active when taking later Element Power cards. See Elemental Mechanics for full choices.']
     ];
     for(const [name,shortText,description] of source){
       const {article,content}=codexArticle(name,shortText,description);
       if(name.includes('CARD')||name.includes('SHRINE')||name.includes('REWARD'))codexLink(content,'catalog','Browse available power-ups');
       grid.append(article);
     }
-    root.append(grid);codexLink(root,'elements','Understand the four elemental attacks');
+    root.append(grid);codexLink(root,'elements','Understand the four elemental attacks and Ascensions');
+    codexLink(root,'oaths','See achievements tied to reliquaries');
   }
   function renderPowerLibrary(){
     const root=$('inventoryCatalogPage');root.replaceChildren();
@@ -1360,6 +1563,36 @@
     }
     root.append(grid);
     codexLink(root,'acquisition','How rarity and upgrade acquisition work');
+  }
+
+  function renderClarity(){
+    const root=$('inventoryClarityPage');root.replaceChildren();
+    codexIntro(root,'COMBAT CLARITY','Choose how many cosmetic particles and floating numbers appear. Damage, enemy attacks, boss telegraphs, loot and hitboxes never change. Your choice is saved for future runs.');
+    const choices=codexElement('div','clarity-options');
+    for(const [id,preset] of Object.entries(CLARITY_PRESETS)){
+      const b=codexElement('button','clarity-option'+(clarityMode===id?' selected':''),preset.name);
+      b.type='button';b.setAttribute('aria-pressed',String(clarityMode===id));
+      const info=id==='cinematic'?'Maximum combat effects.':
+        id==='balanced'?'Default: clear combat with moderate particles.':'Minimum visual clutter for busy late-game waves.';
+      b.append(codexElement('span','codex-article-short',info));
+      b.addEventListener('click',()=>changeClarity(id));choices.append(b);
+    }
+    root.append(choices);
+    root.append(codexElement('p','codex-info-line','Important: attack warning lines and circles, dangerous enemy shots, XP drops, shrine locations and boss HP indicators always remain visible.'));
+    codexLink(root,'scaling','Review late-game difficulty');
+  }
+  function renderOaths(){
+    const root=$('inventoryOathsPage');root.replaceChildren();
+    codexIntro(root,'HUNTER\'S OATHS','Eight persistent trials, with cosmetic titles only. Unlocks are stored locally in this browser, never modify combat power and do not require an account.');
+    root.append(codexElement('p','codex-info-line',oathUnlocks.size+' / '+OATHS.length+' OATHS FULFILLED · Cosmetic titles appear on your hunter sheet and HUD.'));
+    const grid=codexElement('div','codex-grid');
+    for(const oath of OATHS){
+      const completed=oathUnlocks.has(oath.id),progress=game?oath.progress(game):'START A HUNT';
+      const article=codexArticle((completed?'✦ ':'◇ ')+oath.name,completed?'UNLOCKED · TITLE: '+oath.title:'LOCKED · '+progress,oath.desc,true);
+      article.content.append(codexElement('p','codex-article-detail',completed?'COSMETIC TITLE: '+oath.title:'RUN PROGRESS: '+progress));
+      grid.append(article.article);
+    }
+    root.append(grid);
   }
   function renderEnemyScaling(){
     const root=$('inventoryScalingPage');root.replaceChildren();
@@ -1470,6 +1703,15 @@
   function enemyDie(e){
     const index=game.enemies.indexOf(e);if(index<0)return;
     game.enemies.splice(index,1);game.kills++;
+    if(e.elite||ENEMIES[e.type]?.boss)dropReliquary(e.x,e.y);
+    if(e.type==='boss1'&&!game.gargoyleHit)game.cleanGargoyle=true;
+    if((game.player.ascension==='crimson_covenant'&&game.kills%20===0)||
+      (game.player.ascension==='cinder_aegis'&&e.burnTime>0)){
+      const amount=game.player.ascension==='cinder_aegis'?1:3;
+      const before=game.player.hp;game.player.hp=Math.min(game.player.maxHp,game.player.hp+amount);
+      game.totalHealing+=game.player.hp-before;
+    }
+    checkOaths();
     proliferatePoison(e);
     const def=ENEMIES[e.type];
     if(e.type==='boss3'){
@@ -1674,7 +1916,7 @@
     const p=game.player;
     for(let i=p.enemyBleed.length-1;i>=0;i--){
       const b=p.enemyBleed[i],elapsed=Math.min(dt,b.time);
-      p.hp=Math.max(0,p.hp-b.dps*elapsed*(1-p.armor));
+      p.hp=Math.max(0,p.hp-b.dps*elapsed*(1-p.armor)*(game.curseTime>0?1.15:1));
       b.time-=dt;if(b.time<=0)p.enemyBleed.splice(i,1);
     }
     if(p.hp<=0&&!tryPhoenixRevive())die(false);
@@ -1799,6 +2041,8 @@
   function update(dt){
     if(!game || state!=='playing') return;
     const g=game, p=g.player; g.time+=dt; g.worldTime+=dt;
+    g.curseTime=Math.max(0,g.curseTime-dt);
+    checkOaths();
     if(g.time>=DURATION){
       g.time=DURATION;
       if(ENEMY_SPAWNING_ENABLED)startDeathArrival();
@@ -1822,6 +2066,8 @@
     p.moveX=mag?mx:0;p.moveY=mag?my:0;
 
     updateFountains(dt);
+    if(state!=='playing'){updateHUD();return;}
+    checkReliquaryPickup(dt);
     if(state!=='playing'){updateHUD();return;}
     // Continuous perk regeneration plus nonstacking 30s Life Shrine.
     if(p.regen>0){const old=p.hp;p.hp=Math.min(p.maxHp,p.hp+p.regen*dt);g.totalHealing+=p.hp-old;}
@@ -2029,6 +2275,9 @@
       :kills.toLocaleString('en-US');
     el.kills.title=kills.toLocaleString('en-US')+' kills';
     el.time.textContent=timeText(game.time);
+    const seal=$('oathSeal'),newest=OATHS.filter(o=>oathUnlocks.has(o.id)).at(-1);
+    seal.hidden=!newest;
+    if(newest){seal.textContent='✦ '+newest.title;seal.title='Hunter\'s Oath: '+newest.name;}
     const boss=game.enemies.find(e=>ENEMIES[e.type]?.boss);
     el.bossBar.hidden=!boss;
     if(boss)el.bossName.textContent=ENEMIES[boss.type].name.toUpperCase();
@@ -2078,6 +2327,21 @@
         ctx.fillStyle='#12263f';ctx.fillRect(x-22,y-4,44,23);
         ctx.font='32px sans-serif';ctx.fillText('🧲',x-18,y-16);
       }
+      ctx.restore();
+    }
+  }
+  function drawReliquaries(camX,camY,t){
+    for(const relic of game.reliquaries){
+      const x=relic.x-camX,y=relic.y-camY;
+      if(x<-70||x>W+70||y<-90||y>H+70)continue;
+      const shimmer=.6+.4*Math.sin(t*3+relic.phase);
+      ctx.save();ctx.translate(x,y+Math.sin(relic.phase)*3);
+      shadowAt(0,14,19,.55);
+      ctx.shadowColor='#ffba68';ctx.shadowBlur=11+8*shimmer;
+      ctx.strokeStyle='#ffc780';ctx.fillStyle='#3d1327';ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.moveTo(0,-26);ctx.lineTo(21,-9);ctx.lineTo(18,17);ctx.lineTo(-18,17);ctx.lineTo(-21,-9);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.strokeStyle='#f77792';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-21);ctx.lineTo(0,13);ctx.moveTo(-12,-7);ctx.lineTo(12,-7);ctx.stroke();
+      ctx.fillStyle='#ffe8be';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText('◆',0,-31);
       ctx.restore();
     }
   }
@@ -2315,6 +2579,14 @@
       ctx.fillStyle='#f3b1ae';ctx.fillRect(-7,-height*.66,5,3);ctx.fillRect(4,-height*.66,5,3);
     }
     ctx.restore();
+    if(e.elite){
+      const pulse=.6+.4*Math.sin(t*4);
+      ctx.save();ctx.strokeStyle='rgba(255,206,103,'+(.58+pulse*.38)+')';
+      ctx.shadowColor='#ffc46a';ctx.shadowBlur=7;ctx.lineWidth=2;
+      ctx.beginPath();ctx.ellipse(x,y+9,Math.max(22,e.r+11),9,0,0,TAU);ctx.stroke();
+      ctx.fillStyle='#ffe6b0';ctx.textAlign='center';ctx.font='bold 13px serif';
+      ctx.fillText('✦',x,y-(e.r+45));ctx.restore();
+    }
     if(e.attackState==='chargeWarn'){
       ctx.save();ctx.translate(x,y);ctx.rotate(e.chargeAngle);
       const pulse=.5+.5*Math.sin(t*12);
@@ -2458,6 +2730,7 @@
       drawFountains(camX,camY,t);
       drawMagnetShrines(camX,camY,t);
       drawPowerShrines(camX,camY,t);
+      drawReliquaries(camX,camY,t);
       drawDrops(camX,camY,t);
       const objects=[...game.enemies.map(e=>({y:e.y,e})),{y:p.y,p}]; objects.sort((a,b)=>a.y-b.y);
       for(const item of objects){ if(item.e) drawEnemy(item.e,camX,camY,t); else drawPlayer(p,camX,camY,t); }
@@ -2495,6 +2768,14 @@
       return;
     }
     if(state==='inventory')return;
+    if(state==='reliquary'){
+      if(k==='1'||k==='2'){e.preventDefault();chooseReliquary(k==='2');}
+      return;
+    }
+    if(state==='ascension'){
+      if(k==='1'||k==='2'){e.preventDefault();chooseAscension(Number(k)-1);}
+      return;
+    }
     keys.add(k);
     if(state==='upgrade'&&['1','2','3','4'].includes(k))chooseUpgrade(Number(k)-1);
     if(state==='upgrade'&&k==='r')rerollUpgrades();
@@ -2511,6 +2792,8 @@
   document.addEventListener('visibilitychange',()=>{if(document.hidden)keys.clear();});
   document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
+  $('reliquaryClaim').addEventListener('click',()=>chooseReliquary(false));
+  $('reliquaryDesecrate').addEventListener('click',()=>chooseReliquary(true));
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);
   el.start.addEventListener('click',()=>startGame(false));
   el.easyStart.addEventListener('click',()=>startGame(true));
@@ -2521,7 +2804,7 @@
   el.powersTab.addEventListener('click',()=>switchInventorySection('powers'));
   el.encyclopediaTab.addEventListener('click',()=>switchInventorySection('encyclopedia'));
   el.bestiaryTab.addEventListener('click',()=>switchInventorySection('bestiary'));
-  for(const section of ['elements','acquisition','catalog','scaling']){
+  for(const section of ['elements','acquisition','catalog','scaling','clarity','oaths']){
     $(CODEX_SECTIONS[section][1]).addEventListener('click',()=>switchInventorySection(section));
   }
   function updateAudioUI(){

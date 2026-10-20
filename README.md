@@ -2,6 +2,48 @@
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)**
 
+## v0.33.0 — Four Torment Systems (review build)
+
+The v0.32.7 baseline is preserved at [backup/v0.32.7-before-new-mechanics-2026-10-20](https://github.com/MasterJimo/Crimson-Ruin-Age-of-Torment/tree/backup/v0.32.7-before-new-mechanics-2026-10-20). The following systems are playable in both Easy and Hardcore, with all game UI in English.
+
+### Cursed Reliquaries & marked champions
+
+- Starting after 04:00, selected ordinary monster spawns become **Cursed Champions**, approximately once per 100 seconds (maximum one active at a time). Champions have **3.2× maximum HP, 1.35× damage, and 1.07× speed** and display a gold seal in the world. Bosses also drop reliquaries.
+- Champions and defeated bosses drop a glowing **Cursed Reliquary**, which can be collected by walking close. A maximum of three may be on the ground at once; each lasts **150 seconds**.
+- **CLAIM:** receive one eligible **Rare** power-up without a drawback.
+- **DESECRATE:** receive one eligible **Legendary (75%)** or **Mythic (25%)** power-up but take **15% increased damage** for **180 seconds**. The curse applies to normal hits and enemy Bleed, and picking another curse **refreshes rather than stacks** its timer.
+- Both choices grant one **Ascension Sigil** until an Ascension is selected. No unlimited sigil stacking. If no standard perk remains eligible, the reward switches to an existing **Survival Reward**.
+- The Abomination's existing free rare/legendary/mythic power-up on defeat remains intact and independent of this system.
+
+### Torment Ascension — 8 evolution choices
+
+Acquire an Ascension Sigil and reach **Element Rank 4**, meaning three Element Power upgrades. A selection screen offers exactly **two paths for the current element**, and only one Ascension may be chosen per run. Buffs persist even if you take more Element Power ranks later.
+
+| Element | Path A | Path B |
+|---|---|---|
+| Blood | **Crimson Covenant:** +25% Blood damage; heal 3 HP every 20 kills | **Exsanguination:** +55% Blood damage but -15% maximum HP permanently |
+| Fire | **Ember Crown:** +30% attack rate, +15% Fire damage | **Cinder Aegis:** +20% Fire damage, +12% armor effectiveness; heal 1 HP for kills on burning foes |
+| Lightning | **Tempest Oracle:** +3 chain jumps and +20% attack rate | **Iron Thunder:** +35% Lightning damage and +10% armor effectiveness |
+| Poison | **Plague Sovereign:** +40% poison DPS | **Verdant Vow:** +15% poison DPS and +0.7 HP/s regeneration |
+
+Ascension is a separate choice from normal level-up cards, does not consume a level, and cannot be reversed within the same run.
+
+### Combat Clarity
+
+Pause the hunt (**P**, **O**, or **Esc**) → **Encyclopedia → Combat Clarity** and choose a persistent preset:
+
+| Preset | Cosmetic particle count | Max simultaneous damage numbers |
+|---|---:|---:|
+| **Cinematic** | 100% | 125 |
+| **Balanced** (default) | 58% | 70 |
+| **Performance** | 22% | 20 |
+
+The change is visual only. Enemy attack warning lines, circles, projectiles, XP, shrines and boss health remain visible; damage and collision calculations are untouched. The preference is saved to browser local storage under `crimson-ruin-clarity-v033`.
+
+### Hunter's Oaths
+
+Pause → **Encyclopedia → Hunter's Oaths**. There are eight persistent, optional achievements: kill 100 enemies, kill 500, defeat the Gargoyle without receiving damage during the encounter, survive 15 minutes in Hardcore, survive 20 minutes in Hardcore, desecrate 3 reliquaries in one run, select an Ascension, and reach 30:00. Each oath unlocks a **cosmetic title** displayed on the hunter HUD; none improves combat stats. Unlocks are saved locally under `crimson-ruin-oaths-v033`. Browser storage may be cleared by the user and is not synced between devices. No account required.
+
 ## Ability-name and audio-default update
 
 The Blood-exclusive perk is now named **Hemorrhagic** in all player-facing text, including the power-up card, the encyclopedia and documentation. Its combat effects and internal identifier remain unchanged. New players begin with **SFX at 1%**. Existing saved sound preferences are respected and will not be reset.

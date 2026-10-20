@@ -1335,3 +1335,112 @@ body:has(#intro.hidden) .float-messages{top:77px!important;}
   body:has(#intro.hidden) .topbar #timeText{font-size:18px;}
   body:has(#intro.hidden) .topbar .audio-controls{flex-wrap:wrap;}
 }
+
+/* v0.33.0 — Torment Ascension, Cursed Reliquaries and in-game knowledge UI */
+.dark-decision{
+  z-index:25!important;
+  padding:18px!important;
+  background:rgba(8,4,11,.88)!important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.dark-decision.hidden{display:none!important;}
+.dark-decision-panel{
+  width:min(900px,100%);
+  max-height:min(92vh,740px);
+  overflow-y:auto;
+  box-sizing:border-box;
+  border:2px solid #bb6b77;
+  border-radius:24px;
+  background:linear-gradient(155deg,#311421,#120b14 70%);
+  padding:clamp(20px,3vw,38px);
+  box-shadow:0 28px 95px #000c,inset 0 0 40px #9d2d3823;
+  text-align:center;
+}
+.dark-decision-panel h2{
+  margin:12px 0;
+  color:#ffe5dc;
+  font:bold clamp(28px,4vw,44px)/1.15 Georgia,serif;
+  letter-spacing:.1em;
+}
+.dark-decision-panel p{color:#e0bec6;font:15px/1.65 system-ui,sans-serif;}
+.dark-decision-overline{color:#ebaf86;letter-spacing:.16em;font:bold 11px system-ui;}
+.dark-decision-options{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;margin:24px 0 18px;
+}
+.dark-choice{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+  min-height:160px;
+  padding:24px 18px;
+  color:#ffe7df;
+  background:linear-gradient(145deg,#442337,#251422);
+  border:2px solid #a76d72;
+  border-radius:18px;
+  cursor:pointer;
+  text-align:center;
+  white-space:normal;
+  transition:background .15s,border-color .15s,transform .15s;
+}
+.dark-choice:hover,.dark-choice:focus-visible{
+  border-color:#ffd6a1;
+  background:linear-gradient(145deg,#653347,#2e1a28);
+  transform:translateY(-2px);
+  outline-offset:3px;
+}
+.dark-choice strong{font:bold clamp(18px,2.5vw,24px) Georgia,serif;letter-spacing:.07em;}
+.dark-choice span{font:14px/1.6 system-ui,sans-serif;color:#e8c9d2;}
+.dark-choice-danger{border-color:#aa3e65;background:linear-gradient(145deg,#532038,#2a1021);}
+.dark-decision-note{font:12px/1.5 system-ui,sans-serif;color:#cba6ad;}
+.oath-seal{
+  display:inline-block;
+  margin-left:4px;
+  padding:3px 6px;
+  color:#eeb978;
+  font:bold 9px system-ui,sans-serif;
+  border:1px solid #8a6756;
+  border-radius:6px;
+  background:#3e2932;
+  white-space:nowrap;
+}
+.oath-seal[hidden]{display:none!important;}
+.character-ascension-summary{
+  padding:10px 14px;
+  color:#ffcf8c;
+  background:#3b2230;
+  border:1px solid #9a7664;
+  border-radius:10px;
+  font:bold 13px system-ui,sans-serif;
+}
+.clarity-options{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+  margin:16px 0;
+}
+.clarity-option{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:14px 9px;min-height:93px;
+  border:1px solid #6b4151;border-radius:12px;
+  background:#261620;color:#f5ccd5;font:bold 13px system-ui;
+  cursor:pointer;
+}
+.clarity-option.selected,.clarity-option[aria-pressed="true"]{
+  border:2px solid #f4b681;
+  background:#522637;
+  color:#fff0d9;
+}
+.clarity-option:hover{border-color:#f4b681;}
+.clarity-option .codex-article-short{font:12px/1.4 system-ui;color:#d7b5c0;}
+@media(max-width:740px){
+  .dark-decision-options{grid-template-columns:1fr;gap:10px;}
+  .dark-choice{min-height:105px;padding:15px;}
+  .dark-decision-panel{padding:16px;max-height:90dvh;}
+  .clarity-options{grid-template-columns:1fr;}
+  .oath-seal{display:none!important;}
+}

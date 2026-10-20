@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#14080a">
-  <meta name="game-version" content="0.32.7">
+  <meta name="game-version" content="0.33.0">
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.32.7">
+  <link rel="stylesheet" href="style.css?v=0.33.0">
 </head>
 <body>
   <div class="site-shell">
@@ -20,6 +20,7 @@
           <span class="divider-v" aria-hidden="true"></span>
           <span class="utility-level-label">LVL</span>
           <strong id="levelText" class="utility-level">1</strong>
+          <span id="oathSeal" class="oath-seal" hidden title="Hunter's Oath title"></span>
         </button>
         <div class="hp-zone utility-hp">
           <span class="hp-icon" aria-hidden="true">♥</span>
@@ -111,6 +112,35 @@
         <div id="upgradeCards" class="upgrade-cards"></div>
       </section>
 
+      <section class="screen-overlay hidden dark-decision" id="reliquaryOverlay" role="dialog" aria-modal="true" aria-labelledby="reliquaryTitle">
+        <div class="dark-decision-panel">
+          <span class="dark-decision-overline">THE CURSE IS YOURS TO CLAIM</span>
+          <h2 id="reliquaryTitle">CURSED RELIQUARY</h2>
+          <p>A fallen champion leaves a choice. Both paths grant a relic sigil for a future Torment Ascension.</p>
+          <div class="dark-decision-options">
+            <button type="button" class="dark-choice" id="reliquaryClaim">
+              <strong>✦ CLAIM</strong>
+              <span>Take a safe Rare power-up. No curse.</span>
+            </button>
+            <button type="button" class="dark-choice dark-choice-danger" id="reliquaryDesecrate">
+              <strong>◆ DESECRATE</strong>
+              <span>Take a Legendary (75%) or Mythic (25%) power-up, but suffer +15% damage taken for 180 seconds. The curse refreshes, not stacks.</span>
+            </button>
+          </div>
+          <span class="dark-decision-note">If all normal powers are exhausted, receive a Survival reward instead.</span>
+        </div>
+      </section>
+
+      <section class="screen-overlay hidden dark-decision" id="ascensionOverlay" role="dialog" aria-modal="true" aria-labelledby="ascensionTitle">
+        <div class="dark-decision-panel">
+          <span class="dark-decision-overline">ONE SOUL · TWO DESTINIES</span>
+          <h2 id="ascensionTitle">TORMENT ASCENSION</h2>
+          <p>Element Rank 4+ and one Reliquary Sigil earned. Choose your permanent evolution for this hunt.</p>
+          <div class="dark-decision-options" id="ascensionCards"></div>
+          <span class="dark-decision-note">One Ascension per run. Your choice cannot be undone until your next hunt.</span>
+        </div>
+      </section>
+
       <section class="screen-overlay hidden" id="endScreen" aria-live="polite">
         <header class="end-header">
           <div class="end-title-group">
@@ -188,12 +218,16 @@
               <button type="button" class="inventory-tab" id="inventoryAcquisitionTab" role="tab" aria-selected="false">◆ ITEM ACQUISITION</button>
               <button type="button" class="inventory-tab" id="inventoryCatalogTab" role="tab" aria-selected="false">✚ POWER-UP LIBRARY</button>
               <button type="button" class="inventory-tab" id="inventoryScalingTab" role="tab" aria-selected="false">⌛ ENEMY SCALING</button>
+              <button type="button" class="inventory-tab" id="inventoryClarityTab" role="tab" aria-selected="false">◈ COMBAT CLARITY</button>
+              <button type="button" class="inventory-tab" id="inventoryOathsTab" role="tab" aria-selected="false">✦ HUNTER'S OATHS</button>
             </nav>
             <div class="monster-bestiary codex-page" id="inventoryBestiaryPage"></div>
             <div class="monster-bestiary codex-page" id="inventoryElementsPage" hidden></div>
             <div class="monster-bestiary codex-page" id="inventoryAcquisitionPage" hidden></div>
             <div class="monster-bestiary codex-page" id="inventoryCatalogPage" hidden></div>
             <div class="monster-bestiary codex-page" id="inventoryScalingPage" hidden></div>
+            <div class="monster-bestiary codex-page" id="inventoryClarityPage" hidden></div>
+            <div class="monster-bestiary codex-page" id="inventoryOathsPage" hidden></div>
           </div>
           <div class="inventory-footer">PRESS <kbd>P</kbd>, <kbd>O</kbd> OR <kbd>ESC</kbd> TO RESUME</div>
         </div>
@@ -207,8 +241,8 @@
     </footer>
   </div>
   <script src="sprites.js" defer></script>
-  <script src="monsters.js?v=0.32.7" defer></script>
-  <script src="assets.js?v=0.32.7" defer></script>
-  <script src="game.js?v=0.32.7" defer></script>
+  <script src="monsters.js?v=0.33.0" defer></script>
+  <script src="assets.js?v=0.33.0" defer></script>
+  <script src="game.js?v=0.33.0" defer></script>
 </body>
 </html>
