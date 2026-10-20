@@ -27,8 +27,8 @@
   // transparent atlas: projectile, impact and particles for each element.
   const skillArt=new Image();
   skillArt.decoding='async';
-  skillArt.src='assets/elemental-skills-v030.webp';
-  const SKILL_TILE=64,SKILL_ROWS={blood:0,lightning:1,fire:2,poison:3};
+  skillArt.src='assets/elemental-skills-v0301.webp';
+  const SKILL_TILE=192,SKILL_ROWS={blood:0,lightning:1,fire:2,poison:3};
   function drawSkillFrame(element,frame,x,y,width,height,opacity=1){
     if(!skillArt.complete||!skillArt.naturalWidth)return false;
     const row=SKILL_ROWS[element];
