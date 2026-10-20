@@ -2077,6 +2077,7 @@
     }
     for(let i=0;i<3;i++){ const a=t*1.8+i*TAU/3; ctx.fillStyle=i===0?'#ffc7d2':'#f1607f'; ctx.fillRect(Math.round(x+Math.cos(a)*20),Math.round(y-8+Math.sin(a)*11),2,2); }
   }
+  const GARGOYLE_WARNING_LENGTH=570*4; // 4× warning-line length; charge movement stays at the balanced 570 units.
   function drawEnemy(e,camX,camY,t){
     const def=ENEMIES[e.type];if(!def)return;
     const x=Math.round(e.x-camX),y=Math.round(e.y-camY);
@@ -2103,11 +2104,19 @@
     if(e.attackState==='chargeWarn'){
       ctx.save();ctx.translate(x,y);ctx.rotate(e.chargeAngle);
       const pulse=.5+.5*Math.sin(t*12);
-      ctx.strokeStyle='rgba(255,36,58,'+(.64+pulse*.3)+')';
-      ctx.lineWidth=8+pulse*3;ctx.shadowColor='#ff2944';ctx.shadowBlur=12;
-      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(570,0);ctx.stroke();
-      ctx.strokeStyle='#ffd0ce';ctx.lineWidth=1.5;
-      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(570,0);ctx.stroke();ctx.restore();
+      // Bright layered red glow with a sharp white-hot center, even on a dark map.
+      ctx.lineCap='round';
+      ctx.shadowColor='#ff1639';ctx.shadowBlur=28;
+      ctx.strokeStyle='rgba(255,20,45,'+(.67+pulse*.18)+')';
+      ctx.lineWidth=27+pulse*5;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(GARGOYLE_WARNING_LENGTH,0);ctx.stroke();
+      ctx.shadowColor='#ff3547';ctx.shadowBlur=18;
+      ctx.strokeStyle='#ff304b';ctx.lineWidth=12+pulse*2;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(GARGOYLE_WARNING_LENGTH,0);ctx.stroke();
+      ctx.shadowColor='#fff0ee';ctx.shadowBlur=9;
+      ctx.strokeStyle='#ffe2df';ctx.lineWidth=3+pulse;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(GARGOYLE_WARNING_LENGTH,0);ctx.stroke();
+      ctx.restore();
     }
     if(e.attackState==='abominationWindup'||e.attackState==='demonBlast'){
       const radius=e.attackState==='abominationWindup'?79:[50,94,142][e.attackStage];

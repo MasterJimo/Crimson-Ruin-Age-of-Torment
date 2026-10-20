@@ -15,7 +15,7 @@
     normal('imp','Imp',600,70,125,4,19,'Rapid melee',.69,'Very quick; can catch movement-speed 150 hunters.',{weight:6,xp:4,r:9,color:'#e44e61'}),
     normal('hellhound','Hellhound',600,145,45,12,24,'Bite + summons',1.25,'Stops to summon 1-2 additional Hellhounds, unless killed promptly.',{weight:4,xp:7,r:13,color:'#e45c3a',summonEvery:10.5}),
     normal('necromancer','Necromancer',600,105,19,29,290,'Fast dark bolt',3.15,'Extremely slow caster; fires a fast, high-damage projectile.',{weight:4,xp:8,r:12,color:'#bf386d',projectileSpeed:290}),
-    normal('boss1','Gargoyle',180,1100,40,55,27,'Telegraphed line charge',7,'A long red straight-line warning precedes a brutal 55-damage charge.',{boss:true,bossAt:180,r:24,xp:45,color:'#9a8194'}),
+    normal('boss1','Gargoyle',180,11000,40,55,27,'Telegraphed line charge',7,'An extra-bright red line warning reaches 2280 units; its charge deals 55 base damage.',{boss:true,bossAt:180,r:24,xp:45,color:'#9a8194'}),
     normal('boss3','Abomination',480,5200,15,32,29,'Heavy claw + circular slam',4.5,'Very slow and extremely durable; medium-radius AoE slam. Drops one Rare-Mythic perk, no XP cost.',{boss:true,bossAt:480,r:31,xp:0,color:'#b8a5a0'}),
     normal('boss2','Demon',1020,3400,66,23,28,'Three expanding circle blasts',6.8,'Pursues quickly, then detonates three successively larger circles.',{boss:true,bossAt:1020,r:27,xp:70,color:'#ae2638'})
   ];
