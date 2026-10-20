@@ -1713,3 +1713,95 @@ body.touch-game:has(#intro.hidden) .topbar .audio-controls .sound-control{min-he
     max-width:320px;margin:0!important;
   }
 }
+
+/* v0.33.2 — one cohesive utility bar, no separate HUD capsules.
+   Scoped to gameplay only; the illustrated main menu retains its styling.
+   The entire bar supplies the surface, and lightweight separators keep data
+   groups readable without adding frames, shadows or rounded subpanels. */
+body:has(#intro.hidden) .topbar{
+  background:linear-gradient(180deg,#21131c 0%,#150b14 100%)!important;
+  border-bottom:1px solid #694052!important;
+  box-shadow:none!important;
+}
+body:has(#intro.hidden) .topbar .inventory-button.utility-stats{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  color:#ffe1d9;
+}
+body:has(#intro.hidden) .topbar .inventory-button.utility-stats:hover{
+  background:rgba(255,218,226,.055)!important;
+}
+body:has(#intro.hidden) .topbar .inventory-button.utility-stats:focus-visible{
+  outline:2px solid #ffd6a6!important;
+  outline-offset:1px;
+}
+body:has(#intro.hidden) .topbar .utility-hp{
+  background:transparent!important;
+  border:0!important;
+  border-left:1px solid #694453!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  padding-left:12px!important;
+}
+body:has(#intro.hidden) .topbar #hud{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+}
+body:has(#intro.hidden) .topbar #hud::before{
+  content:none!important;
+  display:none!important;
+}
+body:has(#intro.hidden) .topbar #timeText{
+  text-shadow:0 0 12px #f46e8c45!important;
+}
+body:has(#intro.hidden) .topbar .oath-seal{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  color:#f1c08c;
+  margin-left:5px;
+  padding:2px 0;
+}
+body:has(#intro.hidden) .topbar .volume-control,
+body:has(#intro.hidden) .topbar .sound-control{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body:has(#intro.hidden) .topbar .sound-control{
+  padding:8px 10px;
+  min-width:86px;
+  color:#ffdae5;
+}
+body:has(#intro.hidden) .topbar .sound-control.is-muted{
+  color:#ff91a9;
+}
+body:has(#intro.hidden) .topbar .sound-control:hover{
+  background:rgba(255,218,226,.06)!important;
+}
+body:has(#intro.hidden) .topbar .mobile-audio-toggle{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body:has(#intro.hidden) .topbar .mobile-audio-toggle:focus-visible,
+body:has(#intro.hidden) .topbar .sound-control:focus-visible{
+  outline:2px solid #ffd6a6;
+  outline-offset:2px;
+}
+/* Keep the horizontal alignment and touch targets on narrow layouts. */
+@media(max-width:650px){
+  body:has(#intro.hidden) .topbar .utility-hp{
+    padding-left:7px!important;
+  }
+}

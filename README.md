@@ -2,6 +2,17 @@
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)**
 
+## v0.33.2 — Unified in-game top utility bar
+
+The in-game top HUD is now a **single functional bar**, with no separate
+rounded boxes, panels, shadows or outlines surrounding kills, level, earned
+Oath title, HP, clock, or desktop sound controls. The health meter and volume
+sliders still have their recognizable fill tracks. Thin dividers distinguish
+sections without creating standalone boxes. The clock remains centered,
+the stats group still opens Character Stats / Encyclopedia, and all values,
+sounds, mobile touch controls and game mechanics are unchanged. The illustrated
+main menu is not affected.
+
 ## v0.33.1 — Play on phones (portrait and landscape)
 
 **Mobile phones and tablets now use an analog on-screen joystick**: drag
