@@ -1163,3 +1163,15 @@ body:has(#intro.hidden) .footer{
 /* v0.32.1 — readable survival options when standard upgrades are exhausted. */
 .upgrade-card .perk-tier{white-space:normal;}
 .upgrade-card .detail{overflow-wrap:anywhere;}
+
+/* v0.32.4 — align the invisible Hardcore click target with the painted
+   red Hardcore button, including its hover and keyboard-focus highlight.
+   Keep the painted background and the Easy Mode target untouched. */
+@media (min-width:721px){
+  #intro .intro-mode-choices > .intro-hardcore{
+    /* Relative to the same grid used by the background artwork.
+       The old full-width hitbox started too far left of the red frame. */
+    left:7.5%!important;
+    width:94%!important;
+  }
+}
