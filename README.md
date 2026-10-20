@@ -13,22 +13,22 @@
 
 | Element | Base hit | Base attacks/s | Damage and status rules |
 |---|---:|---:|---|
-| **Blood** | **20** | **1** | Every hit applies Bleed equal to **100% of actual hit damage over 8s per stack** (base **20 damage per stack / 2.5 DPS**). Up to **8 independent stacks** (base **160 total DoT** if all run their full duration); further hits replace the oldest stack. |
-| **Fire** | **40** | **1** | Applies one refreshing Burn dealing **100% of the basic hit each second for 2s** (base: **40 DPS × 2s = 80 total Burn damage**, plus the initial **40 direct hit**). Burn cannot stack. |
+| **Blood** | **21.6** (+8%) | **1** | Every hit applies Bleed equal to **100% of actual hit damage over 8s per stack** (base **21.6 damage per stack / 2.7 DPS**). Up to **8 independent stacks** (base **172.8 total DoT** if all run their full duration); further hits replace the oldest stack. |
+| **Fire** | **43.2** (+8%) | **1** | Applies one refreshing Burn dealing **100% of the basic hit each second for 2s** (base: **43.2 DPS × 2s = 86.4 total Burn damage**, plus the initial **43.2 direct hit**). Burn cannot stack. |
 | **Lightning** | **Random 1–200** | **1** | Each hit has **50% Shock chance** for **4s**. Shocked enemies take **×2 direct-hit damage**; DoT is unaffected. |
-| **Poison** | **0** | **2** | Every hit applies a **permanent 15 DPS stack**, equivalent to **120 damage over 8s**. Stacks have no count or duration limit. |
+| **Poison** | **0** | **2** | Every hit applies a **permanent 15 DPS stack** (120 damage over 8s). Critical hits scale their new stack with **Crit Multiplier**. On death with **5+ stacks**, the enemy spreads **5 stacks** to up to **6 enemies** within **175 units**. Proliferation can chain. Stacks have no count or duration limit. |
 
 ### Elemental damage formulas
 
 Base shot interval is `1 / attacks per second`: **1.0s** for Blood, Fire and Lightning, and **0.5s** for Poison. Rapid Fire multiplies the selected element's attack speed normally.
 
 - **Element Power:** Each upgrade adds `5% × rarity multiplier` to the base damage of the chosen element. Multiple bonuses **add**, rather than multiply.
-- **Blood:** basic hit = `20 × (1 + Blood Power bonus) + flat damage`. Bleed DPS per stack = `actual hit damage / 8` for **8s**, so each stack deals **100% of that hit** over its lifetime. With 8 base stacks: `8 × 20 = 160` total Bleed damage. Bleed scales with flat damage, Blood Power, crits and other direct-hit modifiers.
-- **Fire:** basic hit = `40 × (1 + Fire Power bonus) + flat damage`. Burn DPS = `basic hit × 1.0` for **2s**; at base that is **40 direct + 40 DoT in second 1 + 40 DoT in second 2**. Burn scales with flat damage and Fire Power, but not critical damage or Shock.
+- **Blood:** basic hit = `21.6 × (1 + Blood Power bonus) + flat damage`. Bleed DPS per stack = `actual hit damage / 8` for **8s**, so each stack deals **100% of that hit** over its lifetime. With 8 base stacks: `8 × 21.6 = 172.8` total Bleed damage. Bleed scales with flat damage, Blood Power, crits and other direct-hit modifiers.
+- **Fire:** basic hit = `43.2 × (1 + Fire Power bonus) + flat damage`. Burn DPS = `basic hit × 1.0` for **2s**; at base that is **43.2 direct + 43.2 DoT in second 1 + 43.2 DoT in second 2**. Burn scales with flat damage and Fire Power, but not critical damage or Shock.
 - **Lightning:** hit = `random integer 1–200 × (1 + Lightning Power bonus) + flat damage`, followed by applicable direct-hit modifiers.
-- **Poison:** total DPS = `number of stacks × 15 × (1 + Poison Power bonus)`. Existing stacks also gain the bonus. Flat damage is unavailable to Poison.
+- **Poison:** DPS = `15 × (1 + Poison Power bonus) × sum(crit multiplier of each stack)`. Normal stacks contribute ×1, critical stacks contribute the **Crit Damage multiplier at application** (base ×1.6); crit potency remains when Poison Power upgrades existing stacks. At death with 5+ stacks, propagate **5 stacks with the source's average crit potency** to up to 6 nearby enemies within radius 175. Spread stacks can spread again upon death. **No 20-stack execution rule or stack cap** exists in the live game. Flat damage is unavailable to Poison.
 
-**Hemorrhagic Burst (Blood):** An independent **5% chance per four-card power-up offer** (including rerolls), available once per run. After selection, every Blood hit immediately creates and detonates 8 Bleed stacks in an area instead of leaving ticking stacks. Base area damage = `8 × hit damage` (**160 area damage** for an unmodified 20-damage Blood hit). Rarity adds `10% × (rarity multiplier − 1)` burst potency; the explosion does not spread Bleed.
+**Hemorrhagic Burst (Blood):** An independent **5% chance per four-card power-up offer** (including rerolls), available once per run. After selection, every Blood hit immediately creates and detonates 8 Bleed stacks in an area instead of leaving ticking stacks. Base area damage = `8 × hit damage` (**172.8 area damage** for an unmodified 21.6-damage Blood hit). Rarity adds `10% × (rarity multiplier − 1)` burst potency; the explosion does not spread Bleed.
 
 ## Power-ups and rarity
 

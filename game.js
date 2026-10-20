@@ -118,7 +118,7 @@
     if(p.element==='poison'){
       p.poisonMultiplier=multiplier;
       for(const enemy of g.enemies){
-        if(enemy.poisonStacks>0)enemy.poisonDps=enemy.poisonStacks*POISON_DPS*multiplier;
+        if(enemy.poisonStacks>0)enemy.poisonDps=(enemy.poisonStackStrength||enemy.poisonStacks)*POISON_DPS*multiplier;
       }
     }
   }
@@ -146,12 +146,12 @@
   // The four starting cards are intentionally brief. Full mechanics remain
   // available in the paused Power-Up Grimoire.
   const ELEMENT_CHOICES = [
-    {id:'blood',element:'blood',name:'BLOOD',desc:'20 DMG · Bleed on hit',longDesc:'20 direct damage. Every hit Bleeds for 100% of its damage over 8s per stack (20 total each at base), up to 8 stacks. Brutality and Blood Power improve Bleed.',tier:'rare'},
-    {id:'fire',element:'fire',name:'FIRE',desc:'40 DMG · Burn over 2s',longDesc:'40 direct damage. Burn deals 100% of the basic hit every second for 2s (40 + 40 at base), refreshing on hit. Brutality and Fire Power improve Burn.',tier:'rare'},
+    {id:'blood',element:'blood',name:'BLOOD',desc:'21.6 DMG · Bleed on hit',longDesc:'21.6 direct damage. Every hit Bleeds for 100% of its damage over 8s per stack (21.6 total each at base), up to 8 stacks. Brutality and Blood Power improve Bleed.',tier:'rare'},
+    {id:'fire',element:'fire',name:'FIRE',desc:'43.2 DMG · Burn over 2s',longDesc:'43.2 direct damage. Burn deals 100% of the basic hit every second for 2s (43.2 + 43.2 at base), refreshing on hit. Brutality and Fire Power improve Burn.',tier:'rare'},
     {id:'lightning',element:'lightning',name:'LIGHTNING',desc:'1–200 DMG · 50% Shock',longDesc:'Random 1–200 direct damage per hit. Each hit has a 50% chance to Shock for 4s; shocked enemies take double direct-hit damage.',tier:'rare'},
-    {id:'poison',element:'poison',name:'POISON',desc:'15 DPS · Infinite stacks',longDesc:'Every hit adds a permanent 15 DPS Poison stack (120 damage per 8s). <strong>Infinite scaling</strong>: stacks never expire.',tier:'rare'}
+    {id:'poison',element:'poison',name:'POISON',desc:'15 DPS · Infinite stacks',longDesc:'Every hit adds 15 DPS Poison, multiplied by Crit Damage on critical hits. Enemies dying with 5+ Poison stacks spread 5 stacks to up to 6 nearby targets. <strong>Infinite scaling</strong>: stacks never expire.',tier:'rare'}
   ];
-  const ELEMENT_DAMAGE={blood:20,fire:40,lightning:1,poison:0};
+  const ELEMENT_DAMAGE={blood:21.6,fire:43.2,lightning:1,poison:0}; // +8% base Blood and Fire
   const ELEMENT_ATTACK_RATE={blood:1,fire:1,lightning:1,poison:2};
   // User-supplied v0.23 art: four starting elements without arrows, 18
   // power-ups with upgrade arrows. Each cell already has the new gold frame.
@@ -232,7 +232,7 @@
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
       player:{x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
-      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], bolts:[], fountains:[], magnetShrines:[], powerShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:45, magnetSpawned:false, nextPowerShrineAt:120, powerShrineSpawned:false, kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
+      enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], poisonBursts:[], bolts:[], fountains:[], magnetShrines:[], powerShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:45, magnetSpawned:false, nextPowerShrineAt:120, powerShrineSpawned:false, kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0, bossNext:51,rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
     spawnFountain(true);
@@ -966,6 +966,8 @@
   function enemyDie(e){
     const index=game.enemies.indexOf(e); if(index<0) return;
     game.enemies.splice(index,1); game.kills++;
+    // Native Poison: a poisoned death can infect nearby enemies.
+    proliferatePoison(e);
     const def=ENEMIES[e.type];
     if(e.type==='warden'){
       for(let i=0;i<14;i++)game.drops.push({x:e.x+rand(-39,39),y:e.y+rand(-32,32),value:4,life:75,phase:rand(0,TAU)});
@@ -1059,11 +1061,33 @@
       stacks[oldest]=stack;
     }
   }
-  // Each Poison hit adds a permanent, unlimited 15 DPS stack (120 / 8s).
-  // Aggregate DPS instead of allocating an object per stack.
-  function applyPoisonStack(enemy,potency){
-    enemy.poisonStacks=(enemy.poisonStacks||0)+1;
-    enemy.poisonDps=enemy.poisonStacks*POISON_DPS*potency;
+  // Each poisoned hit snapshots its crit multiplier; summed potency also
+  // allows older stacks and transmitted stacks to survive Poison Power picks.
+  function applyPoisonStacks(enemy,count,critMultiplier=1){
+    enemy.poisonStacks=(enemy.poisonStacks||0)+count;
+    enemy.poisonStackStrength=(enemy.poisonStackStrength||0)+count*critMultiplier;
+    enemy.poisonDps=enemy.poisonStackStrength*POISON_DPS*game.player.poisonMultiplier;
+  }
+  function applyPoisonStack(enemy,critMultiplier=1){
+    applyPoisonStacks(enemy,1,critMultiplier);
+  }
+  // Innate Poison Proliferate: spread five stacks to six nearest enemies
+  // within a 175-unit circle when a 5+-stack target dies. Can chain.
+  function proliferatePoison(source){
+    if(game.player.element!=='poison'||(source.poisonStacks||0)<5)return;
+    const radius=175;
+    const nearby=game.enemies.filter(e=>
+      dist2(source.x,source.y,e.x,e.y)<=(radius+e.r)*(radius+e.r)
+    ).sort((a,b)=>dist2(source.x,source.y,a.x,a.y)-dist2(source.x,source.y,b.x,b.y)).slice(0,6);
+    const averageCrit=(source.poisonStackStrength||source.poisonStacks)/source.poisonStacks;
+    for(const enemy of nearby){
+      applyPoisonStacks(enemy,5,averageCrit);
+      addParticles(enemy.x,enemy.y,'#94ff74',5,42,2,3);
+    }
+    game.poisonBursts.push({x:source.x,y:source.y,radius,life:.52,max:.52});
+    if(game.poisonBursts.length>24)game.poisonBursts.shift();
+    addParticles(source.x,source.y,'#65ff80',24,90,2,4);
+    floatText(source.x,source.y-36,'PROLIFERATE ×'+nearby.length,'#b2ff99',11);
   }
   // Fire's single Burn deals the full basic hit each second for 2s; refreshes.
   function refreshBurn(enemy,p){
@@ -1204,7 +1228,10 @@
           if(b.lightning && Math.random()<.5){e.shockTime=4;floatText(e.x,e.y-35,'SHOCK!','#86d8ff');addMagicFx(e.x,e.y,'lightning',33,.19);}
           if(b.frost)e.slowTime=2.5;
           // Poison has no stack limit or expiry; every hit adds 15 DPS.
-          if(b.poison)applyPoisonStack(e,p.poisonMultiplier);
+          if(b.poison){
+            applyPoisonStack(e,crit?p.critDamage:1);
+            if(crit)floatText(e.x,e.y-28,'CRIT POISON!','#f8e17e',10);
+          }
           if(p.chainChance>0&&Math.random()<Math.min(.95,p.chainChance))chainLightning(e,dmg*.55,b.hit);
           if(b.orb){explodeAt(e.x,e.y,dmg*.7,e,b.hit);addMagicFx(e.x,e.y,'blood_orb_v11',70,.26);}
           else if(p.element==='blood'&&Math.random()<p.bloodSplashChance)explodeAt(e.x,e.y,dmg*.38,e,b.hit);
@@ -1263,6 +1290,7 @@
     }
 
     for(let i=g.magicFx.length-1;i>=0;i--){g.magicFx[i].life-=dt;if(g.magicFx[i].life<=0)g.magicFx.splice(i,1);}
+    for(let i=g.poisonBursts.length-1;i>=0;i--){const b=g.poisonBursts[i];b.life-=dt;if(b.life<=0)g.poisonBursts.splice(i,1);}
     for(let i=g.bolts.length-1;i>=0;i--){g.bolts[i].life-=dt;if(g.bolts[i].life<=0)g.bolts.splice(i,1);}
     shake=Math.max(0,shake-25*dt); flash=Math.max(0,flash-dt); updateHUD();
   }
@@ -1648,6 +1676,20 @@
       }
     }
   }
+  function drawPoisonBursts(camX,camY){
+    for(const b of game.poisonBursts){
+      const progress=1-b.life/b.max,r=b.radius*(1-(1-progress)**2),alpha=Math.max(0,1-progress);
+      const x=b.x-camX,y=b.y-camY;
+      ctx.save();
+      ctx.strokeStyle='rgba(109,255,113,'+(.8*alpha)+')';
+      ctx.fillStyle='rgba(63,230,106,'+(.10*alpha)+')';
+      ctx.lineWidth=4+5*progress;ctx.shadowColor='#4eff79';ctx.shadowBlur=17*alpha;
+      ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.stroke();
+      ctx.shadowBlur=0;ctx.strokeStyle='rgba(190,255,128,'+(.44*alpha)+')';
+      ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,r*.82,0,TAU);ctx.stroke();
+      ctx.restore();
+    }
+  }
   function drawFx(camX,camY){
     for(const p of game.particles){ ctx.globalAlpha=clamp(p.life/p.max,0,1); ctx.fillStyle=p.color; ctx.fillRect(Math.round(p.x-camX),Math.round(p.y-camY),p.size,p.size); }
     ctx.globalAlpha=1; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='bold 11px Silkscreen,monospace';
@@ -1675,7 +1717,7 @@
       const objects=[...game.enemies.map(e=>({y:e.y,e})),{y:p.y,p}]; objects.sort((a,b)=>a.y-b.y);
       for(const item of objects){ if(item.e) drawEnemy(item.e,camX,camY,t); else drawPlayer(p,camX,camY,t); }
       if(game.death)drawDeath(camX,camY,t);
-      drawShots(camX,camY,t); drawMagic(camX,camY); drawSlashBursts(camX,camY); drawImpacts(camX,camY); drawFx(camX,camY);
+      drawShots(camX,camY,t); drawMagic(camX,camY); drawPoisonBursts(camX,camY); drawSlashBursts(camX,camY); drawImpacts(camX,camY); drawFx(camX,camY);
     } else {
       shadowAt(W/2,H/2+55,22,.5);if(!window.NoobArt?.paint(ctx,'hero_idle',W/2-32,H/2-55,64,85))ctx.drawImage(sprite('hero'),W/2-29,H/2-22,58,70);
     }
