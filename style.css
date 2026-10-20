@@ -1175,3 +1175,163 @@ body:has(#intro.hidden) .footer{
     width:94%!important;
   }
 }
+
+/* v0.32.6 — one fixed utility header for the entire run.
+   Existing live HUD nodes move into the header; no duplicates on the arena.
+   Never apply these rules to the illustrated title-screen menu. */
+body:has(#intro.hidden) .topbar{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;
+  justify-content:stretch;
+  column-gap:12px;
+  row-gap:6px;
+  width:100%;
+  min-height:56px;
+  padding:6px 13px!important;
+  flex-wrap:nowrap;
+  background:linear-gradient(180deg,#21131c,#130b13);
+  box-sizing:border-box;
+}
+body:has(#intro:not(.hidden)) .topbar-game-utility{
+  display:none!important;
+}
+.topbar-game-utility{
+  display:flex;
+  grid-column:1;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+  justify-self:start;
+}
+body:has(#intro.hidden) .topbar .inventory-button.utility-stats{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  gap:8px;
+  height:43px;
+  width:auto!important;
+  min-width:146px;
+  max-width:205px;
+  padding:6px 11px;
+  border-color:#8c5366;
+  border-radius:11px;
+  background:linear-gradient(155deg,#361827,#180c16);
+  color:#ffe1d9;
+  font:800 13px/1 system-ui,sans-serif;
+  white-space:nowrap;
+  box-sizing:border-box;
+  cursor:pointer;
+}
+body:has(#intro.hidden) .topbar .inventory-button.utility-stats[hidden]{
+  display:none!important;
+}
+.topbar .utility-stats .skull{font-size:18px;color:#fd839b;}
+.topbar .utility-stats .utility-kills{
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+  min-width:4ch;
+  max-width:7ch;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:15px;
+}
+.topbar .utility-stats .divider-v{height:20px;flex:0 0 1px;}
+.topbar .utility-stats .utility-level-label{font-size:11px;letter-spacing:.05em;color:#d1aeba;}
+.topbar .utility-stats .utility-level{font-variant-numeric:tabular-nums;font-size:14px;}
+body:has(#intro.hidden) .topbar .utility-hp{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:7px;
+  padding:7px 10px;
+  min-height:43px;
+  min-width:0;
+  max-width:100%;
+  border-radius:11px;
+  font-size:12px;
+  box-sizing:border-box;
+  backdrop-filter:none;
+}
+.topbar .utility-hp .hp-track{
+  flex:0 1 clamp(66px,6.5vw,112px);
+  width:clamp(66px,6.5vw,112px);
+  min-width:52px;
+  height:9px;
+}
+.topbar .utility-hp .hp-num{
+  font-variant-numeric:tabular-nums;
+  font-size:13px;
+  white-space:nowrap;
+}
+body:has(#intro.hidden) .topbar #hud{
+  display:flex;
+  grid-column:2;
+  align-items:center;
+  justify-content:center;
+  position:static!important;
+  left:auto!important;top:auto!important;right:auto!important;
+  transform:none!important;
+  min-width:102px;
+  height:43px;
+  margin:0;
+  padding:5px 12px;
+  justify-self:center;
+  border-radius:11px;
+  z-index:auto;
+  box-sizing:border-box;
+}
+body:has(#intro.hidden) .topbar #hud[hidden]{display:none!important;}
+body:has(#intro.hidden) .topbar #hud::before{display:none;}
+body:has(#intro.hidden) .topbar #timeText{
+  font-size:23px;
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.045em;
+}
+body:has(#intro.hidden) .topbar .topbar-right.solo-audio{
+  grid-column:3;
+  width:auto;
+  min-width:0;
+  justify-content:flex-end;
+  justify-self:end;
+  flex:0 1 auto;
+}
+body:has(#intro.hidden) .topbar .audio-controls{
+  gap:7px;
+  flex-wrap:nowrap;
+  width:auto;
+  min-width:0;
+}
+body:has(#intro.hidden) .boss-bar{top:12px!important;}
+body:has(#intro.hidden) .float-messages{top:77px!important;}
+@media(max-width:1180px){
+  body:has(#intro.hidden) .topbar{
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-rows:auto auto;
+    min-height:75px;
+    column-gap:9px;
+    row-gap:3px;
+    padding:5px 9px!important;
+  }
+  body:has(#intro.hidden) .topbar-game-utility{grid-column:1;grid-row:1;}
+  body:has(#intro.hidden) .topbar #hud{grid-column:2;grid-row:1;min-width:95px;}
+  body:has(#intro.hidden) .topbar .topbar-right.solo-audio{
+    grid-column:1/-1;grid-row:2;justify-self:end;
+  }
+  body:has(#intro.hidden) .topbar .audio-controls{gap:6px;}
+  body:has(#intro.hidden) .topbar .utility-hp .hp-track{width:80px;flex-basis:80px;}
+}
+@media(max-width:650px){
+  body:has(#intro.hidden) .topbar{min-height:89px;padding:5px 7px!important;}
+  body:has(#intro.hidden) .topbar-game-utility{gap:5px;flex-wrap:wrap;}
+  body:has(#intro.hidden) .topbar .inventory-button.utility-stats{height:33px;min-width:121px;gap:5px;padding:4px 7px;}
+  body:has(#intro.hidden) .topbar .inventory-button.utility-stats .utility-kills{font-size:12px;}
+  body:has(#intro.hidden) .topbar .utility-hp{min-height:32px;padding:4px 6px;gap:5px;}
+  body:has(#intro.hidden) .topbar .utility-hp .hp-track{width:60px;flex-basis:60px;min-width:40px;}
+  body:has(#intro.hidden) .topbar .utility-hp .hp-num{font-size:11px;}
+  body:has(#intro.hidden) .topbar #hud{height:34px;min-width:78px;padding:3px 6px;}
+  body:has(#intro.hidden) .topbar #timeText{font-size:18px;}
+  body:has(#intro.hidden) .topbar .audio-controls{flex-wrap:wrap;}
+}

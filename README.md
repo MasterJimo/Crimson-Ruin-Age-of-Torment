@@ -2,6 +2,17 @@
 
 **[▶ PLAY THE GAME](https://masterjimo.github.io/Crimson-Ruin-Age-of-Torment/)**
 
+## Single-row utility HUD
+
+During gameplay, the upper bar now contains a clickable **kills / level** display on
+the left (opens Character Stats / Encyclopedia), the **HP meter** immediately
+beside it, a smaller **fixed centered clock**, and the audio controls at the
+right. The old chest icon and duplicate arena overlays are gone. Large kill
+totals are compacted (for example `12.4K` or `1.2M`); the full count is still
+available via hover, and the original value is used for scoring. On narrower
+screens the audio controls wrap into a second header row, while the timer
+remains in a stable grid cell.
+
 ## Courtyard texture clarity
 
 The original gothic courtyard artwork remains unchanged. Once its WebP texture

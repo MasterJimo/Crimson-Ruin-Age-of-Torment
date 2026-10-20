@@ -2021,7 +2021,14 @@
     }
     const xpPct=p.level>=MAX_HUNTER_LEVEL?100:clamp(100*p.xp/p.next,0,100);
     el.xp.style.width=`${xpPct}%`; el.xpStrip.setAttribute('aria-valuenow',String(Math.round(xpPct)));
-    el.level.textContent=p.level>=MAX_HUNTER_LEVEL?p.level+' MAX':p.level; el.kills.textContent=game.kills; el.time.textContent=timeText(game.time);
+    el.level.textContent=p.level>=MAX_HUNTER_LEVEL?p.level+' MAX':p.level;
+    // Space for millions/billions of kills without pushing HP or the timer.
+    const kills=Number.isFinite(game.kills)?game.kills:0;
+    el.kills.textContent=kills>=10000
+      ?new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(kills)
+      :kills.toLocaleString('en-US');
+    el.kills.title=kills.toLocaleString('en-US')+' kills';
+    el.time.textContent=timeText(game.time);
     const boss=game.enemies.find(e=>ENEMIES[e.type]?.boss);
     el.bossBar.hidden=!boss;
     if(boss)el.bossName.textContent=ENEMIES[boss.type].name.toUpperCase();
