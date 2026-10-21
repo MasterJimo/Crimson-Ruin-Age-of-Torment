@@ -32,6 +32,25 @@ The browser version supports portrait and landscape layouts. The **Encyclopedia*
 - **Hunter's Oaths:** Optional achievements that unlock cosmetic titles; they do not increase combat power.
 - **Combat Clarity:** Cinematic, Balanced and Performance effect presets to reduce visual clutter without changing gameplay.
 
+### Fire and Lightning status VFX — v0.33.6
+
+The first small flame and spark implementation was too weak at real in-game
+enemy sizes. Fire now surrounds the animated monster with **layered, glowing
+yellow/orange flames across the limbs, torso, shoulders and head**, plus
+looping rising embers and a stronger orange silhouette rim. One tiny cached
+transparent Canvas flame is reused for all enemies; flames follow each
+sprite rather than remaining fixed on the floor. Lightning now runs a
+**prominent branching blue-white bolt from head to feet**, with additional
+flickering torso arcs, forks and a blue rim-light. Both use high-contrast
+Canvas drawing against the dark courtyard, scale to large bosses, and vary
+details across Cinematic/Balanced/Performance presets.
+
+This is a real-time implementation on the game's current monster sprite
+renderer—not a pre-rendered concept image. Burn duration/DPS, Shock chance,
+duration and double-damage mechanic remain unchanged. Combined statuses
+coexist without hiding boss attack-warning overlays. Combat damage and
+collision are unaffected.
+
 ## Core mechanics
 
 In addition to Poison's toxic-green silhouette and mist, enemies

@@ -159,8 +159,8 @@
   const statusSpriteCache=new Map();
   const STATUS_TINT={
     poison:{color:'#5fdb69',alpha:.35},
-    fire:{color:'#ff8c38',alpha:.23},
-    lightning:{color:'#8cbcff',alpha:.23}
+    fire:{color:'#ff8627',alpha:.42},
+    lightning:{color:'#68b2ff',alpha:.34}
   };
   function statusSpriteFrame(image,x,y,tile,key,status){
     if(statusSpriteCache.has(key))return statusSpriteCache.get(key);
@@ -211,75 +211,170 @@
     ctx.restore();
   }
 
-  // Fire: warm silhouette plus small flame tongues at shoulders and ankles.
-  // Draw the wider glow BEHIND sprites, and a few small flames in front.
-  // All positions follow each monster's local animated sprite coordinates.
+
+  // v0.33.6 — genuine in-game Fire / Lightning status VFX, scaled to the
+  // monster's actual body. Render flames from ONE small precomposed transparent
+  // Canvas image; do not allocate particles, gradients or Canvas textures for
+  // every enemy. No gameplay or elemental damage changes.
+  let burningFlameSprite=null;
+  function fireFlameStamp(){
+    if(burningFlameSprite)return burningFlameSprite;
+    try{
+      const canvas=document.createElement('canvas');
+      canvas.width=48;canvas.height=96;
+      const f=canvas.getContext('2d');if(!f)return null;
+      const bloom=f.createRadialGradient(24,69,3,24,65,32);
+      bloom.addColorStop(0,'rgba(255,189,43,.48)');
+      bloom.addColorStop(.52,'rgba(255,69,8,.26)');
+      bloom.addColorStop(1,'rgba(255,37,5,0)');
+      f.fillStyle=bloom;f.fillRect(0,0,48,96);
+      const flame=f.createLinearGradient(0,92,0,10);
+      flame.addColorStop(0,'rgba(255,235,95,.97)');
+      flame.addColorStop(.3,'rgba(255,146,25,.94)');
+      flame.addColorStop(.7,'rgba(246,48,10,.80)');
+      flame.addColorStop(1,'rgba(204,20,4,0)');
+      f.fillStyle=flame;
+      f.beginPath();f.moveTo(11,92);
+      f.bezierCurveTo(5,75,19,56,15,44);
+      f.bezierCurveTo(17,35,26,25,23,4);
+      f.bezierCurveTo(36,29,28,42,37,55);
+      f.bezierCurveTo(48,77,37,91,37,92);
+      f.closePath();f.fill();
+      f.fillStyle='rgba(255,249,185,.82)';
+      f.beginPath();f.moveTo(19,91);
+      f.quadraticCurveTo(14,68,24,48);
+      f.quadraticCurveTo(32,65,29,91);
+      f.closePath();f.fill();
+      burningFlameSprite=canvas;return canvas;
+    }catch(_){return null;}
+  }
   function drawFireAura(w,h,e,t,front=false){
+    const sprite=fireFlameStamp();
     const detail=CLARITY_PRESETS[clarityMode].particles;
-    const count=front?(detail>.35?2:1):(detail>.8?4:detail>.35?3:2);
-    const phase=t*7+e.phase*.21;
+    const baseCount=front?(detail>.8?7:detail>.3?6:4):
+      (detail>.8?9:detail>.3?8:5);
+    // Gracefully reduce ornamentation in the 100+ enemy Hardcore swarm.
+    // Status readability never drops below 3 flames on either side.
+    const pressure=game?.enemies?.length||0;
+    const count=Math.max(3,Math.round(baseCount*
+      (pressure>=140?.55:pressure>=80?.75:1)));
+    const phase=t*8+e.phase*.31;
     ctx.save();
-    ctx.shadowColor='#ff5c14';
-    ctx.shadowBlur=detail>.35?(front?5:9):0;
+    if(!front){
+      // Low, wide amber heat surrounding the feet and edges of the monster.
+      ctx.fillStyle='rgba(255,80,10,.13)';
+      ctx.shadowColor='#ff550a';ctx.shadowBlur=detail>.3?18:7;
+      ctx.beginPath();ctx.ellipse(0,-h*.31,w*.52,h*.46,0,0,TAU);ctx.fill();
+      ctx.shadowBlur=0;
+    }
+    // Stagger head, shoulders, torso and legs rather than drawing tiny fire
+    // triangles only along the outermost edges (the old implementation).
     for(let i=0;i<count;i++){
-      const side=i%2===0?-1:1;
-      const x=side*w*(front?.30:.34)+(i>=2?0:Math.sin(phase*.68+i)*2);
-      const y=-h*(i>=2?.60:.32)+(front?6:3);
-      const flameH=h*(front?.13:.21)*(1+.18*Math.sin(phase+i*2.4));
-      const flameW=Math.max(3,w*(front?.07:.11));
-      const sway=Math.sin(phase*.9+i*2.1)*flameW*.9;
-      ctx.fillStyle=front?'rgba(255,172,68,.72)':'rgba(255,89,20,.38)';
-      ctx.beginPath();
-      ctx.moveTo(x-flameW,y+4);
-      ctx.quadraticCurveTo(x-flameW*1.25,y-flameH*.28,x+sway,y-flameH);
-      ctx.quadraticCurveTo(x+flameW*1.4,y-flameH*.18,x+flameW,y+4);
-      ctx.closePath();ctx.fill();
-      if(detail>.35){
-        ctx.shadowBlur=0;
-        ctx.fillStyle=front?'rgba(255,226,123,.68)':'rgba(255,181,48,.43)';
-        ctx.beginPath();ctx.moveTo(x-flameW*.42,y+2);
-        ctx.quadraticCurveTo(x-flameW*.3,y-flameH*.12,x+sway*.3,y-flameH*.56);
-        ctx.quadraticCurveTo(x+flameW*.65,y-flameH*.12,x+flameW*.42,y+2);
+      const branch=i%5;
+      const anchorX=[-.34,.32,-.12,.14,0][branch]*w;
+      const anchorY=[-.28,-.32,-.08,-.55,-.70][branch]*h+
+        (i>=5?h*.10:0);
+      const motion=Math.sin(phase*.9+i*2.31);
+      const lift=Math.sin(phase*1.4+i*1.5);
+      const flameH=h*(front?.37:.43)*(1+motion*.18);
+      const flameW=w*(front?.30:.32)*(1+.12*lift);
+      const px=anchorX+w*.035*motion,py=anchorY+h*.025*lift;
+      if(sprite){
+        ctx.globalAlpha=front? .78:.75;
+        ctx.drawImage(sprite,px-flameW/2,py-flameH,flameW,flameH);
+      }else{
+        // Real Canvas fallback if a browser cannot create the cached stamp.
+        ctx.globalAlpha=.85;
+        ctx.fillStyle='#ff7920';
+        ctx.beginPath();ctx.moveTo(px-flameW*.35,py);
+        ctx.quadraticCurveTo(px-flameW*.6,py-flameH*.5,
+          px+flameW*.13,py-flameH);
+        ctx.quadraticCurveTo(px+flameW*.55,py-flameH*.4,
+          px+flameW*.35,py);
         ctx.closePath();ctx.fill();
       }
     }
+    ctx.globalAlpha=1;
+    // Floating yellow embers: follow the monster, rise and loop without
+    // allocating real particle objects or changing movement/combat state.
+    const sparks=detail>.8?5:detail>.3?3:1;
+    ctx.fillStyle='#ffe09c';ctx.shadowColor='#ff6b16';
+    ctx.shadowBlur=detail>.3?5:0;
+    for(let i=0;i<sparks;i++){
+      const ascent=(t*(.48+i*.07)+e.phase*.019+i*.27)%1;
+      const sx=Math.sin(t*3.8+i*7.3+e.phase)*w*.38;
+      const sy=h*.04-ascent*h*1.13;
+      const r=i%2===0?1.65:1.15;
+      ctx.globalAlpha=.92*(1-ascent*.65);
+      ctx.fillRect(sx,sy,r,r*1.5);
+    }
     ctx.restore();
   }
-  // Shock: flickering lightning zigzags CROSS the monster silhouette rather
-  // than drawing a static halo. Stable time-sliced phase means animation with
-  // no extra simulation particles or random allocations each frame.
+
+  // Large branching bolts DOWN and ACROSS the body. Jagged positions update
+  // ~12 times per second, with a saturated blue halo and a white-hot core.
+  // Never alter the existing Shock timers, damage multiplier or bounce logic.
   function drawShockArcs(w,h,e,t){
     const detail=CLARITY_PRESETS[clarityMode].particles;
-    const count=detail>.8?3:detail>.3?2:1;
-    const tick=Math.floor(t*11+e.phase*.22);
+    const baseBoltCount=detail>.8?3:detail>.3?2:1;
+    const boltCount=game?.enemies?.length>=140?1:
+      game?.enemies?.length>=80?Math.min(2,baseBoltCount):baseBoltCount;
+    const slice=Math.floor(t*12+e.phase*.15);
+    const seed=e.x*.017+e.y*.011+e.phase*.06;
+    const flicker=.72+.28*Math.abs(Math.sin(t*16+seed));
     ctx.save();
-    ctx.lineJoin='round';ctx.lineCap='round';
-    for(let i=0;i<count;i++){
-      const jitter=Math.sin(tick*3.71+i*9.16+e.x*.017+e.y*.013);
-      const middleY=-h*(.26+i*.20);
-      const blink=.58+.42*Math.abs(Math.sin(t*12+e.phase+i*2));
-      ctx.beginPath();
-      for(let j=0;j<6;j++){
-        const step=j/5;
-        const px=w*(-.38+.76*step);
-        const py=middleY+Math.sin((tick+i*11+j*7)*1.83)*h*.07
-          +jitter*h*.045*(1-Math.abs(.5-step)*2);
-        if(j===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    ctx.lineCap='round';ctx.lineJoin='miter';
+    ctx.fillStyle='rgba(47,124,255,.12)';
+    ctx.shadowBlur=detail>.3?15:6;ctx.shadowColor='#268fff';
+    ctx.beginPath();ctx.ellipse(0,-h*.43,w*.40,h*.43,0,0,TAU);ctx.fill();
+    ctx.shadowBlur=0;
+    for(let b=0;b<boltCount;b++){
+      const segments=8,points=[];
+      for(let j=0;j<=segments;j++){
+        const frac=j/segments;
+        let x,y;
+        if(b===0){
+          // Major vertical strike from above the skull to the feet.
+          x=Math.sin((slice*9+j*11)*1.91+seed)*w*.26+
+            Math.sin(frac*Math.PI*2+slice*.5)*w*.09;
+          y=-h*.95+h*frac*1.02;
+        }else{
+          // Secondaries wrap diagonally across chest and arms.
+          const side=b===1?-1:1;
+          x=side*w*.39*(1-2*frac)+Math.sin(slice*2.8+j*5.7+seed+b)*w*.105;
+          y=-h*(b===1?.73:.51)+h*frac*.54;
+        }
+        points.push([x,y]);
       }
-      ctx.strokeStyle='rgba(68,145,255,'+(.42*blink)+')';
-      ctx.lineWidth=detail>.35?3.1:2;
-      ctx.shadowColor='#499cff';ctx.shadowBlur=detail>.35?9:0;
-      ctx.stroke();
+      ctx.beginPath();
+      for(let j=0;j<points.length;j++){
+        if(j===0)ctx.moveTo(points[j][0],points[j][1]);
+        else ctx.lineTo(points[j][0],points[j][1]);
+      }
+      ctx.shadowColor='#2f80ff';ctx.shadowBlur=detail>.3?15:7;
+      ctx.strokeStyle='rgba(44,123,255,'+(.76*flicker)+')';
+      ctx.lineWidth=b===0?6:4.2;ctx.stroke();
+      ctx.shadowBlur=7;
+      ctx.strokeStyle='rgba(124,213,255,'+(.95*flicker)+')';
+      ctx.lineWidth=b===0?3.4:2.3;ctx.stroke();
       ctx.shadowBlur=0;
-      ctx.strokeStyle='rgba(225,244,255,'+(.78*blink)+')';
-      ctx.lineWidth=detail>.35?1.18:.85;
-      ctx.stroke();
-      if(detail>.8&&i===0){
-        const branchY=middleY+Math.sin(tick*1.83)*h*.06;
-        ctx.beginPath();ctx.moveTo(0,branchY);
-        ctx.lineTo(w*.16,branchY-h*.16);ctx.lineTo(w*.26,branchY-h*.20);
-        ctx.strokeStyle='rgba(176,218,255,'+(.63*blink)+')';
-        ctx.lineWidth=1.15;ctx.stroke();
+      ctx.strokeStyle='rgba(247,252,255,'+(.98*flicker)+')';
+      ctx.lineWidth=b===0?1.65:1.05;ctx.stroke();
+      // Forks branch sideways from real points on the torso and limbs.
+      const forkCount=b===0?(detail>.3?3:1):(detail>.8?2:1);
+      for(let fork=0;fork<forkCount;fork++){
+        const index=Math.min(segments-1,2+fork*2);
+        const point=points[index],dir=(fork+b)%2===0?-1:1;
+        const reach=w*(.16+.08*(fork%2));
+        const bend=Math.sin(slice*4.41+b*9+fork*7+seed)*h*.055;
+        ctx.beginPath();ctx.moveTo(point[0],point[1]);
+        ctx.lineTo(point[0]+dir*reach*.53,point[1]-h*.11+bend);
+        ctx.lineTo(point[0]+dir*reach,point[1]-h*.075+bend);
+        ctx.strokeStyle='rgba(70,166,255,'+(.9*flicker)+')';
+        ctx.shadowColor='#4c9dff';ctx.shadowBlur=detail>.3?8:3;
+        ctx.lineWidth=2.6;ctx.stroke();
+        ctx.shadowBlur=0;ctx.lineWidth=1;
+        ctx.strokeStyle='rgba(241,252,255,'+flicker+')';ctx.stroke();
       }
     }
     ctx.restore();
@@ -2790,8 +2885,10 @@
       // Preserve source detail at any monitor resolution while keeping
       // identical on-screen sprite sizes, foot anchors and collision radii.
       // A restrained rim-light helps silhouettes stand off the dark courtyard.
-      ctx.shadowColor=def.boss?'rgba(255,194,179,.40)':'rgba(255,224,192,.23)';
-      ctx.shadowBlur=def.boss?4:2;
+      ctx.shadowColor=e.hit>0?'rgba(255,255,243,.8)':
+        burning?'rgba(255,87,9,.87)':shocked?'rgba(76,149,255,.93)':
+        def.boss?'rgba(255,194,179,.40)':'rgba(255,224,192,.23)';
+      ctx.shadowBlur=e.hit>0?9:burning?12:shocked?13:def.boss?4:2;
       const frame=monsterHDFrame(e);
       const tinted=status&&onScreen?statusSpriteFrame(monsterHDAtlas,
         frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,MONSTER_HD_TILE,status+':hd:'+idx+':'+frame,status):null;
