@@ -153,13 +153,17 @@
     return monsterHDAtlas.complete&&monsterHDAtlas.naturalWidth===MONSTER_HD_TILE*MONSTER_HD_FRAMES
       &&monsterHDAtlas.naturalHeight===MONSTER_HD_TILE*MONSTER_ART_ORDER.length;
   }
-  // v0.33.4 — cached poison-tinted silhouettes. Compose each source animation
-  // frame only once (up to 13 × 10 HD tiles) rather than applying per-enemy
-  // Canvas filters every frame. Keep original detailed sprites and alpha intact.
-  // If Canvas 2D tinting is unavailable, the subtle poison haze still works.
-  const poisonSpriteCache=new Map();
-  function poisonSpriteFrame(image,x,y,tile,key){
-    if(poisonSpriteCache.has(key))return poisonSpriteCache.get(key);
+  // v0.33.5 — cache visually tinted monster frames per status and animation
+  // frame. No CPU-heavy pixel shader/filter per monster or per rendered frame.
+  // The exact original atlas and transparent silhouette are retained.
+  const statusSpriteCache=new Map();
+  const STATUS_TINT={
+    poison:{color:'#5fdb69',alpha:.35},
+    fire:{color:'#ff8c38',alpha:.23},
+    lightning:{color:'#8cbcff',alpha:.23}
+  };
+  function statusSpriteFrame(image,x,y,tile,key,status){
+    if(statusSpriteCache.has(key))return statusSpriteCache.get(key);
     let tinted=null;
     try{
       const canvas=document.createElement('canvas');
@@ -168,13 +172,17 @@
       if(tint){
         tint.drawImage(image,x,y,tile,tile,0,0,tile,tile);
         tint.globalCompositeOperation='source-atop';
-        tint.globalAlpha=.35;
-        tint.fillStyle='#5fdb69';
+        tint.globalAlpha=STATUS_TINT[status].alpha;
+        tint.fillStyle=STATUS_TINT[status].color;
         tint.fillRect(0,0,tile,tile);
         tinted=canvas;
       }
-    }catch(_){ /* Unsupported/offscreen canvas: retain original sprites. */ }
-    poisonSpriteCache.set(key,tinted);
+    }catch(_){ /* Browser lacks offscreen 2D compositing: draw base sprite. */ }
+    // Cap decoded offscreen textures on phones: at most 160 source tiles,
+    // about 23 MB of 192×192 RGBA frames, regardless of horde composition.
+    if(statusSpriteCache.size>=160)
+      statusSpriteCache.delete(statusSpriteCache.keys().next().value);
+    statusSpriteCache.set(key,tinted);
     return tinted;
   }
   // A few drifting translucent clouds, deliberately drawn BEHIND the sprite
@@ -199,6 +207,80 @@
       ctx.beginPath();
       ctx.ellipse(x+10+Math.sin(phase*.61)*11,y-h*.13,w*.32,h*.22,.24,0,TAU);
       ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Fire: warm silhouette plus small flame tongues at shoulders and ankles.
+  // Draw the wider glow BEHIND sprites, and a few small flames in front.
+  // All positions follow each monster's local animated sprite coordinates.
+  function drawFireAura(w,h,e,t,front=false){
+    const detail=CLARITY_PRESETS[clarityMode].particles;
+    const count=front?(detail>.35?2:1):(detail>.8?4:detail>.35?3:2);
+    const phase=t*7+e.phase*.21;
+    ctx.save();
+    ctx.shadowColor='#ff5c14';
+    ctx.shadowBlur=detail>.35?(front?5:9):0;
+    for(let i=0;i<count;i++){
+      const side=i%2===0?-1:1;
+      const x=side*w*(front?.30:.34)+(i>=2?0:Math.sin(phase*.68+i)*2);
+      const y=-h*(i>=2?.60:.32)+(front?6:3);
+      const flameH=h*(front?.13:.21)*(1+.18*Math.sin(phase+i*2.4));
+      const flameW=Math.max(3,w*(front?.07:.11));
+      const sway=Math.sin(phase*.9+i*2.1)*flameW*.9;
+      ctx.fillStyle=front?'rgba(255,172,68,.72)':'rgba(255,89,20,.38)';
+      ctx.beginPath();
+      ctx.moveTo(x-flameW,y+4);
+      ctx.quadraticCurveTo(x-flameW*1.25,y-flameH*.28,x+sway,y-flameH);
+      ctx.quadraticCurveTo(x+flameW*1.4,y-flameH*.18,x+flameW,y+4);
+      ctx.closePath();ctx.fill();
+      if(detail>.35){
+        ctx.shadowBlur=0;
+        ctx.fillStyle=front?'rgba(255,226,123,.68)':'rgba(255,181,48,.43)';
+        ctx.beginPath();ctx.moveTo(x-flameW*.42,y+2);
+        ctx.quadraticCurveTo(x-flameW*.3,y-flameH*.12,x+sway*.3,y-flameH*.56);
+        ctx.quadraticCurveTo(x+flameW*.65,y-flameH*.12,x+flameW*.42,y+2);
+        ctx.closePath();ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+  // Shock: flickering lightning zigzags CROSS the monster silhouette rather
+  // than drawing a static halo. Stable time-sliced phase means animation with
+  // no extra simulation particles or random allocations each frame.
+  function drawShockArcs(w,h,e,t){
+    const detail=CLARITY_PRESETS[clarityMode].particles;
+    const count=detail>.8?3:detail>.3?2:1;
+    const tick=Math.floor(t*11+e.phase*.22);
+    ctx.save();
+    ctx.lineJoin='round';ctx.lineCap='round';
+    for(let i=0;i<count;i++){
+      const jitter=Math.sin(tick*3.71+i*9.16+e.x*.017+e.y*.013);
+      const middleY=-h*(.26+i*.20);
+      const blink=.58+.42*Math.abs(Math.sin(t*12+e.phase+i*2));
+      ctx.beginPath();
+      for(let j=0;j<6;j++){
+        const step=j/5;
+        const px=w*(-.38+.76*step);
+        const py=middleY+Math.sin((tick+i*11+j*7)*1.83)*h*.07
+          +jitter*h*.045*(1-Math.abs(.5-step)*2);
+        if(j===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+      }
+      ctx.strokeStyle='rgba(68,145,255,'+(.42*blink)+')';
+      ctx.lineWidth=detail>.35?3.1:2;
+      ctx.shadowColor='#499cff';ctx.shadowBlur=detail>.35?9:0;
+      ctx.stroke();
+      ctx.shadowBlur=0;
+      ctx.strokeStyle='rgba(225,244,255,'+(.78*blink)+')';
+      ctx.lineWidth=detail>.35?1.18:.85;
+      ctx.stroke();
+      if(detail>.8&&i===0){
+        const branchY=middleY+Math.sin(tick*1.83)*h*.06;
+        ctx.beginPath();ctx.moveTo(0,branchY);
+        ctx.lineTo(w*.16,branchY-h*.16);ctx.lineTo(w*.26,branchY-h*.20);
+        ctx.strokeStyle='rgba(176,218,255,'+(.63*blink)+')';
+        ctx.lineWidth=1.15;ctx.stroke();
+      }
     }
     ctx.restore();
   }
@@ -2687,6 +2769,10 @@
     const x=Math.round(e.x-camX),y=Math.round(e.y-camY);
     shadowAt(x,y+8,e.r*(def.boss?1.28:1),def.boss?.48:.34);
     const poisoned=e.poisonDps>0;
+    const burning=e.burnTime>0,shocked=e.shockTime>0;
+    // Keep Poison priority on mixed statuses; the other effects still animate.
+    const status=poisoned?'poison':burning?'fire':shocked?'lightning':null;
+    const onScreen=x>-125&&x<W+125&&y>-150&&y<H+150;
     ctx.save();
     const floating=['eye','succubus','imp','boss1','boss2'].includes(e.type);
     ctx.translate(x,Math.round(y+(floating?Math.sin(e.phase)*2.3:Math.sin(e.phase)*.9)));
@@ -2697,7 +2783,8 @@
     const width=def.boss?e.type==='boss3'?111:99:e.type==='plague_rat'?66:e.type==='hellhound'?74:61;
     const height=def.boss?e.type==='boss3'?113:104:e.type==='plague_rat'?46:e.type==='blood_slime'?55:72;
     const idx=MONSTER_ART_INDEX[e.type]??-1;
-    if(poisoned)drawPoisonHaze(0,0,width,height,e,t);
+    if(poisoned&&onScreen)drawPoisonHaze(0,0,width,height,e,t);
+    if(burning&&onScreen)drawFireAura(width,height,e,t);
     if(idx>=0&&monsterHDReady()){
       ctx.imageSmoothingEnabled=true;
       // Preserve source detail at any monitor resolution while keeping
@@ -2706,21 +2793,24 @@
       ctx.shadowColor=def.boss?'rgba(255,194,179,.40)':'rgba(255,224,192,.23)';
       ctx.shadowBlur=def.boss?4:2;
       const frame=monsterHDFrame(e);
-      const tinted=poisoned?poisonSpriteFrame(monsterHDAtlas,
-        frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,MONSTER_HD_TILE,'hd:'+idx+':'+frame):null;
+      const tinted=status&&onScreen?statusSpriteFrame(monsterHDAtlas,
+        frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,MONSTER_HD_TILE,status+':hd:'+idx+':'+frame,status):null;
       if(tinted)ctx.drawImage(tinted,-width/2,-height+13,width,height);
       else ctx.drawImage(monsterHDAtlas,frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,
         MONSTER_HD_TILE,MONSTER_HD_TILE,-width/2,-height+13,width,height);
     }else if(monsterAtlas.complete&&monsterAtlas.naturalWidth&&idx>=0){
       ctx.imageSmoothingEnabled=true;
-      const tinted=poisoned?poisonSpriteFrame(monsterAtlas,idx*40,0,40,'lo:'+idx):null;
+      const tinted=status&&onScreen?statusSpriteFrame(monsterAtlas,idx*40,0,40,status+':lo:'+idx,status):null;
       if(tinted)ctx.drawImage(tinted,-width/2,-height+13,width,height);
       else ctx.drawImage(monsterAtlas,idx*40,0,40,40,-width/2,-height+13,width,height);
     }else{
-      ctx.fillStyle=poisoned?'#6abf70':def.color;
+      ctx.fillStyle=status==='poison'?'#6abf70':
+        status==='fire'?'#d9864d':status==='lightning'?'#9dbcf6':def.color;
       ctx.beginPath();ctx.ellipse(0,-height*.47,width*.31,height*.42,0,0,TAU);ctx.fill();
       ctx.fillStyle='#f3b1ae';ctx.fillRect(-7,-height*.66,5,3);ctx.fillRect(4,-height*.66,5,3);
     }
+    if(burning&&onScreen)drawFireAura(width,height,e,t,true);
+    if(shocked&&onScreen)drawShockArcs(width,height,e,t);
     ctx.restore();
     if(e.elite){
       const pulse=.6+.4*Math.sin(t*4);
@@ -2761,9 +2851,9 @@
     const size=def.boss?34:20;
     // Poison is visible on the silhouette and via drifting haze above,
     // instead of the old flat neon circle covering the creature.
-    if(e.burnTime>0){ctx.save();ctx.globalAlpha=.4;ctx.fillStyle='#ff7716';ctx.shadowColor='#ff4b12';ctx.shadowBlur=9;ctx.beginPath();ctx.arc(x,y-18,size*.85,0,TAU);ctx.fill();ctx.restore();}
+    // Fire now follows the model with flickering flames, not a flat disk.
     if(e.bleedStacks?.length){ctx.save();ctx.textAlign='center';ctx.strokeStyle='#350c19';ctx.lineWidth=3;ctx.fillStyle='#ff8da9';ctx.font='bold 10px sans-serif';ctx.strokeText('×'+e.bleedStacks.length,x,y-49);ctx.fillText('×'+e.bleedStacks.length,x,y-49);ctx.restore();}
-    if(e.shockTime>0){ctx.save();ctx.strokeStyle='#67c8ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y-15,size+5,0,TAU);ctx.stroke();ctx.restore();}
+    // Lightning now arcs through the silhouette, not around a static ring.
     if(e.hit>0&&!def.boss){ctx.fillStyle='#310e1b';ctx.fillRect(x-13,y-42,26,3);ctx.fillStyle='#d74b6c';ctx.fillRect(x-13,y-42,26*Math.max(0,e.hp/e.maxHp),3);}
   }
   function drawShots(camX,camY){

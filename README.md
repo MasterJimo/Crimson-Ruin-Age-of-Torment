@@ -34,6 +34,17 @@ The browser version supports portrait and landscape layouts. The **Encyclopedia*
 
 ## Core mechanics
 
+In addition to Poison's toxic-green silhouette and mist, enemies
+affected by **Burn** now glow warm orange and show small flickering flame
+tongues. Enemies affected by **Shock** receive a cool-blue tint and short,
+jagged electric arcs that travel across their animated models. Effects are
+rendered with cached, tinted original sprite frames and lightweight Canvas
+paths; Combat Clarity controls their visual complexity. Both are purely
+cosmetic: elemental damage, duration, stacking, enemies and bosses retain
+their previous mechanics.
+
+
+
 Poisoned creatures are visibly **tinted a muted toxic green** with a faint,
 animated green mist around their model (no overhead droplet icon). The effect
 uses cached, recoloured monster animation frames and the existing Combat
