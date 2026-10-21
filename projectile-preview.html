@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crimson Ruin — Porównanie projectile’ów</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0e0c14;color:#f3e6df}
+*{box-sizing:border-box}body{margin:0;padding:22px 14px 38px;background:radial-gradient(ellipse at 45% 0,#321825 0,#0e0c14 68%);min-height:100vh}
+main{max-width:1040px;margin:auto}h1{font:700 clamp(26px,4vw,40px) Georgia,serif;margin:8px 0}
+.kicker{color:#ef879b;font-size:12px;font-weight:750;letter-spacing:.2em}p{color:#bba9b6;line-height:1.5}
+.stage{border:1px solid #5c3042;border-radius:15px;overflow:hidden;background:#141019;box-shadow:0 20px 45px #0007}
+canvas{display:block;width:100%;height:auto}nav{display:flex;flex-wrap:wrap;gap:9px;margin:15px 0}
+button{cursor:pointer;border:1px solid #804359;background:#261824;color:#f7d7db;border-radius:9px;padding:10px 15px;font:650 13px system-ui}
+button:hover{border-color:#ee718d;background:#462437}a{color:#f1adbd}.note{font-size:12px}
+</style></head><body><main>
+<div class="kicker">CRIMSON RUIN • AGE OF TORMENT</div>
+<h1>Projectile’e — przed i po</h1>
+<p>Trzy zatwierdzone pociski. Postacie są wyświetlane z oficjalnego atlasu gry. Zmieniono tylko grafikę, bez zmian obrażeń, prędkości i zasad ataku.</p>
+<div class="stage"><canvas id="screen" width="1000" height="790" role="img" aria-label="Porównanie obecnych i nowych pocisków: Skeleton Archer, Watcher Eye i Necromancer"></canvas></div>
+<nav><button id="pause" type="button">⏸ Pauza animacji</button><button id="save" type="button">↓ Zapisz podgląd PNG</button></nav>
+<p class="note" id="status">Ładowanie grafik…</p>
+<p class="note"><a href="index.html">← Wróć do gry</a></p></main><script>
+(() => {
+  const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d');
+  const atlas=new Image(),fallback=new Image();
+  atlas.src='assets/monsters-hd-v032.webp';fallback.src='assets/monsters-v031.png';
+  const projectiles=[
+    {title:'SKELETON ARCHER',subtitle:'Ciężka strzała',file:'skeleton_archer_arrow.png',row:3,
+      fill:'#a88b68',tip:'#ffe4b6',glow:'#fbd6a9',desc:'Stalowy grot · drewniany trzon · pióra'},
+    {title:'WATCHER EYE',subtitle:'Arcane bolt volley',file:'watcher_eye_arcane_bolt.png',row:2,
+      fill:'#d72c55',tip:'#ffbec7',glow:'#ff506c',desc:'Karmazynowy rdzeń · smuga · puls'},
+    {title:'NECROMANCER',subtitle:'Fast dark bolt',file:'necromancer_dark_bolt.png',row:9,
+      fill:'#a63180',tip:'#eec6f8',glow:'#e949b4',desc:'Fioletowa energia · widmowy ogon'}
+  ];
+  for(const obj of projectiles){obj.image=new Image();obj.image.src='assets/projectiles/'+obj.file;}
+  let t=0,last=0,paused=false;
+  const label=(str,x,y,size=14,color='#eedbdc',bold=false)=>{
+    ctx.fillStyle=color;ctx.font=(bold?'bold ':'')+size+'px system-ui';ctx.fillText(str,x,y);
+  };
+  function panel(x,y,w,h,color){
+    ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,10);ctx.fill();
+  }
+  function monster(row,x,y){
+    if(atlas.complete&&atlas.naturalWidth===1920){
+      const frame=Math.floor(t*4)%10;ctx.save();ctx.imageSmoothingEnabled=true;
+      ctx.drawImage(atlas,frame*192,row*192,192,192,x-53,y-107,106,128);ctx.restore();
+    }else if(fallback.complete&&fallback.naturalWidth){
+      ctx.save();ctx.imageSmoothingEnabled=true;
+      ctx.drawImage(fallback,row*40,0,40,40,x-53,y-107,106,128);ctx.restore();
+    }else{
+      ctx.strokeStyle='#8b6672';ctx.setLineDash([4,4]);ctx.strokeRect(x-48,y-105,96,120);ctx.setLineDash([]);
+      label('SPRITE',x-26,y-42,12,'#a68592');
+    }
+  }
+  function original(obj,x,y){
+    ctx.save();ctx.translate(x,y);ctx.shadowColor=obj.glow;ctx.shadowBlur=obj.row===9?17:8;
+    ctx.fillStyle=obj.fill;ctx.fillRect(-30,-9,60,18);ctx.shadowBlur=0;
+    ctx.fillStyle=obj.tip;ctx.fillRect(12,-6,18,12);ctx.restore();
+  }
+  function improved(obj,x,y){
+    if(!obj.image.complete||!obj.image.naturalWidth)return;
+    ctx.save();ctx.translate(x,y);ctx.imageSmoothingEnabled=true;
+    ctx.drawImage(obj.image,-76,-32,152,64);ctx.restore();
+  }
+  function draw(){
+    const bg=ctx.createLinearGradient(0,0,1000,790);
+    bg.addColorStop(0,'#1b1420');bg.addColorStop(.6,'#17111b');bg.addColorStop(1,'#20121d');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,1000,790);
+    for(let i=0;i<80;i++){
+      const px=(i*137+67)%1000,py=(i*59+119)%790;
+      ctx.fillStyle=i%4?'#492e3a30':'#88505a25';ctx.fillRect(px,py,(i%5)*4+4,1);
+    }
+    panel(20,18,960,61,'#271a26');label('PRZED',43,56,17,'#b7a0ac',true);
+    label('PO / REDESIGN',521,56,17,'#ffb6bf',true);
+    ctx.strokeStyle='#553342';ctx.beginPath();ctx.moveTo(497,22);ctx.lineTo(497,785);ctx.stroke();
+    for(let i=0;i<projectiles.length;i++){
+      const obj=projectiles[i],y=96+i*229;
+      panel(20,y,960,207,i%2?'#271a25':'#231924');
+      label(obj.title,45,y+31,18,'#f7e5df',true);label(obj.subtitle,45,y+51,11,'#b18d9b',true);
+      label(obj.title,520,y+31,18,'#f7e5df',true);label(obj.subtitle,520,y+51,11,'#e893a8',true);
+      for(const x of [122,592]){
+        ctx.fillStyle='#07060baa';ctx.beginPath();ctx.ellipse(x,y+164,64,11,0,0,Math.PI*2);ctx.fill();
+      }
+      monster(obj.row,122,y+159);monster(obj.row,592,y+159);
+      const osc=(t*.29)%1;
+      original(obj,278+osc*40,y+120);improved(obj,755+osc*42,y+120);
+      label('Prostokąt 20 × 6 px',208,y+181,12,'#b08c98');
+      label(obj.desc,699,y+181,12,'#edb1bf');
+    }
+  }
+  function loop(now){if(!paused)t+=Math.min(48,now-last||16)/1000;last=now;draw();requestAnimationFrame(loop)}
+  requestAnimationFrame(loop);
+  document.getElementById('pause').onclick=()=>{
+    paused=!paused;document.getElementById('pause').textContent=paused?'▶ Wznów animację':'⏸ Pauza animacji';
+  };
+  document.getElementById('save').onclick=()=>{
+    const a=document.createElement('a');a.download='crimson-ruin-projectile-preview.png';
+    a.href=canvas.toDataURL('image/png');a.click();
+  };
+  atlas.onload=()=>{document.getElementById('status').textContent='✓ Oryginalny atlas potworów wczytany'};
+  atlas.onerror=()=>{document.getElementById('status').textContent='Podgląd korzysta ze sprite’ów zastępczych, jeśli atlas HD jest niedostępny.'};
+})();
+</script></body></html>

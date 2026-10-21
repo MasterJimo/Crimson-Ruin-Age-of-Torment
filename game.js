@@ -2933,18 +2933,36 @@
     // Lightning now arcs through the silhouette, not around a static ring.
     if(e.hit>0&&!def.boss){ctx.fillStyle='#310e1b';ctx.fillRect(x-13,y-42,26,3);ctx.fillStyle='#d74b6c';ctx.fillRect(x-13,y-42,26*Math.max(0,e.hp/e.maxHp),3);}
   }
+  // Approved enemy-ranged PNG sprites (transparent, facing right).
+  // These are visual-only: enemyFire() controls all speed, spread and damage.
+  const ENEMY_PROJECTILE_SPRITES={
+    skeleton_archer:{file:'skeleton_archer_arrow.png',w:41,h:17},
+    eye:{file:'watcher_eye_arcane_bolt.png',w:39,h:18},
+    necromancer:{file:'necromancer_dark_bolt.png',w:45,h:20}
+  };
+  for(const art of Object.values(ENEMY_PROJECTILE_SPRITES)){
+    art.image=new Image();art.image.decoding='async';
+    art.image.src='assets/projectiles/'+art.file;
+  }
   function drawShots(camX,camY){
     for(const b of game.shots){
       const x=b.x-camX,y=b.y-camY;
       ctx.save();ctx.translate(x,y);ctx.rotate(b.angle);
       if(b.hostile){
-        const eye=b.enemyType==='eye',arrow=b.enemyType==='skeleton_archer',necro=b.enemyType==='necromancer';
-        ctx.shadowColor=eye?'#ff506c':arrow?'#fbd6a9':'#e949b4';
-        ctx.shadowBlur=necro?12:5;
-        ctx.fillStyle=eye?'#d72c55':arrow?'#a88b68':'#a63180';
-        ctx.fillRect(-10,-3,20,6);
-        ctx.fillStyle=arrow?'#ffe4b6':eye?'#ffbec7':'#eec6f8';
-        ctx.fillRect(4,-2,6,4);
+        const art=ENEMY_PROJECTILE_SPRITES[b.enemyType];
+        if(art && art.image.complete && art.image.naturalWidth>0){
+          ctx.imageSmoothingEnabled=true;
+          ctx.drawImage(art.image,-art.w/2,-art.h/2,art.w,art.h);
+        }else{
+          // Keep the old rectangle only as a fallback while PNGs load.
+          const eye=b.enemyType==='eye',arrow=b.enemyType==='skeleton_archer',necro=b.enemyType==='necromancer';
+          ctx.shadowColor=eye?'#ff506c':arrow?'#fbd6a9':'#e949b4';
+          ctx.shadowBlur=necro?12:5;
+          ctx.fillStyle=eye?'#d72c55':arrow?'#a88b68':'#a63180';
+          ctx.fillRect(-10,-3,20,6);
+          ctx.fillStyle=arrow?'#ffe4b6':eye?'#ffbec7':'#eec6f8';
+          ctx.fillRect(4,-2,6,4);
+        }
       }else{
         const size=b.size||1;
         const widths={blood:55,lightning:47,fire:39,poison:44};
