@@ -153,6 +153,55 @@
     return monsterHDAtlas.complete&&monsterHDAtlas.naturalWidth===MONSTER_HD_TILE*MONSTER_HD_FRAMES
       &&monsterHDAtlas.naturalHeight===MONSTER_HD_TILE*MONSTER_ART_ORDER.length;
   }
+  // v0.33.4 — cached poison-tinted silhouettes. Compose each source animation
+  // frame only once (up to 13 × 10 HD tiles) rather than applying per-enemy
+  // Canvas filters every frame. Keep original detailed sprites and alpha intact.
+  // If Canvas 2D tinting is unavailable, the subtle poison haze still works.
+  const poisonSpriteCache=new Map();
+  function poisonSpriteFrame(image,x,y,tile,key){
+    if(poisonSpriteCache.has(key))return poisonSpriteCache.get(key);
+    let tinted=null;
+    try{
+      const canvas=document.createElement('canvas');
+      canvas.width=tile;canvas.height=tile;
+      const tint=canvas.getContext('2d');
+      if(tint){
+        tint.drawImage(image,x,y,tile,tile,0,0,tile,tile);
+        tint.globalCompositeOperation='source-atop';
+        tint.globalAlpha=.35;
+        tint.fillStyle='#5fdb69';
+        tint.fillRect(0,0,tile,tile);
+        tinted=canvas;
+      }
+    }catch(_){ /* Unsupported/offscreen canvas: retain original sprites. */ }
+    poisonSpriteCache.set(key,tinted);
+    return tinted;
+  }
+  // A few drifting translucent clouds, deliberately drawn BEHIND the sprite
+  // so animation detail, hit flashes and boss warning telegraphs stay legible.
+  function drawPoisonHaze(x,y,w,h,e,t){
+    const level=CLARITY_PRESETS[clarityMode].particles;
+    const phase=t*1.7+e.phase*.4;
+    const opacity=.65+.35*Math.sin(phase);
+    ctx.save();
+    ctx.fillStyle='rgba(94,212,91,'+(.07*opacity)+')';
+    ctx.beginPath();
+    ctx.ellipse(x+Math.sin(phase)*7,y-h*.39,w*.40,h*.39,.1,0,TAU);
+    ctx.fill();
+    if(level>.3){
+      ctx.fillStyle='rgba(126,235,88,'+(.063*opacity)+')';
+      ctx.beginPath();
+      ctx.ellipse(x-8+Math.cos(phase*.73)*8,y-h*.60,w*.29,h*.31,-.2,0,TAU);
+      ctx.fill();
+    }
+    if(level>.8){
+      ctx.fillStyle='rgba(109,203,75,'+(.049*opacity)+')';
+      ctx.beginPath();
+      ctx.ellipse(x+10+Math.sin(phase*.61)*11,y-h*.13,w*.32,h*.22,.24,0,TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
   const MONSTER_FAST_ANIMS=new Set(['plague_rat','succubus','imp','hellhound','eye']);
   const MONSTER_IDLE_STATES=new Set(['chargeWarn','abominationWindup','demonBlast','summon']);
   function monsterHDFrame(e){
@@ -2637,6 +2686,7 @@
     const def=ENEMIES[e.type];if(!def)return;
     const x=Math.round(e.x-camX),y=Math.round(e.y-camY);
     shadowAt(x,y+8,e.r*(def.boss?1.28:1),def.boss?.48:.34);
+    const poisoned=e.poisonDps>0;
     ctx.save();
     const floating=['eye','succubus','imp','boss1','boss2'].includes(e.type);
     ctx.translate(x,Math.round(y+(floating?Math.sin(e.phase)*2.3:Math.sin(e.phase)*.9)));
@@ -2647,6 +2697,7 @@
     const width=def.boss?e.type==='boss3'?111:99:e.type==='plague_rat'?66:e.type==='hellhound'?74:61;
     const height=def.boss?e.type==='boss3'?113:104:e.type==='plague_rat'?46:e.type==='blood_slime'?55:72;
     const idx=MONSTER_ART_INDEX[e.type]??-1;
+    if(poisoned)drawPoisonHaze(0,0,width,height,e,t);
     if(idx>=0&&monsterHDReady()){
       ctx.imageSmoothingEnabled=true;
       // Preserve source detail at any monitor resolution while keeping
@@ -2655,13 +2706,18 @@
       ctx.shadowColor=def.boss?'rgba(255,194,179,.40)':'rgba(255,224,192,.23)';
       ctx.shadowBlur=def.boss?4:2;
       const frame=monsterHDFrame(e);
-      ctx.drawImage(monsterHDAtlas,frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,
+      const tinted=poisoned?poisonSpriteFrame(monsterHDAtlas,
+        frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,MONSTER_HD_TILE,'hd:'+idx+':'+frame):null;
+      if(tinted)ctx.drawImage(tinted,-width/2,-height+13,width,height);
+      else ctx.drawImage(monsterHDAtlas,frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,
         MONSTER_HD_TILE,MONSTER_HD_TILE,-width/2,-height+13,width,height);
     }else if(monsterAtlas.complete&&monsterAtlas.naturalWidth&&idx>=0){
       ctx.imageSmoothingEnabled=true;
-      ctx.drawImage(monsterAtlas,idx*40,0,40,40,-width/2,-height+13,width,height);
+      const tinted=poisoned?poisonSpriteFrame(monsterAtlas,idx*40,0,40,'lo:'+idx):null;
+      if(tinted)ctx.drawImage(tinted,-width/2,-height+13,width,height);
+      else ctx.drawImage(monsterAtlas,idx*40,0,40,40,-width/2,-height+13,width,height);
     }else{
-      ctx.fillStyle=def.color;
+      ctx.fillStyle=poisoned?'#6abf70':def.color;
       ctx.beginPath();ctx.ellipse(0,-height*.47,width*.31,height*.42,0,0,TAU);ctx.fill();
       ctx.fillStyle='#f3b1ae';ctx.fillRect(-7,-height*.66,5,3);ctx.fillRect(4,-height*.66,5,3);
     }
@@ -2703,7 +2759,8 @@
       ctx.beginPath();ctx.arc(x,y,34,0,TAU);ctx.stroke();ctx.restore();
     }
     const size=def.boss?34:20;
-    if(e.poisonDps>0){ctx.save();ctx.globalAlpha=.19;ctx.fillStyle='#4cf14d';ctx.shadowColor='#6dff45';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(x,y-18,size,0,TAU);ctx.fill();ctx.restore();}
+    // Poison is visible on the silhouette and via drifting haze above,
+    // instead of the old flat neon circle covering the creature.
     if(e.burnTime>0){ctx.save();ctx.globalAlpha=.4;ctx.fillStyle='#ff7716';ctx.shadowColor='#ff4b12';ctx.shadowBlur=9;ctx.beginPath();ctx.arc(x,y-18,size*.85,0,TAU);ctx.fill();ctx.restore();}
     if(e.bleedStacks?.length){ctx.save();ctx.textAlign='center';ctx.strokeStyle='#350c19';ctx.lineWidth=3;ctx.fillStyle='#ff8da9';ctx.font='bold 10px sans-serif';ctx.strokeText('×'+e.bleedStacks.length,x,y-49);ctx.fillText('×'+e.bleedStacks.length,x,y-49);ctx.restore();}
     if(e.shockTime>0){ctx.save();ctx.strokeStyle='#67c8ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y-15,size+5,0,TAU);ctx.stroke();ctx.restore();}
