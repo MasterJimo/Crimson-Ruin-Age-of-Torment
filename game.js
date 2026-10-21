@@ -404,7 +404,7 @@
       case 'hemorrhagic_burst':return '8-stack Blood detonation on every hit · +'+(10*(u-1))+'% detonation potency.';
       case 'fire_power':return '+'+(5*u)+'% Fire damage.';
       case 'lightning_power':return '+'+(5*u)+'% Lightning damage.';
-      case 'poison_power':return '+'+(5*u)+'% Poison damage.';
+      case 'poison_power':return '+'+(5*u)+'% Poison stack DPS.';
       case 'survival_heal':return '+4 max HP, then heal at least 24 HP or 25% of max HP.';
       case 'survival_heart':return '+12 max HP and heal 12 HP.';
       case 'survival_regen':return '+0.15 HP per second permanently and heal 10 HP.';
@@ -1744,35 +1744,59 @@
   }
   function renderElements(){
     const root=$('inventoryElementsPage');root.replaceChildren();
-    codexIntro(root,'THE FOUR ELEMENTS','All four spells explained. Damage modifiers are additive to their base spell value; critical hits multiply direct damage.');
+    codexIntro(root,'THE FOUR ELEMENTS','Real combat formulas, status interactions, Element Power ranks and all eight Torment Ascensions.');
     const tiles=codexElement('div','codex-grid');
     const focus=codexFocus;codexFocus=null;
-    const contents=[
-      ['blood','BLOOD','Slow piercing spear · 80 units/s','Direct = (21.6 × (1 + 0.05 × Blood Power units) + Brutality). Each contact adds 1 + Piercing Fangs stacks, up to 8 lasting 8s. One stack = actual hit damage / 8 damage per second. A single spear may hit again after 0.6s. Hemorrhagic replaces the damage-over-time stacks with an instant 8-stack blast.'],
-      ['fire','FIRE','Exploding fireball · 290 units/s','Direct = 43.2 × (1 + 0.05 × Fire Power units) + Brutality. First hit explodes, radius = 55 × (1 + 0.1 × Piercing Fangs). Every target in the radius burns for 2s. Burn DPS = base Fire direct damage (before crit), refreshed on subsequent hits. All Fireballs from the same attack share one direct-hit record, including secondary blasts: only one can damage each enemy per salvo. Poison orbs can still shotgun.'],
-      ['lightning','LIGHTNING','Chain Lightning · 235 units/s','Direct = random integer 1–200 × (1 + 0.05 × Lightning Power units) + Brutality. Each impact can Shock (50% chance, 4s); Shock doubles incoming direct damage. Base 4 chain jumps, +1 per Piercing Fangs and +2 per Spread Shot, max 25. Forward Shot adds 1 random rear bolt, then 2 separately angled rear-flank bolts (up to 3 total); bonus bolts never share the same direction.'],
-      ['poison','POISON','Toxic Orb · 210 units/s','The explosion radius = 55 × (1 + 0.1 × Piercing Fangs). Every victim gets a permanent stack worth 15 × (1 + 0.05 × Poison Power units) DPS, multiplied by crit strength if that stack crits. At 5+ stacks on enemy defeat, Poison spreads 5 stacks to up to 6 nearby targets.']
+    const spells=[
+      ['blood','BLOOD','Blood Spear · 80 units/s · 1 attack/s',
+       'Direct hit = [21.6 × (1 + 0.05 × sum of Blood Power rarity units) × Ascension multiplier + Brutality flat damage] × crit, if any. Each hit adds 1 + Piercing Fangs Bleed stacks (8 max). One stack deals actual hit damage / 8 DPS for 8s. The spear pierces endlessly; the same enemy can be struck every 0.6s. Hemorrhagic converts each hit into immediate area damage = (8 + Piercing Fangs) × actual hit damage × Hemorrhagic rarity multiplier, with a 76-unit burst radius (plus enemy radius), without an extra on-screen label.'],
+      ['fire','FIRE','Fireball · 290 units/s · 1 attack/s',
+       'Direct = [43.2 × (1 + 0.05 × sum of Fire Power rarity units) × Ascension multiplier + Brutality flat damage] × crit, if any. First impact deals direct damage and applies Burn within radius 55 × (1 + 0.10 × Piercing Fangs). Burn DPS = Fire base damage after Power and Ascension bonuses + flat Brutality, without crit, for 2s. Subsequent hits refresh instead of stacking Burn. Base Burn = 43.2 DPS × 2s = 86.4 total DoT. Each target can receive direct Fireball damage only once per salvo, even with multishot.'],
+      ['lightning','LIGHTNING','Chain Lightning · 235 units/s · 1 attack/s',
+       'Each projectile rolls integer 1–200; direct hit = [roll × (1 + 0.05 × sum of Lightning Power rarity units) × Ascension multiplier + Brutality flat damage] × crit, if any. Shock rolls 50% per hit, lasts 4s, and doubles DIRECT damage taken; damage-over-time is unaffected. Chain jumps = min(25, 4 + Piercing Fangs points + 2 × Spread Shot points + Tempest Oracle bonus). Each jump seeks a new enemy within 120 units of the last victim. Forward Shot grants up to 2 additional independently aimed chains (3 projectiles total).'],
+      ['poison','POISON','Toxic Orb · 210 units/s · 2 attacks/s',
+       'No direct hit damage. First impact splashes one permanent Poison stack on each enemy within radius 55 × (1 + 0.10 × Piercing Fangs points). Poison DPS = 15 × (1 + 0.05 × sum of Poison Power rarity units) × Ascension multiplier × sum of individual stack critical weights (normal = 1, crit = Crit Damage). Poison stacks never expire and have no cap. Multiple orbs can each apply a stack. If a poisoned enemy dies with at least 5 stacks, 5 stacks spread to up to 6 enemies in the same radius, preserving average critical potency.']
     ];
-    for(const [id,name,summary,body] of contents){
-      const item=codexArticle(name,summary,body,focus?id===focus:id===game.player.element);
-      codexLink(item.content,'catalog','Related '+name+' power-ups',id+'_power');
-      tiles.append(item.article);
+    for(const [id,name,summary,body] of spells){
+      const entry=codexArticle(name,summary,body,focus?id===focus:id===game.player.element);
+      codexLink(entry.content,'catalog','Related '+name+' power-ups',id+'_power');
+      tiles.append(entry.article);
     }
     root.append(tiles);
-    const ascension=codexElement('div','codex-grid');
+    root.append(codexElement('h3','codex-page-title','DAMAGE MATH & ELEMENT RANKS'));
+    const mathematics=codexElement('div','codex-grid');
+    const mathEntries=[
+      ['ELEMENT POWER & RANKS','Element rank starts at 1. Each matching Element Power card raises the rank by exactly 1, to a maximum of 6. Rarity affects STRENGTH only: Common +5%, Magic +10%, Rare +20%, Legendary +40%, Mythic +80%; Element Power percentages add to one another. Example: Rare + Common = +25% elemental power, rank 3.'],
+      ['DAMAGE MULTIPLIERS & CRITICALS','Blood, Fire and Lightning multiply their element-scaled base damage by 1.15 for utility evolutions or 2 for offensive evolutions; Brutality flat damage is added afterward. Poison instead multiplies stack DPS by 1.15 or 2. Critical direct hits multiply by Crit Damage (base 1.6, with base crit chance 6%). Poison critical multipliers are stored per stack. Shock doubles direct damage but not Bleed, Burn or Poison damage-over-time.'],
+      ['OFFENSIVE ASCENSION COST','Every offensive evolution gives +100% elemental damage (or Poison DPS) but multiplies CURRENT maximum HP by 0.70, rounded up; current HP is clamped to the new maximum. The penalty happens once on selection. Later Vitality cards can increase maximum HP. Exactly one Ascension may be selected each run.']
+    ];
+    for(const [title,body] of mathEntries)mathematics.append(codexArticle(title,'Calculation and limits',body).article);
+    root.append(mathematics);
+    root.append(codexElement('h3','codex-page-title','TORMENT ASCENSIONS · TWO PATHS'));
+    const p=game.player;
+    root.append(codexElement('p','codex-info-line',
+      'CURRENT ELEMENT: '+p.element.toUpperCase()+' · RANK '+(p.elementRank+1)+'/6 · SIGILS: '+game.ascensionSigils+
+      (p.ascension?' · ASCENDED: '+p.ascensionName:' · Rank 4 with Sigil OR rank 6 for free.')));
+    root.append(codexElement('p','codex-info-line',
+      'Rank 4 = 3 matching Element Power cards plus 1 Reliquary Sigil from a boss or Cursed Champion. This early path consumes a Sigil. Rank 6 = 5 cards and requires NO Sigil; the choice appears automatically. One evolution per run; its damage bonus survives later Element Power cards.'));
+    const ascensions=codexElement('div','codex-grid');
     for(const element of ['blood','fire','lightning','poison']){
-      const [first,second]=ASCENSIONS[element];
-      const item=codexArticle('✦ '+element.toUpperCase()+' ASCENSION','Rank 4 + Sigil OR Rank 6 free · choose one path',
-        first.name+': '+first.desc+'   OR   '+second.name+': '+second.desc);
-      ascension.append(item.article);
+      const [unique,offense]=ASCENSIONS[element];
+      const entry=codexArticle('✦ '+element.toUpperCase()+' ASCENSION',
+        'Utility or +100% damage / -30% max HP','',element===p.element);
+      entry.content.append(codexElement('p','codex-article-detail','UTILITY PATH'));
+      entry.content.append(codexElement('p','codex-article-effect',unique.name+': '+unique.desc));
+      entry.content.append(codexElement('p','codex-article-detail','OFFENSIVE PATH · HP SACRIFICE'));
+      entry.content.append(codexElement('p','codex-article-effect',offense.name+': '+offense.desc));
+      if(element==='blood')entry.content.append(codexElement('p','codex-article-detail','Crimson Covenant heals 3 HP per bleeding enemy killed (including Hemorrhagic-marked victims), not once per 20 kills.'));
+      if(element==='fire')entry.content.append(codexElement('p','codex-article-detail','Cinder Aegis ward: 2 seconds of 30% damage reduction after killing a burning enemy; repeated kills refresh duration, not strength.'));
+      if(element==='lightning')entry.content.append(codexElement('p','codex-article-detail','Tempest Oracle adds 3 jumps, capped at 25, and shocked kills discharge one extra bolt to an enemy within 120 units. Discharge damage = 65 × current Lightning damage coefficient; it cannot recursively chain from another discharge kill.'));
+      if(element==='poison')entry.content.append(codexElement('p','codex-article-detail','Verdant Vow cuts damage from poisoned enemies by 25%, including enemy projectiles fired while their shooter is poisoned.'));
+      ascensions.append(entry.article);
     }
-    root.append(codexElement('h3','codex-page-title','TORMENT ASCENSIONS'));
-    root.append(codexElement('p','codex-info-line','Choose an Ascension either at element rank 4 with a Reliquary Sigil (from a boss or Cursed Champion), or at rank 6 without a Sigil. The choice appears automatically; only one Ascension per run.'));
-    root.append(ascension);
-    codexLink(root,'acquisition','Find Cursed Reliquaries');
-    const formula=codexElement('p','codex-info-line','CRITICAL HITS: direct damage × current Crit Damage (starts ×1.6) when Crit Chance succeeds (starts at 6%). Poison stack crits are saved separately; Fire Burn is not increased by crits.');
-    root.append(formula);
-    codexLink(root,'acquisition','Where upgrades come from');
+    root.append(ascensions);
+    codexLink(root,'acquisition','How to obtain Sigils and Element Power');
+    codexLink(root,'scaling','Enemy difficulty formulas and scaling tiers');
   }
   function renderAcquisition(){
     const root=$('inventoryAcquisitionPage');root.replaceChildren();
@@ -1787,7 +1811,7 @@
       ['ABOMINATION REWARD','Guaranteed on boss defeat','One instant eligible power-up: Rare 65% · Legendary 29% · Mythic 6%. This does not use XP or increase the player level.'],
       ['ENDGAME SURVIVAL','When standard perks cannot fill a four-card offer','Four repeatable Common survival rewards become available only as replacements for unavailable normal cards: Field Medic (+4 maximum HP and heal 25%/at least 24), Enduring Heart (+12 maximum HP and heal 12), Mending Vigor (+0.15 permanent HP/s and heal 10), and Phoenix Sigil (up to 2 revival charges; additional sigils give +8 maximum HP). Each revival restores 35% HP and gives 2 seconds of protection. Level 150 is the cap: further crystals still add to total XP scored without forcing more upgrade screens.'],
       ['CURSED RELIQUARIES','Guaranteed boss drops and special Cursed Champion kills','First champions can appear after 04:00, then approximately every 100 seconds. They are tougher and marked by a golden seal. Relics expire after 150 seconds. CLAIM grants a Rare eligible perk without a curse; DESECRATE grants a Legendary (75%) or Mythic (25%) perk with +15% incoming damage for 180s. Repeated curses refresh but do not stack. Both choices grant 1 Ascension Sigil until your evolution is chosen. When all regular perks are capped, a fixed Survival reward replaces the perk.'],
-      ['TORMENT ASCENSION','Rank 4 + Reliquary Sigil OR Rank 6 free','Each element has two choices: a unique utility evolution and a +100% damage evolution that costs 30% maximum HP. One Ascension per run, with its bonuses kept after later Element Power cards.']
+      ['TORMENT ASCENSION','Rank 4 + Reliquary Sigil OR Rank 6 free','Each matching Element Power card gives 1 rank, independent of rarity. Rank 4 (3 picks) and a Reliquary Sigil unlock the early path, consuming 1 Sigil. Rank 6 (5 picks) automatically unlocks the free path without a Sigil. Every element offers one utility and one +100% damage / -30% max HP choice; exactly one Ascension per run. Buffs persist after later Power cards.']
     ];
     for(const [name,shortText,description] of source){
       const {article,content}=codexArticle(name,shortText,description);
@@ -1872,24 +1896,42 @@
   }
   function renderEnemyScaling(){
     const root=$('inventoryScalingPage');root.replaceChildren();
-    codexIntro(root,'TIME & SCALING','Enemies grow each minute, with danger spikes every five minutes. Hardcore becomes substantially harder starting at 15:00; Easy retains the original scaling throughout.');
-    const detail=codexElement('p','codex-info-line','HP = base HP × tier HP × 1.045^minute. Damage = base damage × tier damage × 1.025^minute. Speed = base speed × tier speed × 1.018^minute. Easy Mode uses its original ×0.5 modifier; the 15:00+ Hardcore stage multipliers and spawn pressure are separate.');
-    root.append(detail);
-    const table=codexElement('table','bestiary-scale-table');
-    table.innerHTML='<thead><tr><th>TIME</th><th>HP ×</th><th>DAMAGE ×</th><th>SPEED ×</th><th>SPAWN ×</th></tr></thead>';
-    const body=codexElement('tbody');
-    const base=difficultyAt(0,game?.easyMode||false);
-    for(const minute of window.CrimsonMonsters.tierMinutes){
-      const at=difficultyAt(minute*60,game?.easyMode||false);
-      const row=codexElement('tr');
-      for(const value of [String(minute).padStart(2,'0')+':00',(at.hp/base.hp).toFixed(2),(at.damage/base.damage).toFixed(2),(at.speed/base.speed).toFixed(2),(at.spawn/base.spawn).toFixed(2)]){
-        row.append(codexElement('td','',value));
+    codexIntro(root,'TIME & ENEMY SCALING','Whole-minute scaling combines with tier surges every five minutes. Hardcore jumps sharply after 15:00; Easy keeps the original tier curve.');
+    root.append(codexElement('p','codex-info-line',
+      'm = min(29, floor(seconds / 60)); tier = min(5, floor(seconds / 300)). NEW ENEMY HP = base HP × 1.045^m × tier HP × mode factor; DAMAGE = base hit × 1.025^m × tier damage × mode factor; SPEED = base speed × 1.018^m × tier speed × mode factor. Easy mode factor = 0.5; Hardcore = 1.'));
+    root.append(codexElement('p','codex-info-line',
+      'SPAWN pressure = mode factor × min(cap, min(8, 2 × 1.14^m) × tier spawn). Easy cap: 40 before the ×0.5 factor. Hardcore cap: 40 before 15:00; 72 after. Active enemy cap = 230. Existing enemies inherit NEW tier / OLD tier stat ratios at five-minute boundaries, but do not gain each intervening minute exponent retroactively.'));
+    for(const easy of [true,false]){
+      root.append(codexElement('h3','codex-page-title',easy?'EASY · FIVE-MINUTE TIERS':'HARDCORE · FIVE-MINUTE TIERS'));
+      root.append(codexElement('p','codex-info-line','Tier values below exclude the per-minute exponent and the mode factor '+(easy?'×0.5.':'×1.')));
+      const table=codexElement('table','bestiary-scale-table');
+      table.innerHTML='<thead><tr><th>TIME</th><th>HP ×</th><th>DMG ×</th><th>SPD ×</th><th>SPAWN ×</th><th>AI ×</th></tr></thead>';
+      const body=codexElement('tbody');
+      for(let i=0;i<=5;i++){
+        const stage=surgeFor(i,easy),row=codexElement('tr');
+        const values=[String(i*5).padStart(2,'0')+':00',stage.hp,stage.damage,stage.speed,stage.spawn,stage.aggression];
+        for(const v of values)row.append(codexElement('td','',typeof v==='number'?v.toFixed(2):v));
+        body.append(row);
       }
+      table.append(body);root.append(table);
+    }
+    const easy=game?.easyMode||false;
+    root.append(codexElement('h3','codex-page-title','TOTAL SCALING · '+(easy?'EASY':'HARDCORE')));
+    root.append(codexElement('p','codex-info-line','Includes whole-minute exponents, tier multipliers and the selected difficulty factor. Values are relative to base Bestiary stats.'));
+    const table=codexElement('table','bestiary-scale-table');
+    table.innerHTML='<thead><tr><th>TIME</th><th>HP ×</th><th>DMG ×</th><th>SPD ×</th><th>SPAWN ×</th></tr></thead>';
+    const body=codexElement('tbody');
+    for(const minute of window.CrimsonMonsters.tierMinutes){
+      const d=difficultyAt(minute*60,easy),row=codexElement('tr');
+      for(const v of [String(minute).padStart(2,'0')+':00',d.hp,d.damage,d.speed,d.spawn])
+        row.append(codexElement('td','',typeof v==='number'?v.toFixed(2):v));
       body.append(row);
     }
     table.append(body);root.append(table);
-    root.append(codexElement('p','codex-info-line','After 10:00, only the later monster group spawns; existing enemies remain. In Hardcore, the 15:00/20:00/25:00 waves also reinforce and strengthen enemies already alive. The 230-enemy performance cap is unchanged. Watcher Eye fires one extra bolt every five minutes.'));
-    codexLink(root,'bestiary','Open Monster Bestiary');
+    root.append(codexElement('p','codex-info-line',
+      'At 10:00 late-game monsters replace early types in the spawn pool, while old enemies remain. Hardcore receives extra reinforcements at 15:00, 20:00 and 25:00. Watcher Eye fires 1 extra shot every five minutes (1 at 00:00, 6 at 25:00).'));
+    codexLink(root,'bestiary','See original monster stats');
+    codexLink(root,'elements','Element and evolution damage formulas');
   }
   function openInventory(shouldFocus=true){
     if(state!=='playing'||!game?.elementChosen)return;

@@ -28,7 +28,7 @@ The browser version supports portrait and landscape layouts. The **Encyclopedia*
 ### Special systems
 
 - **Cursed champions and reliquaries:** Defeat marked enemies or bosses to receive a reliquary; choose a safer **CLAIM** reward or a stronger **DESECRATE** reward with a temporary damage-taken curse.
-- **Torment Ascensions:** Choose one of two evolutions after reaching element rank 4 with a Reliquary Sigil, or rank 6 without one (one Ascension per run).
+- **Torment Ascensions:** Rank up your chosen element with Element Power cards. At **rank 4 plus a Reliquary Sigil**, or **rank 6 without a Sigil**, choose one of two evolutions: a unique utility path or double elemental damage at the cost of 30% maximum HP (one Ascension per run).
 - **Hunter's Oaths:** Optional achievements that unlock cosmetic titles; they do not increase combat power.
 - **Combat Clarity:** Cinematic, Balanced and Performance effect presets to reduce visual clutter without changing gameplay.
 
@@ -68,15 +68,36 @@ other elements' combat and visuals are unchanged.
 
 ### Elemental damage formulas
 
-Base shot interval is `1 / attacks per second`: **1.0s** for Blood, Fire and Lightning, and **0.5s** for Poison. Rapid Fire multiplies the selected element's attack speed normally.
+Let `u` be a card's rarity multiplier: **Common 1**, **Magic 2**, **Rare 4**, **Legendary 8**, **Mythic 16**. For the chosen element, `P = 0.05 × sum(u)` across all matching **Element Power** cards. These Power bonuses **add** (a Rare and a Common card give `P = 0.25`). Each card adds **exactly 1 Element Rank**, regardless of rarity: a new run begins at rank 1, and **five matching cards reach rank 6**. The Element Power cards stop appearing after five pickups.
 
-- **Element Power:** Each upgrade adds `5% × rarity multiplier` to the base damage of the chosen element. Multiple bonuses **add**, rather than multiply.
-- **Blood:** direct hit = `21.6 × (1 + Blood Power bonus) + flat damage`. Each Blood Spear collision adds `1 + Piercing Fangs points` Bleed stacks, each worth `actual hit damage / 8` DPS for 8 seconds, capped at **8 active stacks**. Spear pierces infinitely, with a **0.6s per-target repeat-hit cooldown** for each spear. Crits scale both the direct hit and Bleed.
-- **Fire:** direct hit on first enemy = `43.2 × (1 + Fire Power bonus) + flat damage`. Every enemy within radius `55 × (1 + 0.1 × Piercing Fangs points)` gets a 2-second Burn. Burn DPS = `basic hit × 1.0`; subsequent explosions refresh rather than stack it. At base, the primary target takes **43.2 direct + 86.4 Burn** if the full Burn elapses; secondary targets receive Burn only.
-- **Lightning:** each hit starts from the projectile's base roll `random integer 1–200 × (1 + Lightning Power bonus) + flat damage`, with independent crit and Shock rolls per enemy. From the first hit, bounce to the nearest unhit enemy within **120 units** of the last target; maximum `min(25, 4 + Piercing Fangs points + 2 × Spread Shot points)` bounces **per independent chain**. Forward Shot grants `min(3, 1 + Forward Shot points)` independent Chain Lightning projectiles. The first flies toward the target. With one bonus bolt, it fires at a randomly varied rear angle; with two bonus bolts, they take opposite randomly varied rear flanks. The three projectiles never share the same heading and have separate hit lists and chains. No repeated targets within one chain.
-- **Poison:** Toxic Orb and Poison Proliferate radii = `55 × (1 + 0.1 × Piercing Fangs points)`; each enemy hit by the Toxic Orb blast gains one stack. Poison DPS = `15 × (1 + Poison Power bonus) × sum(crit multiplier of each stack)`. Individual stacks may crit (base ×1.6), are permanent, and have no count cap. At death with **5+** stacks, Poison Proliferate transfers **5 stacks** to up to **6 enemies** within the same blast radius, preserving average crit potency.
+For Blood, Fire and Lightning, `A` is the Ascension damage multiplier (**1** without evolution, **1.15** for utility, **2** for offensive). For Poison, the same multiplier applies to **damage-over-time per stack**, not direct hits. Let `B` be flat damage from Brutality, and `C` the current Crit Damage multiplier (initially **1.6**; default critical chance **6%**). A critical direct hit is multiplied by `C`. Shock doubles **direct** damage received, not damage-over-time. Additional boss-damage and enemy Shock modifiers apply to the actual target where applicable.
 
-**Hemorrhagic (Blood):** An independent **5% chance per four-card power-up offer** (including rerolls), available once per run. After selection, every Blood hit detonates Bleed immediately instead of leaving ticking stacks. Base area damage = `(8 + Piercing Fangs points) × hit damage` (**172.8** for an unmodified 21.6-damage hit with 0 Piercing Fangs points). Rarity adds `10% × (rarity multiplier − 1)` burst potency; the explosion does not spread Bleed.
+| Element | Damage calculation | Additional rules |
+|---|---|---|
+| **Blood** | Direct = `[21.6 × (1 + P) × A + B] × (crit ? C : 1)` | Each contact adds `1 + Piercing Fangs points` Bleed stacks (maximum 8). Each stack ticks for `actual direct hit damage / 8` DPS for 8 seconds. Same Blood Spear can strike the same foe every 0.6s. |
+| **Fire** | Direct = `[43.2 × (1 + P) × A + B] × (crit ? C : 1)` | Burn = `43.2 × (1 + P) × A + B` DPS for 2s (no crit). Explosion radius = `55 × (1 + 0.1 × Piercing Fangs points)`. Burn refreshes rather than stacking; a multi-Fireball salvo cannot repeatedly damage one target directly. |
+| **Lightning** | Direct = `[random integer 1–200 × (1 + P) × A + B] × (crit ? C : 1)` | Chain jumps = `min(25, 4 + Piercing Fangs points + 2 × Spread Shot points + Tempest Oracle bonus)`. The Tempest bonus is **3**. Every jump targets a new foe within 120 units; Shock rolls 50% per hit and lasts 4s. Forward Shot can launch up to 3 independently aimed chains. |
+| **Poison** | Direct = **0**; DPS = `15 × (1 + P) × A × sum(stack crit weights)` | Normal stack weight = 1; critical stack weight = `C` at application. Stacks never expire or cap. Toxic Orb adds a stack on each first-impact splash (overlapping orbs can add multiple); splashes use the same `55 × (1 + 0.1 × Piercing Fangs points)` radius. |
+
+**Poison Proliferate:** When a monster dies with **5+ Poison stacks**, the effect transmits **5 stacks** to up to **6** nearby monsters inside its splash radius, preserving the source stacks' average critical strength.
+
+**Hemorrhagic (Blood):** While eligible, an independent **5% roll per four-card offer**, including rerolls, may present the Hemorrhagic card. Once picked, Blood hits immediately detonate rather than leaving normal ticking Bleed. Area damage = `(8 + Piercing Fangs points) × actual hit damage × [1 + 0.1 × (u − 1)]`, affecting enemies inside **76 units plus their collision radius**. Its explosion does not leave Bleed stacks. The effect deliberately does **not** show a floating “BURST!” label.
+
+### Torment Ascensions
+
+Every element has **two mutually exclusive evolutions**. The choice is presented automatically once either condition is fulfilled:
+
+- **Early, RNG-dependent:** Acquire a Reliquary Sigil from a defeated boss or Cursed Champion (by opening its reliquary) **and** reach **element rank 4** by taking **3** matching Element Power cards. Choosing an evolution spends **1 Sigil**.
+- **Guaranteed by upgrades:** Reach **element rank 6** by taking **5** matching Element Power cards. The choice opens **without needing or consuming a Sigil**, even if none was ever found.
+
+You may take **only one Ascension per run**. Ascension damage multipliers persist after later matching Element Power cards; they do not multiply flat Brutality damage. The offensive path multiplies your **current maximum HP by 0.70 once**, rounding up, and clamps current HP to that new cap. Later Vitality cards can increase maximum HP normally.
+
+| Element | Utility evolution: distinct effect | Offensive evolution: major risk/reward |
+|---|---|---|
+| **Blood** | **Crimson Covenant:** +15% Blood damage. Heal **3 HP every time a Bleed-marked monster dies**, including enemies marked by a Hemorrhagic hit; no 20-kill condition. | **Exsanguination:** **+100% Blood damage**, but **−30% current maximum HP** when chosen. |
+| **Fire** | **Cinder Aegis:** +15% Fire damage. Killing a burning monster grants a **2-second flame ward** that reduces damage received by **30%**; further qualifying kills refresh it instead of stacking resistance. | **Ember Crown:** **+100% Fire damage**, but **−30% current maximum HP** when chosen. |
+| **Lightning** | **Tempest Oracle:** +15% Lightning damage, **+3 chain jumps** (25 maximum). Killing a Shocked monster fires **one extra bolt** at a nearby enemy within **120 units**. That discharge deals `65 × current Lightning damage coefficient` before target modifiers and cannot recursively trigger other death bolts. | **Iron Thunder:** **+100% Lightning damage**, but **−30% current maximum HP** when chosen. |
+| **Poison** | **Verdant Vow:** +15% Poison DPS. Monsters affected by Poison deal **25% less damage** to you; ranged shots preserve whether the attacker was poisoned when they were fired. | **Plague Sovereign:** **+100% Poison DPS per stack**, but **−30% current maximum HP** when chosen. |
 
 ## Power-ups and rarity
 
@@ -109,7 +130,7 @@ Every level-up offers **4 different cards**: one Attack, one Defense and two ran
 
 ## Enemies and Monster Bestiary
 
-Pause deliberately with **Escape**, **P**, or **O** (or the game's pause/inventory button) to open two main tabs: **Character Stats** (your current main spell and equipped power-ups on the left, real-time combat stats on the right) and **Encyclopedia**. Opening Encyclopedia reveals five chapters: **Monster Bestiary** (early/late/boss filters), **Elemental Mechanics** (all four spells and exact damage formulas), **Item Acquisition** (shrine timing, drops and rarity odds), **Power-Up Library** (18 perks, rarity and element-specific effects) and **Enemy Scaling** (five-minute stat table). Crosslinks jump between related articles. Enemy names are **not** displayed beneath creatures during combat.
+Pause deliberately with **Escape**, **P**, or **O** (or the game's pause/inventory button) to open two main tabs: **Character Stats** (your current main spell and equipped power-ups on the left, real-time combat stats on the right) and **Encyclopedia**. Opening Encyclopedia reveals seven chapters: **Monster Bestiary** (early/late/boss filters), **Elemental Mechanics** (all four spells and exact damage formulas), **Item Acquisition** (shrine timing, drops and rarity odds), **Power-Up Library** (18 perks, rarity and element-specific effects) **Enemy Scaling** (live Easy/Hardcore tables and exact formulas), **Combat Clarity** (visual density settings), and **Hunter's Oaths** (cosmetic achievements). Crosslinks jump between related articles. Enemy names are **not** displayed beneath creatures during combat.
 
 **00:00–09:59 (early waves):** Skeleton Swordsman (simple sword melee), Plague Rat (weak but quick), Watcher Eye (slow caster, +1 projectile every 5 minutes), Skeleton Archer (high-damage slow arrow), Zombie (slow, heavy claw).
 
@@ -126,18 +147,39 @@ After **10:00**, no further early-wave monsters spawn. Any that are still alive 
 
 ### Enemy difficulty scaling
 
-Enemy stats are base values from the Bestiary times the following multiplier:
+The **Bestiary lists base monster stats**. New enemies receive both a minute-by-minute multiplier and the current five-minute **tier multiplier**. Set `m = min(29, floor(elapsed seconds / 60))` and `t = min(5, floor(elapsed seconds / 300))`.
 
-| Time | HP tier | Damage tier | Speed tier | Spawn tier |
-| --- | ---: | ---: | ---: | ---: |
-| 00:00 | ×1 | ×1 | ×1 | ×1 |
-| 05:00 | ×1.5 | ×1.15 | ×1.12 | ×1.5 |
-| 10:00 | ×2.4 | ×1.35 | ×1.22 | ×2 |
-| 15:00 | ×3.5 | ×1.55 | ×1.32 | ×2.6 |
-| 20:00 | ×5 | ×1.8 | ×1.42 | ×3.2 |
-| 25:00 | ×7 | ×2.1 | ×1.55 | ×4 |
+- **New enemy HP:** `base HP × 1.045^m × tierHP[t] × modeFactor`.
+- **New enemy damage:** `base damage × 1.025^m × tierDamage[t] × modeFactor`.
+- **New enemy speed:** `base speed × 1.018^m × tierSpeed[t] × modeFactor`.
+- **Spawn pressure:** `modeFactor × min(spawnCap, min(8, 2 × 1.14^m) × tierSpawn[t])`.
+- **Mode factor:** Easy **0.5**, Hardcore **1**. Spawn pressure is capped at **40 before the mode factor** in Easy; Hardcore's cap is **40** before 15:00 and **72** from 15:00 onward. The active enemy limit remains **230**.
 
-On top of the tier: **HP × 1.045^minute**, **damage × 1.025^minute**, **speed × 1.018^minute**. Spawn pressure grows at **1.14^minute** up to its cap. Easy Mode halves all these resulting enemy values. Already-spawned enemies inherit new tier jumps without resetting their current HP percentage.
+These tables are **tier multipliers only**; the minute power and mode factor above are applied separately. The final three Hardcore tiers are significantly stronger than Easy.
+
+**Easy — five-minute tiers**
+
+| Time | HP × | Damage × | Speed × | Spawn × | Aggression × |
+|---|---:|---:|---:|---:|---:|
+| 00:00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
+| 05:00 | 1.50 | 1.15 | 1.12 | 1.50 | 1.15 |
+| 10:00 | 2.40 | 1.35 | 1.22 | 2.00 | 1.30 |
+| 15:00 | 3.50 | 1.55 | 1.32 | 2.60 | 1.45 |
+| 20:00 | 5.00 | 1.80 | 1.42 | 3.20 | 1.60 |
+| 25:00 | 7.00 | 2.10 | 1.55 | 4.00 | 1.80 |
+
+**Hardcore — five-minute tiers**
+
+| Time | HP × | Damage × | Speed × | Spawn × | Aggression × |
+|---|---:|---:|---:|---:|---:|
+| 00:00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
+| 05:00 | 1.50 | 1.15 | 1.12 | 1.50 | 1.15 |
+| 10:00 | 2.40 | 1.35 | 1.22 | 2.00 | 1.30 |
+| 15:00 | 8.00 | 2.25 | 1.45 | 5.20 | 1.85 |
+| 20:00 | 15.50 | 3.15 | 1.58 | 8.00 | 2.10 |
+| 25:00 | 29.00 | 4.50 | 1.70 | 11.00 | 2.40 |
+
+An existing monster **does not** receive every intervening minute exponent retroactively. At five-minute boundaries, surviving enemies receive the **new / old tier ratio** to HP, maximum HP, damage, speed and aggression, preserving their HP percentage. Additional reinforcements spawn at each tier; Hardcore gains extra waves at **15:00, 20:00 and 25:00**. Newly spawned enemies always use the complete current minute formula. Starting at **10:00**, new spawns use the late-monster roster, but survivors from earlier waves remain. Watcher Eye fires **1 additional projectile per five-minute tier**: 1 shot at 00:00 and 6 shots from 25:00 onward.
 
 **Blood Slime Bleed:** Each successful melee hit applies a 6-second stack, up to 8 at a time. One stack inflicts **0.65 + 0.11 × current five-minute tier HP/s** before armor. A small blood-droplet indicator near the HP bar displays active stacks.
 
