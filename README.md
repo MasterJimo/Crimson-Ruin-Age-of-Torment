@@ -51,6 +51,25 @@ duration and double-damage mechanic remain unchanged. Combined statuses
 coexist without hiding boss attack-warning overlays. Combat damage and
 collision are unaffected.
 
+### Fire & Lightning — v0.33.7: actual-assets Canvas demo integration
+
+Fire and Shock visuals are now directly based on the **approved working
+Canvas demonstration**, not on an imagined concept image. The real skeleton
+body occupies only about 28×38 pixels inside its 61×72 game sprite, so the
+effect anchors are measured to that **visible skeleton body**, not the
+192×192 atlas tile or its empty space. Eight narrow semi-transparent Fire
+flames sit against its head, arms, ribs and ankles; five rising tiny embers
+appear on top. Shock uses four branching, slim blue/white traces across
+the spine, arms and legs. They animate with stable frame-based jitter.
+
+The original monster frame is drawn first, followed by a screen-blended
+status tint matching the demo; Poison continues to use its existing
+separate green replacement treatment. The same local body coordinates
+scale with each enemy's real onscreen sprite dimensions. All modes and
+bosses are supported. Heavy waves and the Performance preset reduce
+ornamental detail without hiding the core effect. No Burn/Shock damage,
+timers, chance, mechanics or hitboxes were changed.
+
 ## Core mechanics
 
 In addition to Poison's toxic-green silhouette and mist, enemies
