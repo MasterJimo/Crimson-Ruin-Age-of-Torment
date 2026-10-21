@@ -369,7 +369,7 @@
   // Lightning interprets Spread Shot as +2 chains per spread point,
   // not extra angled projectiles. Each Forward Shot fires its own chain.
   const LIGHTNING_BASE_CHAINS=4,LIGHTNING_MAX_CHAINS=25;
-  function lightningChainCount(p){return Math.min(LIGHTNING_MAX_CHAINS,LIGHTNING_BASE_CHAINS+p.pierce+2*p.spreadShots);}
+  function lightningChainCount(p){return Math.min(LIGHTNING_MAX_CHAINS,LIGHTNING_BASE_CHAINS+p.pierce+2*p.spreadShots+(p.stormBonus||0));}
   function attackProjectileCount(p){
     return p.element==='lightning'?1+Math.min(2,p.forwardShots):
       (1+p.forwardShots)*(1+2*p.spreadShots);
@@ -430,14 +430,14 @@
     p.elementDamageBonus=(p.elementDamageBonus||0)+.05*rarityUnits;
     const multiplier=1+p.elementDamageBonus;
     // Permanent ascension bonuses must survive subsequent Element Power cards.
-    const ascensionBoost=({crimson_covenant:1.25,exsanguination:1.55,
-      ember_crown:1.15,cinder_aegis:1.2,iron_thunder:1.35})[p.ascension]||1;
+    const ascensionBoost=({crimson_covenant:1.15,exsanguination:2,
+      ember_crown:2,cinder_aegis:1.15,tempest_oracle:1.15,iron_thunder:2})[p.ascension]||1;
     if(p.element!=='poison')p.damage=ELEMENT_DAMAGE[p.element]*multiplier*ascensionBoost;
     // Existing elemental DoT scales by the same single damage modifier.
     // Existing Burn immediately benefits from Fire Power as well as Brutality.
     if(p.element==='fire')syncActiveBurn(p,g);
     if(p.element==='poison'){
-      p.poisonMultiplier=multiplier*(({plague_sovereign:1.4,verdant_vow:1.15})[p.ascension]||1);
+      p.poisonMultiplier=multiplier*(({plague_sovereign:2,verdant_vow:1.15})[p.ascension]||1);
       for(const enemy of g.enemies){
         if(enemy.poisonStacks>0)enemy.poisonDps=(enemy.poisonStackStrength||enemy.poisonStacks)*POISON_DPS*p.poisonMultiplier;
       }
@@ -492,27 +492,34 @@
     try{localStorage.setItem(CLARITY_SETTINGS_KEY,mode);}catch(_){}
     if(game&&state==='inventory'&&inventorySection==='clarity')renderClarity();
   }
+  // Two paths per element: unique utility or +100% damage with -30% max HP.
+  // Rank is 1 + elementRank; the last (fifth) power pick reaches rank 6.
+  function sacrificeMaximumHealth(p){
+    p.maxHp=Math.max(1,Math.ceil(p.maxHp*.70));
+    p.hp=Math.min(p.hp,p.maxHp);
+  }
   const ASCENSIONS={
     blood:[
-      {id:'crimson_covenant',name:'CRIMSON COVENANT',desc:'Blood hits become 25% stronger. Every 20 kills restores 3 HP.',apply:p=>{p.damage*=1.25;}},
-      {id:'exsanguination',name:'EXSANGUINATION',desc:'Blood damage +55%, but max HP permanently falls by 15%.',apply:p=>{p.damage*=1.55;p.maxHp=Math.max(1,Math.ceil(p.maxHp*.85));p.hp=Math.min(p.hp,p.maxHp);}}
+      {id:'crimson_covenant',name:'CRIMSON COVENANT',desc:'+15% Blood damage. Heal 3 HP whenever a bleeding enemy dies (Hemorrhagic Blood marks also count).',apply:p=>{p.damage*=1.15;}},
+      {id:'exsanguination',name:'EXSANGUINATION',desc:'+100% Blood damage, but permanently lose 30% maximum HP.',apply:p=>{p.damage*=2;sacrificeMaximumHealth(p);}}
     ],
     fire:[
-      {id:'ember_crown',name:'EMBER CROWN',desc:'Fire attacks 30% faster and deals 15% more direct damage.',apply:p=>{p.attackRate*=1.30;p.damage*=1.15;}},
-      {id:'cinder_aegis',name:'CINDER AEGIS',desc:'Fire damage +20%, armor +12%; burning kills heal 1 HP.',apply:p=>{p.damage*=1.2;p.armor=Math.min(.8,1-(1-p.armor)*.88);}}
+      {id:'cinder_aegis',name:'CINDER AEGIS',desc:'+15% Fire damage. Killing a burning enemy grants a 2s flame ward (30% less damage received; refreshes, does not stack).',apply:p=>{p.damage*=1.15;}},
+      {id:'ember_crown',name:'EMBER CROWN',desc:'+100% Fire damage, but permanently lose 30% maximum HP.',apply:p=>{p.damage*=2;sacrificeMaximumHealth(p);}}
     ],
     lightning:[
-      {id:'tempest_oracle',name:'TEMPEST ORACLE',desc:'Lightning gains 3 chain jumps and attacks 20% faster.',apply:p=>{p.stormBonus+=3;p.attackRate*=1.2;}},
-      {id:'iron_thunder',name:'IRON THUNDER',desc:'Lightning power +35% and armor +10%.',apply:p=>{p.damage*=1.35;p.armor=Math.min(.8,1-(1-p.armor)*.9);}}
+      {id:'tempest_oracle',name:'TEMPEST ORACLE',desc:'+15% Lightning damage and +3 chain jumps (25 max). Shocked kills discharge one bolt into a nearby enemy.',apply:p=>{p.damage*=1.15;p.stormBonus+=3;}},
+      {id:'iron_thunder',name:'IRON THUNDER',desc:'+100% Lightning damage, but permanently lose 30% maximum HP.',apply:p=>{p.damage*=2;sacrificeMaximumHealth(p);}}
     ],
     poison:[
-      {id:'plague_sovereign',name:'PLAGUE SOVEREIGN',desc:'Every poison stack deals 40% more DPS.',apply:p=>{p.poisonMultiplier*=1.4;}},
-      {id:'verdant_vow',name:'VERDANT VOW',desc:'Poison DPS +15%, permanent regeneration +0.7 HP/s.',apply:p=>{p.poisonMultiplier*=1.15;p.regen+=.7;}}
+      {id:'verdant_vow',name:'VERDANT VOW',desc:'+15% Poison DPS. Poisoned monsters and their shots deal 25% less damage to you.',apply:p=>{p.poisonMultiplier*=1.15;}},
+      {id:'plague_sovereign',name:'PLAGUE SOVEREIGN',desc:'+100% Poison DPS, but permanently lose 30% maximum HP.',apply:p=>{p.poisonMultiplier*=2;sacrificeMaximumHealth(p);}}
     ]
   };
   function ascensionAvailable(){
     return game&&game.elementChosen&&!game.player.ascension&&
-      game.player.elementRank>=3&&game.ascensionSigils>0;
+      (game.player.elementRank>=5||
+        (game.player.elementRank>=3&&game.ascensionSigils>0));
   }
   function tryOpenAscension(){
     if(state!=='playing'||!ascensionAvailable())return false;
@@ -534,7 +541,9 @@
   function chooseAscension(index){
     if(state!=='ascension'||!ascensionAvailable())return;
     const option=ASCENSIONS[game.player.element]?.[index];if(!option)return;
-    game.ascensionSigils--;game.player.ascension=option.id;game.player.ascensionName=option.name;
+    // Rank 6 is the free route; only an earlier ascension spends a Sigil.
+    if(game.player.elementRank<5&&game.ascensionSigils>0)game.ascensionSigils--;
+    game.player.ascension=option.id;game.player.ascensionName=option.name;
     option.apply(game.player);
     // Reflect poison bonus immediately on stacks already applied.
     if(game.player.element==='poison')for(const e of game.enemies)
@@ -885,7 +894,7 @@
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
       reliquaries:[],ascensionSigils:0,reliquariesOpened:0,desecrations:0,curseTime:0,nextEliteAt:240,oathsUnlockedThisRun:[],gargoyleHit:false,cleanGargoyle:false,
-      player:{enemyBleed:[],x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,reviveCharges:0,ascension:null,ascensionName:null,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
+      player:{enemyBleed:[],x:0,y:0,hp:100,maxHp:100,speed:100,damage:30,attackRate:1,multishot:1,forwardShots:0,spreadShots:0,flatDamage:0,elementRank:0,pierce:0,magnet:1,xp:0,level:1,next:13,shotCd:.15,hitCd:0,walk:0,face:1,attackAnim:0,attackDir:0,attackSide:1,projectileSpeed:1,projectileSize:1,armor:0,critChance:0.06,critDamage:1.6,fireChance:0,frostChance:0,chainChance:0,blastChance:0,xpBonus:1,bossDamage:1,regen:0,orbits:0,orbitCd:0,reviveCharges:0,ascension:null,ascensionName:null,element:null,elementDamageBonus:0,bloodLance:0,bloodOrbChance:0,bloodSplashChance:0,hemorrhagicBurst:false,stormBonus:0,cinderWardTime:0,poisonMultiplier:1,poisonPowerUnits:0,hemorrhagicBurstBoost:1,fountainRegenTime:0,fountainRegenTick:0,magnetBuffTime:0},
       enemies:[], shots:[], drops:[], particles:[], texts:[], stains:[], corpses:[], gibs:[], impacts:[], slashBursts:[], magicFx:[], poisonBursts:[], bolts:[], fountains:[], magnetShrines:[], powerShrines:[], nextFountainAt:rand(44,60), nextMagnetAt:45, magnetSpawned:false, nextPowerShrineAt:120, powerShrineSpawned:false, kills:0, spawn:.27, worldTime:0, upgradeChoices:[], nextNotice:25, bossWaves:0,bossNext:Infinity,bossSpawned:new Set(),rerolls:3,banishes:3,banned:new Set(),banishMode:false,elementChosen:false
     };
     spawnFountain(true);
@@ -1237,11 +1246,13 @@
     updateHUD();
     return true;
   }
-  function damagePlayer(value){
+  function damagePlayer(value,poisonedSource=false){
     const p=game.player;
     if(p.hitCd>0)return false;
     if(game.enemies.some(e=>e.type==='boss1'))game.gargoyleHit=true;
-    const multiplier=game.curseTime>0?1.15:1;
+    const multiplier=(game.curseTime>0?1.15:1)*
+      (p.cinderWardTime>0?.70:1)*
+      (p.ascension==='verdant_vow'&&poisonedSource?.75:1);
     const received=Math.max(1,Math.ceil(value*multiplier*(1-p.armor)));p.hp=Math.max(0,p.hp-received);p.hitCd=HUNTER_HIT_GRACE_SECONDS;shake=Math.max(shake,6);flash=.18;
     addBloodBurst(p.x,p.y,12,'#ad1339'); floatText(p.x,p.y-24,`-${received}`,'#ffc9cd');
     playSound('hurt');
@@ -1751,12 +1762,12 @@
     const ascension=codexElement('div','codex-grid');
     for(const element of ['blood','fire','lightning','poison']){
       const [first,second]=ASCENSIONS[element];
-      const item=codexArticle('✦ '+element.toUpperCase()+' ASCENSION','Rank 4+ · 1 Reliquary Sigil · choose one path',
+      const item=codexArticle('✦ '+element.toUpperCase()+' ASCENSION','Rank 4 + Sigil OR Rank 6 free · choose one path',
         first.name+': '+first.desc+'   OR   '+second.name+': '+second.desc);
       ascension.append(item.article);
     }
     root.append(codexElement('h3','codex-page-title','TORMENT ASCENSIONS'));
-    root.append(codexElement('p','codex-info-line','Obtain a Reliquary Sigil from a defeated boss or marked Cursed Champion, then reach element rank 4 (three matching Element Power upgrades). The choice screen opens automatically. Exactly one Ascension per run; no retroactive perk resets.'));
+    root.append(codexElement('p','codex-info-line','Choose an Ascension either at element rank 4 with a Reliquary Sigil (from a boss or Cursed Champion), or at rank 6 without a Sigil. The choice appears automatically; only one Ascension per run.'));
     root.append(ascension);
     codexLink(root,'acquisition','Find Cursed Reliquaries');
     const formula=codexElement('p','codex-info-line','CRITICAL HITS: direct damage × current Crit Damage (starts ×1.6) when Crit Chance succeeds (starts at 6%). Poison stack crits are saved separately; Fire Burn is not increased by crits.');
@@ -1776,7 +1787,7 @@
       ['ABOMINATION REWARD','Guaranteed on boss defeat','One instant eligible power-up: Rare 65% · Legendary 29% · Mythic 6%. This does not use XP or increase the player level.'],
       ['ENDGAME SURVIVAL','When standard perks cannot fill a four-card offer','Four repeatable Common survival rewards become available only as replacements for unavailable normal cards: Field Medic (+4 maximum HP and heal 25%/at least 24), Enduring Heart (+12 maximum HP and heal 12), Mending Vigor (+0.15 permanent HP/s and heal 10), and Phoenix Sigil (up to 2 revival charges; additional sigils give +8 maximum HP). Each revival restores 35% HP and gives 2 seconds of protection. Level 150 is the cap: further crystals still add to total XP scored without forcing more upgrade screens.'],
       ['CURSED RELIQUARIES','Guaranteed boss drops and special Cursed Champion kills','First champions can appear after 04:00, then approximately every 100 seconds. They are tougher and marked by a golden seal. Relics expire after 150 seconds. CLAIM grants a Rare eligible perk without a curse; DESECRATE grants a Legendary (75%) or Mythic (25%) perk with +15% incoming damage for 180s. Repeated curses refresh but do not stack. Both choices grant 1 Ascension Sigil until your evolution is chosen. When all regular perks are capped, a fixed Survival reward replaces the perk.'],
-      ['TORMENT ASCENSION','Rank 4+ element and a Reliquary Sigil','Each of the four elements has two evolution choices. The hunter may select exactly one Ascension each run; its bonuses remain active when taking later Element Power cards. See Elemental Mechanics for full choices.']
+      ['TORMENT ASCENSION','Rank 4 + Reliquary Sigil OR Rank 6 free','Each element has two choices: a unique utility evolution and a +100% damage evolution that costs 30% maximum HP. One Ascension per run, with its bonuses kept after later Element Power cards.']
     ];
     for(const [name,shortText,description] of source){
       const {article,content}=codexArticle(name,shortText,description);
@@ -1965,16 +1976,36 @@
       element==='fire'?'#ffb47c':'#f67a94',4,25,2,3);
     playSound('shot');
   }
-  function enemyDie(e){
+  function enemyDie(e,fromTempest=false){
     const index=game.enemies.indexOf(e);if(index<0)return;
     game.enemies.splice(index,1);game.kills++;
     if(e.elite||ENEMIES[e.type]?.boss)dropReliquary(e.x,e.y);
     if(e.type==='boss1'&&!game.gargoyleHit)game.cleanGargoyle=true;
-    if((game.player.ascension==='crimson_covenant'&&game.kills%20===0)||
-      (game.player.ascension==='cinder_aegis'&&e.burnTime>0)){
-      const amount=game.player.ascension==='cinder_aegis'?1:3;
-      const before=game.player.hp;game.player.hp=Math.min(game.player.maxHp,game.player.hp+amount);
-      game.totalHealing+=game.player.hp-before;
+    const p=game.player;
+    if(p.ascension==='crimson_covenant'&&
+      ((e.bleedStacks?.length||0)>0 || (e.bloodMarkExpiresAt||0)>game.time)){
+      const before=p.hp;
+      p.hp=Math.min(p.maxHp,p.hp+3);
+      game.totalHealing+=p.hp-before;
+    }
+    if(p.ascension==='cinder_aegis'&&(e.burnTime>0||e.wasBurning)){
+      p.cinderWardTime=2; // Refresh the ward; do not stack resistance.
+    }
+    // One lightning discharge per shocked kill, never a recursive discharge chain.
+    if(p.ascension==='tempest_oracle'&&!fromTempest&&e.shockTime>0){
+      const victim=game.enemies.filter(other=>other.hp>0&&
+        dist2(e.x,e.y,other.x,other.y)<=120*120)
+        .sort((a,b)=>dist2(e.x,e.y,a.x,a.y)-dist2(e.x,e.y,b.x,b.y))[0];
+      if(victim){
+        applyHitDamage(victim,65*p.damage*
+          (ENEMIES[victim.type]?.boss?p.bossDamage:1));
+        victim.hit=.2;
+        game.bolts.push({x:e.x,y:e.y,toX:victim.x,toY:victim.y,
+          life:.26,max:.26,element:'lightning'});
+        if(game.bolts.length>200)game.bolts.splice(0,game.bolts.length-200);
+        addSkillImpact('lightning',victim.x,victim.y,49,.30);
+        if(victim.hp<=0)enemyDie(victim,true);
+      }
     }
     checkOaths();
     proliferatePoison(e);
@@ -2054,18 +2085,19 @@
     addImpact(x,y,82,'#fa3765');
     addBloodBurst(x,y,34,'#d80c3d');
     addParticles(x,y,'#fb6b8b',26,110,2,4);
-    floatText(x,y-48,`BURST! ${Math.ceil(totalBleedDamage)}`,'#ffc0d0',12);
     // One direct area hit (including the triggering target), no chained Bleed.
     // Sum of all eight stacks' FULL original DoT totals, not just their
     // remaining lifetime; Shock still follows the normal direct-hit rule.
     for(const target of game.enemies.slice()){
       if(dist2(x,y,target.x,target.y)>(76+target.r)*(76+target.r))continue;
+      target.bloodMarkExpiresAt=game.time+8;
       applyHitDamage(target,totalBleedDamage);
       target.hit=.32;
       if(target.hp<=0)enemyDie(target);
     }
   }
   function applyBleedStack(enemy,hitDamage){
+    enemy.bloodMarkExpiresAt=game.time+8;
     const stacks=enemy.bleedStacks||(enemy.bleedStacks=[]);
     if(game.player.hemorrhagicBurst){
       // Instant 8-stack detonation on EVERY hit, replacing existing Bleed.
@@ -2181,7 +2213,7 @@
     const p=game.player;
     for(let i=p.enemyBleed.length-1;i>=0;i--){
       const b=p.enemyBleed[i],elapsed=Math.min(dt,b.time);
-      p.hp=Math.max(0,p.hp-b.dps*elapsed*(1-p.armor)*(game.curseTime>0?1.15:1));
+      p.hp=Math.max(0,p.hp-b.dps*elapsed*(1-p.armor)*(game.curseTime>0?1.15:1)*(p.cinderWardTime>0?.70:1));
       b.time-=dt;if(b.time<=0)p.enemyBleed.splice(i,1);
     }
     if(p.hp<=0&&!tryPhoenixRevive())die(false);
@@ -2191,7 +2223,7 @@
     const count=e.type==='eye'?1+difficultyTier(game.time):1,spread=e.type==='eye'?.16:0;
     for(let i=0;i<count;i++){
       const a=aim+(i-(count-1)/2)*spread;
-      game.shots.push({hostile:true,enemyType:e.type,
+      game.shots.push({hostile:true,enemyType:e.type,poisonedSource:(e.poisonStacks||0)>0,
         x:e.x+Math.cos(a)*14,y:e.y+Math.sin(a)*14-6,
         vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:3.3,
         damage:e.damage,angle:a,hit:new Set()});
@@ -2200,7 +2232,7 @@
   }
   function monsterStrike(e,p,def){
     if(Math.hypot(p.x-e.x,p.y-e.y)>def.range+12)return;
-    if(damagePlayer(e.damage)&&e.type==='blood_slime')addHunterBleed();
+    if(damagePlayer(e.damage,(e.poisonStacks||0)>0)&&e.type==='blood_slime')addHunterBleed();
     const a=Math.atan2(p.y-e.y,p.x-e.x);
     addSlashBurst(e.x+Math.cos(a)*16,e.y+Math.sin(a)*14,a);
   }
@@ -2208,14 +2240,14 @@
     const vx=e.x-startX,vy=e.y-startY,len2=vx*vx+vy*vy||1;
     const u=Math.max(0,Math.min(1,((p.x-startX)*vx+(p.y-startY)*vy)/len2));
     if(dist2(startX+vx*u,startY+vy*u,p.x,p.y)<(e.r+7)**2&&!e.chargeHit){
-      e.chargeHit=true;damagePlayer(e.damage);
+      e.chargeHit=true;damagePlayer(e.damage,(e.poisonStacks||0)>0);
     }
   }
   function triggerBossBlast(e,p,stage){
     const radius=[50,94,142][stage],dmg=e.damage*[.85,1,1.15][stage];
     addImpact(e.x,e.y,radius,'#ff395d');
     addParticles(e.x,e.y,'#fc3156',17,100,2,4);
-    if(dist2(p.x,p.y,e.x,e.y)<(radius+8)**2)damagePlayer(dmg);
+    if(dist2(p.x,p.y,e.x,e.y)<(radius+8)**2)damagePlayer(dmg,(e.poisonStacks||0)>0);
   }
   function updateMonsterAI(e,dt,p,g){
     const def=ENEMIES[e.type];if(!def)return;
@@ -2243,7 +2275,7 @@
       if(e.attackTimer<=0){
         e.attackState='';e.attackCd=5;
         addImpact(e.x,e.y,79,'#ff476e');
-        if(dist2(p.x,p.y,e.x,e.y)<87*87)damagePlayer(e.damage*1.28);
+        if(dist2(p.x,p.y,e.x,e.y)<87*87)damagePlayer(e.damage*1.28,(e.poisonStacks||0)>0);
       }
       return;
     }
@@ -2307,6 +2339,7 @@
     if(!game || state!=='playing') return;
     const g=game, p=g.player; g.time+=dt; g.worldTime+=dt;
     g.curseTime=Math.max(0,g.curseTime-dt);
+    p.cinderWardTime=Math.max(0,(p.cinderWardTime||0)-dt);
     checkOaths();
     if(g.time>=DURATION){
       g.time=DURATION;
@@ -2340,6 +2373,8 @@
     p.moveX=mag?mx:0;p.moveY=mag?my:0;
 
     updateFountains(dt);
+    // Shrine and boss power rewards can reach rank six during combat.
+    if(tryOpenAscension()){updateHUD();return;}
     if(state!=='playing'){updateHUD();return;}
     checkReliquaryPickup(dt);
     if(state!=='playing'){updateHUD();return;}
@@ -2385,6 +2420,7 @@
     for(const e of [...g.enemies]){
       e.phase+=dt*6;e.hit=Math.max(0,e.hit-dt);
       tickBleedStacks(e,dt);
+      e.wasBurning=e.burnTime>0;
       if(e.burnTime>0){
         const elapsed=Math.min(dt,e.burnTime),dmg=(e.burnDps||0)*elapsed;
         e.hp-=dmg;g.totalDamage+=dmg;e.burnTime-=elapsed;
@@ -2412,7 +2448,7 @@
         b.y+=b.vy*dt/substeps;
         if(b.hostile){
           if(dist2(b.x,b.y,p.x,p.y)<12*12){
-            if(p.hitCd<=0){damagePlayer(b.damage);if(state==='end')return;}
+            if(p.hitCd<=0){damagePlayer(b.damage,b.poisonedSource);if(state==='end')return;}
             remove=true;
           }
           continue;

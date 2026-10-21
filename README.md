@@ -28,47 +28,9 @@ The browser version supports portrait and landscape layouts. The **Encyclopedia*
 ### Special systems
 
 - **Cursed champions and reliquaries:** Defeat marked enemies or bosses to receive a reliquary; choose a safer **CLAIM** reward or a stronger **DESECRATE** reward with a temporary damage-taken curse.
-- **Torment Ascensions:** Acquire a sigil and develop an element to choose one of two special evolutions for that element (one Ascension per run).
+- **Torment Ascensions:** Choose one of two evolutions after reaching element rank 4 with a Reliquary Sigil, or rank 6 without one (one Ascension per run).
 - **Hunter's Oaths:** Optional achievements that unlock cosmetic titles; they do not increase combat power.
 - **Combat Clarity:** Cinematic, Balanced and Performance effect presets to reduce visual clutter without changing gameplay.
-
-### Fire and Lightning status VFX — v0.33.6
-
-The first small flame and spark implementation was too weak at real in-game
-enemy sizes. Fire now surrounds the animated monster with **layered, glowing
-yellow/orange flames across the limbs, torso, shoulders and head**, plus
-looping rising embers and a stronger orange silhouette rim. One tiny cached
-transparent Canvas flame is reused for all enemies; flames follow each
-sprite rather than remaining fixed on the floor. Lightning now runs a
-**prominent branching blue-white bolt from head to feet**, with additional
-flickering torso arcs, forks and a blue rim-light. Both use high-contrast
-Canvas drawing against the dark courtyard, scale to large bosses, and vary
-details across Cinematic/Balanced/Performance presets.
-
-This is a real-time implementation on the game's current monster sprite
-renderer—not a pre-rendered concept image. Burn duration/DPS, Shock chance,
-duration and double-damage mechanic remain unchanged. Combined statuses
-coexist without hiding boss attack-warning overlays. Combat damage and
-collision are unaffected.
-
-### Fire & Lightning — v0.33.7: actual-assets Canvas demo integration
-
-Fire and Shock visuals are now directly based on the **approved working
-Canvas demonstration**, not on an imagined concept image. The real skeleton
-body occupies only about 28×38 pixels inside its 61×72 game sprite, so the
-effect anchors are measured to that **visible skeleton body**, not the
-192×192 atlas tile or its empty space. Eight narrow semi-transparent Fire
-flames sit against its head, arms, ribs and ankles; five rising tiny embers
-appear on top. Shock uses four branching, slim blue/white traces across
-the spine, arms and legs. They animate with stable frame-based jitter.
-
-The original monster frame is drawn first, followed by a screen-blended
-status tint matching the demo; Poison continues to use its existing
-separate green replacement treatment. The same local body coordinates
-scale with each enemy's real onscreen sprite dimensions. All modes and
-bosses are supported. Heavy waves and the Performance preset reduce
-ornamental detail without hiding the core effect. No Burn/Shock damage,
-timers, chance, mechanics or hitboxes were changed.
 
 ## Core mechanics
 
