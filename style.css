@@ -1805,3 +1805,6 @@ body:has(#intro.hidden) .topbar .sound-control:focus-visible{
     padding-left:7px!important;
   }
 }
+
+/* v0.33.3 — Banish is dormant, kept intact for future use. */
+#banishBtn[hidden]{display:none!important;}

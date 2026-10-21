@@ -507,6 +507,9 @@
 
   const sprite = window.CrimsonSprites.get;
 
+  // Temporarily disable Banish without removing its implementation or run data.
+  // Set to true to restore the button and the B shortcut in a future release.
+  const BANISH_ENABLED=false;
   const keys = new Set();
   let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 10, sfxVolume = 1, sfx = null;
 
@@ -1198,7 +1201,7 @@
     });
     const choosingElement=!g.elementChosen;
     el.upgrade.classList.toggle('element-select',choosingElement);
-    el.reroll.hidden=choosingElement; el.banish.hidden=choosingElement;
+    el.reroll.hidden=choosingElement; el.banish.hidden=choosingElement||!BANISH_ENABLED;
     el.rerollCount.textContent=String(g.rerolls);el.banishCount.textContent=String(g.banishes);
     el.reroll.disabled=g.rerolls<=0||g.upgradeChoices.every(opt=>opt.survival);
     el.banish.disabled=g.banishes<=0 || eligiblePowers().length<=4;
@@ -1225,7 +1228,7 @@
     renderUpgrade();playSound('pickup');
   }
   function toggleBanish(){
-    if(state!=='upgrade'||!game.elementChosen||game.banishes<=0)return;
+    if(!BANISH_ENABLED||state!=='upgrade'||!game.elementChosen||game.banishes<=0)return;
     game.banishMode=!game.banishMode;renderUpgrade();
   }
   function chooseUpgrade(index){
@@ -1244,7 +1247,7 @@
       for(let i=0;i<5;i++)spawnEnemy('skeleton',rand(175,285),rand(0,TAU));
       flashMessage(`✦ ${choice.name} ATTUNED`,2200);playSound('start');syncMusic();updateHUD();return;
     }
-    if(game.banishMode){
+    if(BANISH_ENABLED&&game.banishMode){
       if(choice.survival){flashMessage('SURVIVAL BONUS CANNOT BE BANISHED',1800);return;}
       if(game.banishes<=0||eligiblePowers().length<=4)return;
       const remaining=eligiblePowers().filter(p=>p.id!==choice.id);
@@ -2864,7 +2867,7 @@
     keys.add(k);
     if(state==='upgrade'&&['1','2','3','4'].includes(k))chooseUpgrade(Number(k)-1);
     if(state==='upgrade'&&k==='r')rerollUpgrades();
-    if(state==='upgrade'&&k==='b')toggleBanish();
+    if(BANISH_ENABLED&&state==='upgrade'&&k==='b')toggleBanish();
     if(state==='intro'&&(k==='enter'||k===' ')&&!e.repeat&&e.target?.tagName!=='BUTTON')startGame(false);
     if(state==='intro'&&k==='e'&&!e.repeat)startGame(true);
     if(state==='end'&&k==='enter'&&e.target?.tagName!=='BUTTON')returnToModeSelect();
