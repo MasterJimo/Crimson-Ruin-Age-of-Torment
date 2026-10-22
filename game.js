@@ -846,11 +846,52 @@
       setSaveIndicator('Local save is incompatible. Import an external backup.','error');return null;
     }
   }
-  function updateContinueButton(){
-    $('continueRunBtn').hidden=!readLocalRunSave();
+  // The main menu stays artwork-only. A saved hunt is detected at startup,
+  // but the continue/new-run decision is shown only at element selection.
+  let restorePromptOpen=false;
+  let pendingHuntOnLaunch=readLocalRunSave();
+  function closeRestorePrompt(){
+    restorePromptOpen=false;
+    $('restoreHuntOverlay').classList.add('hidden');
+  }
+  function showRestorePrompt(saved){
+    restorePromptOpen=true;
+    const old=saved.game;
+    const school=old.elementChosen?old.player.element.toUpperCase():'ELEMENT NOT SELECTED';
+    const mode=old.easyMode?'EASY':'HARDCORE';
+    const nextMode=game.easyMode?'EASY':'HARDCORE';
+    $('restoreHuntDetail').textContent=
+      'Previous hunt: '+mode+' · '+school+' · '+timeText(old.time)+
+      '. Continue from your saved progress, or start a new '+nextMode+' hunt.';
+    $('startFreshHuntBtn').textContent='START NEW '+nextMode+' HUNT';
+    $('restoreHuntOverlay').classList.remove('hidden');
+    $('resumeSavedHuntBtn').focus();
+  }
+  function chooseNewHunt(){
+    if(!restorePromptOpen||!game)return;
+    closeRestorePrompt();
+    // The player explicitly chose to replace the previous save.
+    clearRunSave();
+    saveRun(true);
+    el.upgradeCards.querySelector('button')?.focus();
+  }
+  function resumeSavedHunt(){
+    if(!restorePromptOpen)return;
+    const saved=readLocalRunSave();
+    if(!saved){
+      closeRestorePrompt();
+      el.status.textContent='SAVED HUNT NO LONGER AVAILABLE · CHOOSE AN ELEMENT';
+      saveRun(true);
+      return;
+    }
+    try{restoreRunSave(saved);}catch(_){
+      // Never delete the old save or start writing a new one on failure.
+      setSaveIndicator('Could not restore your saved hunt.','error');
+      $('restoreHuntDetail').textContent='The saved hunt could not be loaded. You may start a new hunt, which will replace it.';
+    }
   }
   function saveRun(force=false){
-    if(!autosaveEnabled||!game||['intro','end','death'].includes(state))return false;
+    if(!autosaveEnabled||restorePromptOpen||!game||['intro','end','death'].includes(state))return false;
     const now=Date.now();
     if(!force&&now-lastAutosaveAt<AUTO_SAVE_INTERVAL_MS)return false;
     const payload=createRunSave();if(!payload)return false;
@@ -874,6 +915,7 @@
 
   function restoreRunSave(saved){
     validateRunSave(saved);
+    // Keep the confirmation and original backup until restore completes.
     setSaveMenuOpen(false);
     $('saveDock').hidden=false;
     updateAutosaveToggleUI();
@@ -938,6 +980,7 @@
     el.status.textContent='SAVED HUNT RESTORED · '+timeText(game.time);
     setSaveIndicator('Hunt loaded · '+timeText(game.time),'saved');
     lastAutosaveAt=Date.now();
+    closeRestorePrompt();
     return true;
   }
   function downloadRunSave(){
@@ -1160,10 +1203,14 @@
     el.start.focus();
   }
   function startGame(easyMode=false){
+    // Reading the save must precede creating the starting-element picker.
+    // Never clear or replace the previous hunt until START NEW is confirmed.
+    const previousHunt=readLocalRunSave();
+    pendingHuntOnLaunch=previousHunt;
+    closeRestorePrompt();
     setSaveMenuOpen(false);
     $('saveDock').hidden=false;
     updateAutosaveToggleUI();
-    clearRunSave();
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
@@ -1182,8 +1229,9 @@
     updateHUD();
     openUpgrade();
     if(game.easyMode)el.status.textContent='EASY MODE · CHOOSE ELEMENT';
-    // Audio begins after the player chooses a school (browser gesture).
-    saveRun(true);
+    // Resume is offered here (at the element picker), not on the title screen.
+    if(previousHunt)showRestorePrompt(previousHunt);
+    else saveRun(true);
 
   }
 
@@ -1705,7 +1753,7 @@
     game.banishMode=!game.banishMode;renderUpgrade();
   }
   function chooseUpgrade(index){
-    if(state!=='upgrade')return;
+    if(state!=='upgrade'||restorePromptOpen)return;
     const choice=game.upgradeChoices[index];if(!choice)return;
     if(!game.elementChosen){
       if(!choice.element)return;
@@ -3641,6 +3689,13 @@
     // Never treat OS/browser shortcuts (e.g. Alt+P, Ctrl+O) as game hotkeys.
     if(e.altKey||e.ctrlKey||e.metaKey)return;
     const k=e.key.toLowerCase();
+    if(restorePromptOpen){
+      // Do not let digit hotkeys pick a new element behind the dialog.
+      // Preserve native keyboard activation (Space/Enter) on its buttons.
+      if(['1','2','3','4','arrowup','arrowdown','arrowleft','arrowright'].includes(k))
+        e.preventDefault();
+      return;
+    }
     if(k==='escape'&&saveMenuOpen){
       e.preventDefault();setSaveMenuOpen(false);return;
     }
@@ -3680,12 +3735,8 @@
   $('reliquaryClaim').addEventListener('click',()=>chooseReliquary(false));
   $('reliquaryDesecrate').addEventListener('click',()=>chooseReliquary(true));
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);
-  $('continueRunBtn').addEventListener('click',()=>{
-    const saved=readLocalRunSave();
-    if(saved)try{restoreRunSave(saved);}catch(_){
-      setSaveIndicator('This autosave could not be restored.','error');
-    }
-  });
+  $('resumeSavedHuntBtn').addEventListener('click',resumeSavedHunt);
+  $('startFreshHuntBtn').addEventListener('click',chooseNewHunt);
   $('saveSettingsBtn').addEventListener('click',()=>setSaveMenuOpen(!saveMenuOpen));
   $('autosaveToggleBtn').addEventListener('click',toggleAutosave);
   $('downloadSaveBtn').addEventListener('click',downloadRunSave);
@@ -3754,7 +3805,8 @@
   });
 
   updateAutosaveToggleUI();
-  updateContinueButton();
+  // Save detection also happens on page startup; no intro-screen button.
+  pendingHuntOnLaunch=readLocalRunSave();
   showAchievementTitle();
   requestAnimationFrame(loop);
 })();

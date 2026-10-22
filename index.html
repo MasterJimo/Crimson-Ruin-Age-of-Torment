@@ -8,7 +8,7 @@
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?content=e6b0957dfc03e874dd5141fa3d5c5c2ca61c58c1">
+  <link rel="stylesheet" href="style.css?content=59c7f1865f73042b8c0cd87bdf8b28de8e485d6e">
 </head>
 <body>
   <div class="site-shell">
@@ -116,9 +116,6 @@
             <span class="mode-caption">A GENTLER HUNT</span>
           </button>
         </div>
-        <div class="intro-save-actions" aria-label="Continue saved game">
-          <button type="button" id="continueRunBtn" class="save-continue" hidden>💾 CONTINUE SAVED HUNT</button>
-        </div>
         <p class="intro-keyboard-help" id="introKeyboardHelp">Move with WASD or arrow keys. Press P to pause and O to open inventory and Codex.</p>
         <p class="mobile-intro-help">Use the joystick to move in any direction. Spells attack automatically. Tap PAUSE for stats and the Encyclopedia.</p>
       </section>
@@ -131,6 +128,20 @@
           <span id="perkNotice" class="perk-notice visually-hidden" aria-live="polite">Choose a power</span>
         </div>
         <div id="upgradeCards" class="upgrade-cards"></div>
+      </section>
+      <section class="screen-overlay hidden dark-decision restore-hunt-overlay" id="restoreHuntOverlay"
+        role="dialog" aria-modal="true" aria-labelledby="restoreHuntTitle"
+        aria-describedby="restoreHuntDetail">
+        <div class="dark-decision-panel restore-hunt-panel">
+          <span class="dark-decision-overline">SAVED HUNT FOUND</span>
+          <h2 id="restoreHuntTitle">CONTINUE YOUR HUNT?</h2>
+          <p id="restoreHuntDetail">A previous hunt was saved in this browser.</p>
+          <div class="restore-hunt-buttons">
+            <button type="button" id="resumeSavedHuntBtn" class="restore-hunt-primary">💾 CONTINUE SAVED HUNT</button>
+            <button type="button" id="startFreshHuntBtn" class="restore-hunt-secondary">START NEW HUNT</button>
+          </div>
+          <span class="dark-decision-note">Starting a new hunt replaces the previous autosave. Continuing restores your previous element, progress and difficulty.</span>
+        </div>
       </section>
 
       <section class="screen-overlay hidden dark-decision" id="reliquaryOverlay" role="dialog" aria-modal="true" aria-labelledby="reliquaryTitle">
@@ -275,6 +286,6 @@
   <script src="sprites.js" defer></script>
   <script src="monsters.js?v=0.33.7" defer></script>
   <script src="assets.js?v=0.33.7" defer></script>
-  <script src="game.js?content=adccd88796c50bf6b13490bd23143dbaa97bd632" defer></script>
+  <script src="game.js?content=4542e14f791a247b4e5bbc9190b5e3929f5fd56e" defer></script>
 </body>
 </html>
