@@ -749,14 +749,38 @@
   // Versioned local saves. The saved file contains no login or GitHub token.
   const RUN_SAVE_KEY='crimson-ruin-hunt-autosave-v1';
   const RUN_SAVE_SCHEMA=1, AUTO_SAVE_INTERVAL_MS=12000, AUTOSAVE_MAX_BYTES=8*1024*1024;
-  let lastAutosaveAt=0;
+  const AUTOSAVE_ENABLED_KEY='crimson-ruin-autosave-enabled-v1';
+  let lastAutosaveAt=0,saveMenuOpen=false,autosaveEnabled=true;
+  try{autosaveEnabled=localStorage.getItem(AUTOSAVE_ENABLED_KEY)!=='false';}catch(_){}
+  function setSaveMenuOpen(open){
+    if(open&&(!game||state==='intro'||state==='end'||state==='death'))return;
+    saveMenuOpen=Boolean(open);
+    $('saveMenu').hidden=!saveMenuOpen;
+    $('saveSettingsBtn').setAttribute('aria-expanded',String(saveMenuOpen));
+    if(saveMenuOpen){keys.clear();resetJoystick();}
+  }
+  function updateAutosaveToggleUI(){
+    const btn=$('autosaveToggleBtn');
+    btn.setAttribute('aria-checked',String(autosaveEnabled));
+    btn.textContent='💾 AUTOSAVE: '+(autosaveEnabled?'ON':'OFF');
+    if(!autosaveEnabled)
+      setSaveIndicator('Autosave is OFF. Use Export Save to back up this hunt.','off');
+    else setSaveIndicator('Autosave is ON. This hunt saves locally every 12 seconds.');
+  }
+  function toggleAutosave(){
+    autosaveEnabled=!autosaveEnabled;
+    try{localStorage.setItem(AUTOSAVE_ENABLED_KEY,String(autosaveEnabled));}catch(_){}
+    updateAutosaveToggleUI();
+    if(autosaveEnabled)saveRun(true);
+  }
   function setSaveIndicator(message,mode='local'){
     const el=$('autosaveStatus');if(!el)return;
     el.classList.toggle('is-saved',mode==='saved');
     el.classList.toggle('is-error',mode==='error');
+    el.classList.toggle('is-off',mode==='off');
     el.title=message;
     const label=el.querySelector('.save-label');
-    if(label)label.textContent=mode==='saved'?'SAVED':mode==='error'?'ERROR':'LOCAL';
+    if(label)label.textContent=message;
   }
   function packShot(s,index,groups){
     const out={...s};
@@ -826,7 +850,7 @@
     $('continueRunBtn').hidden=!readLocalRunSave();
   }
   function saveRun(force=false){
-    if(!game||['intro','end','death'].includes(state))return false;
+    if(!autosaveEnabled||!game||['intro','end','death'].includes(state))return false;
     const now=Date.now();
     if(!force&&now-lastAutosaveAt<AUTO_SAVE_INTERVAL_MS)return false;
     const payload=createRunSave();if(!payload)return false;
@@ -850,6 +874,9 @@
 
   function restoreRunSave(saved){
     validateRunSave(saved);
+    setSaveMenuOpen(false);
+    $('saveDock').hidden=false;
+    updateAutosaveToggleUI();
     const input=saved.game,enemies=input.enemies.map(e=>({...e})),groups=new Map();
     const shots=input.shots.map(b=>{
       const shot={...b};
@@ -1122,6 +1149,7 @@
   // The results screen returns to this choice instead of forcing Hardcore.
   function returnToModeSelect(){
     if(state!=='end')return;
+    setSaveMenuOpen(false);$('saveDock').hidden=true;
     game=null;state='intro';keys.clear();shake=0;flash=0;
     el.end.classList.add('hidden');
     el.intro.classList.remove('hidden');
@@ -1132,6 +1160,9 @@
     el.start.focus();
   }
   function startGame(easyMode=false){
+    setSaveMenuOpen(false);
+    $('saveDock').hidden=false;
+    updateAutosaveToggleUI();
     clearRunSave();
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
@@ -1766,6 +1797,7 @@
   }
   function die(won){
     if(state==='end')return;
+    setSaveMenuOpen(false);$('saveDock').hidden=true;
     clearRunSave();
     const survived=Boolean(won&&game.endingAt30);
     checkOaths();
@@ -2629,7 +2661,7 @@
     }
   }
   function update(dt){
-    if(!game || state!=='playing') return;
+    if(!game || state!=='playing' || saveMenuOpen) return;
     const g=game, p=g.player; g.time+=dt; g.worldTime+=dt;
     g.curseTime=Math.max(0,g.curseTime-dt);
     p.cinderWardTime=Math.max(0,(p.cinderWardTime||0)-dt);
@@ -3598,7 +3630,7 @@
     if(!last)last=ts;
     const dt=Math.min((ts-last)/1000,.04);last=ts;
     // Freeze scene animations and gameplay when paused/reading/results.
-    if(state==='playing'||state==='death')animTime+=dt;
+    if((state==='playing'||state==='death')&&!saveMenuOpen)animTime+=dt;
     if(state==='death')updateDeath(dt);else update(dt);
     syncMobileControls();
     if(game&&state!=='end')saveRun();
@@ -3609,6 +3641,9 @@
     // Never treat OS/browser shortcuts (e.g. Alt+P, Ctrl+O) as game hotkeys.
     if(e.altKey||e.ctrlKey||e.metaKey)return;
     const k=e.key.toLowerCase();
+    if(k==='escape'&&saveMenuOpen){
+      e.preventDefault();setSaveMenuOpen(false);return;
+    }
     if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();
     if((k==='o'||k==='p'||k==='escape')&&(state==='playing'||state==='inventory')){
       e.preventDefault();if(!e.repeat)togglePause();
@@ -3651,12 +3686,16 @@
       setSaveIndicator('This autosave could not be restored.','error');
     }
   });
+  $('saveSettingsBtn').addEventListener('click',()=>setSaveMenuOpen(!saveMenuOpen));
+  $('autosaveToggleBtn').addEventListener('click',toggleAutosave);
   $('downloadSaveBtn').addEventListener('click',downloadRunSave);
   $('uploadSaveBtn').addEventListener('click',()=>$('uploadSaveInput').click());
-  $('introImportBtn').addEventListener('click',()=>$('uploadSaveInput').click());
   $('uploadSaveInput').addEventListener('change',async e=>{
     const file=e.target.files?.[0];e.target.value='';
-    await importRunSave(file);
+    await importRunSave(file);setSaveMenuOpen(false);
+  });
+  document.addEventListener('pointerdown',e=>{
+    if(saveMenuOpen&&!$('saveDock').contains(e.target))setSaveMenuOpen(false);
   });
   el.start.addEventListener('click',()=>startGame(false));
   el.easyStart.addEventListener('click',()=>startGame(true));
@@ -3714,6 +3753,7 @@
     sfxVolume=clamp(Number(el.sfxVolume.value),0,100); updateAudioUI(); rememberAudio();
   });
 
+  updateAutosaveToggleUI();
   updateContinueButton();
   showAchievementTitle();
   requestAnimationFrame(loop);

@@ -1851,3 +1851,87 @@ body:has(#intro:not(.hidden)) .save-dock{display:none!important}
 }
 .achievement-equip:hover,.achievement-equip:focus-visible{outline:1px solid #ffe2a2;background:#4b3320}
 .achievement-equip:disabled{opacity:.72;cursor:default;border-color:#77714d}
+
+
+/* Save controls belong exclusively to an active hunt. Keep the illustrated
+   start screen clean: only a slim Continue button appears below mode choices. */
+.save-dock[hidden],.save-menu[hidden],#intro .save-continue[hidden]{display:none!important}
+body:has(#intro:not(.hidden)) .save-dock{display:none!important}
+body:has(#intro.hidden) .topbar{
+  position:relative;z-index:30;overflow:visible;
+}
+.save-dock{position:relative;flex:0 0 auto;display:flex;align-items:center;isolation:isolate}
+.save-settings-button{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:39px;height:39px;padding:3px;cursor:pointer;
+  border:1px solid #926274;border-radius:9px;
+  background:linear-gradient(150deg,#382133,#1d101b);
+  color:#ffdfc4;font:800 24px/1 system-ui,sans-serif;
+  box-shadow:inset 0 1px #ffffff20,0 4px 12px #0006;
+}
+.save-settings-button:hover,.save-settings-button:focus-visible,
+.save-settings-button[aria-expanded="true"]{
+  border-color:#ecc191;background:#4b2a38;outline:1px solid #f0c89d;
+}
+.save-menu{
+  position:absolute;right:0;top:calc(100% + 10px);z-index:100;
+  width:min(244px,calc(100vw - 20px));box-sizing:border-box;
+  display:flex;flex-direction:column;gap:7px;padding:12px;
+  border:1px solid #a46f77;border-radius:13px;
+  background:linear-gradient(160deg,#2b1926,#170e17);
+  box-shadow:0 14px 40px #000d,0 0 0 1px #ffffff12 inset;
+}
+.save-menu-heading{
+  color:#ffd8bf;text-align:left;font:850 12px/1.5 system-ui,sans-serif;
+  letter-spacing:.14em;padding-bottom:4px;border-bottom:1px solid #604152;
+}
+.save-menu-action{
+  display:flex;align-items:center;text-align:left;min-height:39px;
+  cursor:pointer;padding:9px 11px;border:1px solid #704b60;border-radius:8px;
+  background:#291825;color:#ffe1d1;
+  font:800 11px/1.25 system-ui,sans-serif;letter-spacing:.04em;
+}
+.save-menu-action:hover,.save-menu-action:focus-visible{
+  background:#513044;border-color:#ecc491;outline:1px solid #ffd4a3;
+}
+.save-menu-action[aria-checked="true"]{border-color:#9e834f;color:#ffe5a6}
+.save-menu-action[aria-checked="false"]{border-color:#805663;color:#e0b7bc}
+.save-menu-status{
+  display:block;min-height:24px;padding:6px 2px 0;
+  color:#bda8b4;font:600 10px/1.45 system-ui,sans-serif;
+  overflow-wrap:anywhere;
+}
+.save-menu-status.is-saved{color:#e6c890}
+.save-menu-status.is-error{color:#ff979e}
+.save-menu-status.is-off{color:#c4a9b6}
+.save-menu-status .save-label{font:inherit;color:inherit;letter-spacing:0}
+#intro .intro-save-actions{
+  position:absolute!important;left:50%!important;top:81%!important;
+  bottom:auto!important;transform:translateX(-50%);
+  width:max-content;max-width:90%;height:auto;
+  z-index:9;display:flex;align-items:center;justify-content:center;
+  margin:0!important;padding:0!important;
+}
+#intro .intro-save-actions .save-continue{
+  cursor:pointer;border:1px solid #bb8b64;border-radius:9px;
+  padding:9px 19px;background:linear-gradient(160deg,#382333ed,#211321f0);
+  color:#ffe4c1;box-shadow:0 3px 14px #0009,inset 0 1px #fff2;
+  font:850 clamp(9px,1.05vw,13px)/1.15 system-ui,sans-serif;
+  white-space:nowrap;letter-spacing:.06em;min-height:36px;
+}
+#intro .intro-save-actions .save-continue:hover,
+#intro .intro-save-actions .save-continue:focus-visible{
+  border-color:#ffcf9c;background:#533042;outline:1px solid #ffcf9c;
+}
+@media(max-width:720px){
+  #intro .intro-save-actions{top:86%!important}
+  .save-settings-button{width:34px;height:34px;font-size:20px}
+}
+body.touch-game #intro .intro-save-actions{
+  position:relative!important;left:auto!important;top:auto!important;
+  transform:none!important;max-width:94%;width:auto;
+  margin:0 auto!important;flex:0 0 auto;
+}
+body.touch-game:has(#intro.hidden) .save-menu{
+  right:0;max-width:calc(100vw - 16px);
+}
