@@ -703,7 +703,10 @@
   const SKILL_ICON_CELLS={"blood":[0,0],"fire":[1,0],"lightning":[2,0],"poison":[3,0],"blood_power":[4,0],"fire_power":[0,1],"lightning_power":[1,1],"poison_power":[2,1],"hemorrhagic_burst":[3,1],"brutality":[4,1],"rapid_fire":[0,2],"movement":[1,2],"vitality":[2,2],"regen":[3,2],"armor":[4,2],"knowledge":[0,3],"magnet":[1,3],"forward":[2,3],"spread":[3,3],"pierce":[4,3],"crit":[0,4],"crit_damage":[1,4]};
   // The opening choice is concise; the Grimoire shows the fuller explanation.
   function elementDescriptionHTML(choice,detailed=false){
-    return (detailed?choice?.longDesc:choice?.desc)||'';
+    // A loaded save can contain older cached card descriptions. Always use
+    // the canonical short text on the starting-element selection screen.
+    const source=ELEMENT_CHOICES.find(el=>el.element===choice?.element)||choice;
+    return (detailed?source?.longDesc:source?.desc)||'';
   }
   function damageStatRows(p){
     const fmt=n=>String(Number(n.toFixed(2)));
@@ -943,7 +946,7 @@
     const cards=[...ELEMENT_CHOICES,...POWERS,...SURVIVAL_BOONS];
     const choices=input.upgradeChoices.map(c=>{
       const src=cards.find(item=>item.id===c.id);
-      return {...src,tier:c.tier,desc:src.element?src.longDesc:perkDescription(c.id,c.tier)};
+      return {...src,tier:c.tier,desc:src.element?src.desc:perkDescription(c.id,c.tier)};
     });
     game={...input,enemies,shots,upgradeChoices:choices,
       bossSpawned:new Set(input.bossSpawned),banned:new Set(input.banned),
