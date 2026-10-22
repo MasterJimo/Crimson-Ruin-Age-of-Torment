@@ -1808,3 +1808,46 @@ body:has(#intro.hidden) .topbar .sound-control:focus-visible{
 
 /* v0.33.3 — Banish is dormant, kept intact for future use. */
 #banishBtn[hidden]{display:none!important;}
+
+
+/* Local autosave and cosmetic Achievement title — top utility header. */
+.achievement-title{
+  flex:0 1 auto;max-width:172px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  padding:7px 9px;border:1px solid #bb8444;border-radius:9px;
+  background:linear-gradient(160deg,#332416,#140e13);color:#ffe0a1;
+  font:750 10px/1.2 system-ui,sans-serif;letter-spacing:.035em;
+  box-shadow:inset 0 1px 0 #fff2,0 0 8px #bb854022;
+}
+.achievement-title[hidden]{display:none!important}
+.save-dock{display:flex;gap:4px;align-items:center;flex:none}
+.save-icon,.save-tool{display:inline-flex;justify-content:center;align-items:center;min-height:33px;border:1px solid #775365;border-radius:8px;background:#20151f;color:#f9d6bb}
+.save-icon{gap:4px;padding:4px 7px;font-size:16px;white-space:nowrap}
+.save-label{font:700 9px system-ui,sans-serif;color:#d7b7ba;letter-spacing:.04em}
+.save-icon.is-saved{border-color:#9a824a;background:#242017}
+.save-icon.is-error{border-color:#d96565;background:#301924}
+.save-tool{cursor:pointer;padding:4px 6px;gap:1px;font:700 16px system-ui,sans-serif}
+.save-tool span{font-size:12px}
+.save-tool:hover,.save-tool:focus-visible{background:#513042;outline:1px solid #f6d1a1}
+.intro-save-actions{position:relative;z-index:3;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin:10px 0 6px}
+.intro-save-actions .save-continue,.intro-save-actions .save-import{cursor:pointer;padding:10px 15px;border:1px solid #b58a5d;background:linear-gradient(135deg,#3d2830,#1d121c);border-radius:9px;color:#ffe4b4;font:750 12px system-ui,sans-serif}
+.intro-save-actions .save-continue[hidden]{display:none!important}
+body:has(#intro:not(.hidden)) .save-dock{display:none!important}
+@media(max-width:1180px){
+ body:has(#intro.hidden) .topbar .topbar-right.solo-audio{justify-self:end}
+ .achievement-title{max-width:106px;font-size:9px}
+}
+@media(max-width:700px){
+ .save-icon{padding:3px 5px;min-height:29px}.save-label{display:none}
+ .save-tool{min-height:29px;padding:3px 4px;font-size:14px}
+ .save-tool span{font-size:10px}
+ .achievement-title{max-width:94px;padding:5px}
+}
+
+/* Achievements: select which earned title appears on the upper HUD. */
+.achievement-equip{
+ cursor:pointer;border:1px solid #b48b55;border-radius:8px;
+ background:linear-gradient(140deg,#362519,#190f17);color:#ffe4b3;
+ padding:9px 12px;margin:9px 0 4px;font:700 11px system-ui,sans-serif;
+}
+.achievement-equip:hover,.achievement-equip:focus-visible{outline:1px solid #ffe2a2;background:#4b3320}
+.achievement-equip:disabled{opacity:.72;cursor:default;border-color:#77714d}

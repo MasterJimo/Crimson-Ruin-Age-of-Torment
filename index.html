@@ -8,7 +8,7 @@
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=0.33.7">
+  <link rel="stylesheet" href="style.css?content=b148e6a67b752ee22d89dfaf523a2872f7ef0a86">
 </head>
 <body>
   <div class="site-shell">
@@ -20,7 +20,7 @@
           <span class="divider-v" aria-hidden="true"></span>
           <span class="utility-level-label">LVL</span>
           <strong id="levelText" class="utility-level">1</strong>
-          <span id="oathSeal" class="oath-seal" hidden title="Hunter's Oath title"></span>
+
         </button>
         <div class="hp-zone utility-hp">
           <span class="hp-icon" aria-hidden="true">♥</span>
@@ -30,11 +30,18 @@
           <span class="fountain-buff" id="fountainBuff" hidden>✚ 30s</span>
           <span class="magnet-buff" id="magnetBuff" hidden>🧲 15s</span>
         </div>
+        <span id="achievementTitle" class="achievement-title" hidden aria-label="Equipped achievement title"></span>
       </div>
       <div class="topbar-clock hud-center" id="hud" hidden aria-label="Run time">
         <strong id="timeText">00:00</strong>
       </div>
       <div class="topbar-right solo-audio">
+        <div id="saveDock" class="save-dock" aria-label="Game save controls">
+          <span id="autosaveStatus" class="save-icon" role="status" aria-live="polite" title="Autosave is stored in this browser">💾<span class="save-label">LOCAL</span></span>
+          <button id="downloadSaveBtn" type="button" class="save-tool" title="Download a portable save file" aria-label="Download save file">📁<span aria-hidden="true">↓</span></button>
+          <button id="uploadSaveBtn" type="button" class="save-tool" title="Import a save file" aria-label="Import save file">📂<span aria-hidden="true">↑</span></button>
+          <input id="uploadSaveInput" type="file" accept=".json,application/json" hidden>
+        </div>
         <button id="mobileAudioToggle" class="mobile-audio-toggle" type="button" aria-expanded="false" aria-controls="audioControls">♫ SOUND</button>
         <div class="audio-controls" id="audioControls" aria-label="Audio settings">
           <label class="volume-control" for="musicVolume">
@@ -99,6 +106,10 @@
             <span class="mode-name">EASY MODE</span>
             <span class="mode-caption">A GENTLER HUNT</span>
           </button>
+        </div>
+        <div class="intro-save-actions" aria-label="Saved game">
+          <button type="button" id="continueRunBtn" class="main-button save-continue" hidden>💾 CONTINUE SAVED HUNT</button>
+          <button type="button" id="introImportBtn" class="save-import">📂 IMPORT SAVE FILE</button>
         </div>
         <p class="intro-keyboard-help" id="introKeyboardHelp">Move with WASD or arrow keys. Press P to pause and O to open inventory and Codex.</p>
         <p class="mobile-intro-help">Use the joystick to move in any direction. Spells attack automatically. Tap PAUSE for stats and the Encyclopedia.</p>
@@ -221,7 +232,7 @@
               <button type="button" class="inventory-tab" id="inventoryCatalogTab" role="tab" aria-selected="false">✚ POWER-UP LIBRARY</button>
               <button type="button" class="inventory-tab" id="inventoryScalingTab" role="tab" aria-selected="false">⌛ ENEMY SCALING</button>
               <button type="button" class="inventory-tab" id="inventoryClarityTab" role="tab" aria-selected="false">◈ COMBAT CLARITY</button>
-              <button type="button" class="inventory-tab" id="inventoryOathsTab" role="tab" aria-selected="false">✦ HUNTER'S OATHS</button>
+              <button type="button" class="inventory-tab" id="inventoryOathsTab" role="tab" aria-selected="false">🏆 ACHIEVEMENTS</button>
             </nav>
             <div class="monster-bestiary codex-page" id="inventoryBestiaryPage"></div>
             <div class="monster-bestiary codex-page" id="inventoryElementsPage" hidden></div>
@@ -256,6 +267,6 @@
   <script src="sprites.js" defer></script>
   <script src="monsters.js?v=0.33.7" defer></script>
   <script src="assets.js?v=0.33.7" defer></script>
-  <script src="game.js?content=21c2beec3dd87e936bc1fd12826bf33beb890504" defer></script>
+  <script src="game.js?content=5a37cd5a8524ae4a6ad99a731c4b987de91d7631" defer></script>
 </body>
 </html>

@@ -23,13 +23,15 @@ A free, single-player **dark-fantasy arena survival roguelike** for desktop and 
 | Pause / resume and open Character Stats / Encyclopedia | **P**, **O** or **Esc** | **PAUSE** button |
 | Music, SFX and mute | On-screen sound controls | **SOUND** settings |
 
-The browser version supports portrait and landscape layouts. The **Encyclopedia** explains monsters, elemental mechanics, items, power-ups, scaling and Hunter's Oaths. For a shorter introduction, see [About & Controls](about.html).
+The browser version supports portrait and landscape layouts. The **Encyclopedia** explains monsters, elemental mechanics, items, power-ups, scaling and Achievements. For a shorter introduction, see [About & Controls](about.html).
 
 ### Special systems
 
 - **Cursed champions and reliquaries:** Defeat marked enemies or bosses to receive a reliquary; choose a safer **CLAIM** reward or a stronger **DESECRATE** reward with a temporary damage-taken curse.
 - **Torment Ascensions:** Rank up your chosen element with Element Power cards. At **rank 4 plus a Reliquary Sigil**, or **rank 6 without a Sigil**, choose one of two evolutions: a unique utility path or double elemental damage at the cost of 30% maximum HP (one Ascension per run).
-- **Hunter's Oaths:** Optional achievements that unlock cosmetic titles; they do not increase combat power.
+- **Achievements:** Eight optional challenges that unlock cosmetic titles. Select an unlocked title in the Encyclopedia > Achievements tab; the title appears in the top HUD bar. Existing Hunter's Oaths unlocks remain available. Achievements do not affect combat power.
+- **Local autosave:** The active hunt saves automatically to this browser every **12 seconds** and when you leave the tab. Click **💾 CONTINUE SAVED HUNT** on the title screen to restore it safely in a paused state. Pending Power-Up, Reliquary and Ascension choices are preserved. Starting a new hunt replaces the previous autosave; finishing or dying clears the autosave.
+- **Portable saves:** Use **📁↓** in the top bar to export the active hunt as a JSON file, and **📂↑** to import (or **📂 IMPORT SAVE FILE** on the title screen). Backups are local files, not GitHub commits. Browsers may clear site storage; download backups for long-term use.
 - **Combat Clarity:** Cinematic, Balanced and Performance effect presets to reduce visual clutter without changing gameplay.
 
 ## Core mechanics
@@ -130,7 +132,7 @@ Every level-up offers **4 different cards**: one Attack, one Defense and two ran
 
 ## Enemies and Monster Bestiary
 
-Pause deliberately with **Escape**, **P**, or **O** (or the game's pause/inventory button) to open two main tabs: **Character Stats** (your current main spell and equipped power-ups on the left, real-time combat stats on the right) and **Encyclopedia**. Opening Encyclopedia reveals seven chapters: **Monster Bestiary** (early/late/boss filters), **Elemental Mechanics** (all four spells and exact damage formulas), **Item Acquisition** (shrine timing, drops and rarity odds), **Power-Up Library** (18 perks, rarity and element-specific effects) **Enemy Scaling** (live Easy/Hardcore tables and exact formulas), **Combat Clarity** (visual density settings), and **Hunter's Oaths** (cosmetic achievements). Crosslinks jump between related articles. Enemy names are **not** displayed beneath creatures during combat.
+Pause deliberately with **Escape**, **P**, or **O** (or the game's pause/inventory button) to open two main tabs: **Character Stats** (your current main spell and equipped power-ups on the left, real-time combat stats on the right) and **Encyclopedia**. Opening Encyclopedia reveals seven chapters: **Monster Bestiary** (early/late/boss filters), **Elemental Mechanics** (all four spells and exact damage formulas), **Item Acquisition** (shrine timing, drops and rarity odds), **Power-Up Library** (18 perks, rarity and element-specific effects) **Enemy Scaling** (live Easy/Hardcore tables and exact formulas), **Combat Clarity** (visual density settings), and **Achievements** (cosmetic challenges and selectable top-bar titles). Crosslinks jump between related articles. Enemy names are **not** displayed beneath creatures during combat.
 
 **00:00–09:59 (early waves):** Skeleton Swordsman (simple sword melee), Plague Rat (weak but quick), Watcher Eye (slow caster, +1 projectile every 5 minutes), Skeleton Archer (high-damage slow arrow), Zombie (slow, heavy claw).
 

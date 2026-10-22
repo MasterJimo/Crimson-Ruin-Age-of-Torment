@@ -447,7 +447,9 @@
   // v0.33.0 — four interconnected optional systems.
   // All persistent rewards from Oaths are cosmetic: no account-level power creep.
   const CLARITY_SETTINGS_KEY='crimson-ruin-clarity-v033';
+  // Keep the original key so existing achievements survive the rename.
   const OATHS_KEY='crimson-ruin-oaths-v033';
+  const ACHIEVEMENT_TITLE_KEY='crimson-ruin-achievement-title-v1';
   const CLARITY_PRESETS={
     cinematic:{name:'CINEMATIC',particles:1,texts:125},
     balanced:{name:'BALANCED',particles:.58,texts:70},
@@ -473,13 +475,47 @@
     const value=JSON.parse(localStorage.getItem(OATHS_KEY)||'[]');
     if(Array.isArray(value))for(const id of value)if(OATHS.some(o=>o.id===id))oathUnlocks.add(id);
   }catch(_){}
+  let selectedAchievementId=null;
+  try{
+    const value=localStorage.getItem(ACHIEVEMENT_TITLE_KEY);
+    if(value&&oathUnlocks.has(value))selectedAchievementId=value;
+  }catch(_){}
+  function equippedAchievement(){
+    return OATHS.find(o=>o.id===selectedAchievementId&&oathUnlocks.has(o.id))||
+      OATHS.filter(o=>oathUnlocks.has(o.id)).at(-1)||null;
+  }
+  function showAchievementTitle(){
+    const badge=$('achievementTitle');
+    if(!badge)return;
+    const award=equippedAchievement();
+    badge.hidden=!award;
+    if(award){
+      badge.textContent='✦ '+award.title;
+      badge.title='Achievement: '+award.name;
+    }
+  }
+  function selectAchievement(id){
+    if(!oathUnlocks.has(id))return;
+    selectedAchievementId=id;
+    try{localStorage.setItem(ACHIEVEMENT_TITLE_KEY,id);}catch(_){}
+    showAchievementTitle();
+    if(game){
+      if(state==='inventory')renderOaths();
+      updateHUD();
+    }
+  }
   let oathToastCooldown=0;
   function unlockOath(id){
     if(oathUnlocks.has(id))return false;
     const oath=OATHS.find(o=>o.id===id);if(!oath)return false;
     oathUnlocks.add(id);
-    try{localStorage.setItem(OATHS_KEY,JSON.stringify([...oathUnlocks]));}catch(_){}
-    if(game){game.oathsUnlockedThisRun.push(id);flashMessage('✦ OATH FULFILLED: '+oath.name,2600);}
+    selectedAchievementId=id;
+    try{
+      localStorage.setItem(OATHS_KEY,JSON.stringify([...oathUnlocks]));
+      localStorage.setItem(ACHIEVEMENT_TITLE_KEY,id);
+    }catch(_){}
+    if(game){game.oathsUnlockedThisRun.push(id);flashMessage('🏆 ACHIEVEMENT UNLOCKED: '+oath.name,2600);}
+    showAchievementTitle();
     return true;
   }
   function checkOaths(){
@@ -709,6 +745,212 @@
   const keys = new Set();
   let state = 'intro', game = null, raf = 0, last = 0, animTime = 0, shake = 0, flash = 0, muted = false, musicVolume = 10, sfxVolume = 1, sfx = null;
 
+
+  // Versioned local saves. The saved file contains no login or GitHub token.
+  const RUN_SAVE_KEY='crimson-ruin-hunt-autosave-v1';
+  const RUN_SAVE_SCHEMA=1, AUTO_SAVE_INTERVAL_MS=12000, AUTOSAVE_MAX_BYTES=8*1024*1024;
+  let lastAutosaveAt=0;
+  function setSaveIndicator(message,mode='local'){
+    const el=$('autosaveStatus');if(!el)return;
+    el.classList.toggle('is-saved',mode==='saved');
+    el.classList.toggle('is-error',mode==='error');
+    el.title=message;
+    const label=el.querySelector('.save-label');
+    if(label)label.textContent=mode==='saved'?'SAVED':mode==='error'?'ERROR':'LOCAL';
+  }
+  function packShot(s,index,groups){
+    const out={...s};
+    out.hitIds=[...(s.hit||[])].map(e=>index.get(e)).filter(Number.isInteger);
+    out.lastHitIds=[...(s.lastHit||[])].map(([e,time])=>[index.get(e),time])
+      .filter(([i,t])=>Number.isInteger(i)&&Number.isFinite(t));
+    if(s.fireSalvoHits){
+      if(!groups.has(s.fireSalvoHits))groups.set(s.fireSalvoHits,groups.size);
+      out.group=groups.get(s.fireSalvoHits);
+      // A sibling Fireball may have already expired; retain its hit record.
+      out.fireSalvoHitIds=[...s.fireSalvoHits].map(e=>index.get(e))
+        .filter(Number.isInteger);
+    }else{out.group=null;out.fireSalvoHitIds=[];}
+    delete out.hit;delete out.lastHit;delete out.fireSalvoHits;
+    return out;
+  }
+  function createRunSave(){
+    if(!game||['intro','end','death'].includes(state)||game.endingAt30||game.time>=DURATION)return null;
+    const index=new Map(game.enemies.map((e,i)=>[e,i])),groups=new Map();
+    const snapshot={...game,
+      // The transient visual effects are safe to restart from zero.
+      particles:[],texts:[],stains:[],corpses:[],gibs:[],impacts:[],
+      slashBursts:[],magicFx:[],poisonBursts:[],bolts:[],
+      shots:game.shots.map(s=>packShot(s,index,groups)),
+      bossSpawned:[...game.bossSpawned],banned:[...game.banned],
+      upgradeChoices:game.upgradeChoices.map(c=>({id:c.id,tier:c.tier}))
+    };
+    return {schema:RUN_SAVE_SCHEMA,savedAt:Date.now(),state,
+      game:snapshot,achievements:[...oathUnlocks],selectedTitle:selectedAchievementId};
+  }
+  function validateRunSave(data){
+    const g=data?.game,p=g?.player;
+    if(data?.schema!==RUN_SAVE_SCHEMA||
+       !['playing','inventory','upgrade','reliquary','ascension'].includes(data.state)||
+       !g||!p||!Number.isFinite(g.time)||g.time<0||g.time>=DURATION||
+       !Number.isFinite(p.hp)||p.hp<=0||!Number.isFinite(p.maxHp)||p.maxHp<=0||
+       !Number.isFinite(p.x)||!Number.isFinite(p.y)||
+       !Array.isArray(g.enemies)||g.enemies.length>230||
+       !Array.isArray(g.shots)||g.shots.length>3000||
+       !Array.isArray(g.upgradeChoices)||g.upgradeChoices.length>4||
+       !Array.isArray(g.bossSpawned)||!Array.isArray(g.banned)||
+       !Array.isArray(g.reliquaries)||!Array.isArray(g.drops)||
+       typeof g.elementChosen!=='boolean'||
+       (g.elementChosen&&!['blood','fire','lightning','poison'].includes(p.element))||
+       (data.state!=='upgrade'&&!g.elementChosen))
+      throw new Error('Invalid or incompatible save');
+    if(g.enemies.some(e=>!ENEMIES[e.type]||!Number.isFinite(e.x)||!Number.isFinite(e.y)))
+      throw new Error('Invalid enemy');
+    const pool=[...ELEMENT_CHOICES,...POWERS,...SURVIVAL_BOONS];
+    if(g.upgradeChoices.some(c=>!pool.some(p=>p.id===c.id)||
+       !['common','magic','rare','legendary','mythic'].includes(c.tier)))
+      throw new Error('Invalid card');
+    if(g.shots.some(b=>!Number.isFinite(b.x)||!Number.isFinite(b.y)||
+       !Array.isArray(b.hitIds)||!Array.isArray(b.lastHitIds)))
+      throw new Error('Invalid projectile');
+    return data;
+  }
+  function readLocalRunSave(){
+    try{
+      const text=localStorage.getItem(RUN_SAVE_KEY);
+      return text?validateRunSave(JSON.parse(text)):null;
+    }catch(_){
+      setSaveIndicator('Local save is incompatible. Import an external backup.','error');return null;
+    }
+  }
+  function updateContinueButton(){
+    $('continueRunBtn').hidden=!readLocalRunSave();
+  }
+  function saveRun(force=false){
+    if(!game||['intro','end','death'].includes(state))return false;
+    const now=Date.now();
+    if(!force&&now-lastAutosaveAt<AUTO_SAVE_INTERVAL_MS)return false;
+    const payload=createRunSave();if(!payload)return false;
+    try{
+      const serialized=JSON.stringify(payload);
+      if(serialized.length>AUTOSAVE_MAX_BYTES)throw new Error('Too large');
+      localStorage.setItem(RUN_SAVE_KEY,serialized);
+      lastAutosaveAt=now;
+      setSaveIndicator('Autosaved at '+new Date(now).toLocaleTimeString()+' · '+timeText(game.time),'saved');
+      return true;
+    }catch(_){
+      setSaveIndicator('Autosave unavailable: browser storage may be full or disabled.','error');
+      return false;
+    }
+  }
+  function clearRunSave(){
+    try{localStorage.removeItem(RUN_SAVE_KEY);}catch(_){}
+    lastAutosaveAt=0;setSaveIndicator('No saved hunt.','local');
+  }
+
+
+  function restoreRunSave(saved){
+    validateRunSave(saved);
+    const input=saved.game,enemies=input.enemies.map(e=>({...e})),groups=new Map();
+    const shots=input.shots.map(b=>{
+      const shot={...b};
+      shot.hit=new Set(b.hitIds.filter(Number.isInteger).map(i=>enemies[i]).filter(Boolean));
+      shot.lastHit=new Map(b.lastHitIds.filter(([i,t])=>Number.isInteger(i)&&enemies[i]&&Number.isFinite(t))
+        .map(([i,t])=>[enemies[i],t]));
+      if(b.group!==null&&b.group!==undefined){
+        if(!groups.has(b.group))groups.set(b.group,new Set());
+        shot.fireSalvoHits=groups.get(b.group);
+        for(const i of b.fireSalvoHitIds||[]){
+          if(Number.isInteger(i)&&enemies[i])shot.fireSalvoHits.add(enemies[i]);
+        }
+      }else shot.fireSalvoHits=null;
+      delete shot.hitIds;delete shot.lastHitIds;delete shot.group;
+      delete shot.fireSalvoHitIds;
+      return shot;
+    });
+    // Rebuild the shared Fireball volley hit records; other shots in the
+    // same volley must not hit an enemy previously struck by a sibling.
+    for(const shot of shots)if(shot.fireSalvoHits)
+      for(const hitEnemy of shot.hit)shot.fireSalvoHits.add(hitEnemy);
+    const cards=[...ELEMENT_CHOICES,...POWERS,...SURVIVAL_BOONS];
+    const choices=input.upgradeChoices.map(c=>{
+      const src=cards.find(item=>item.id===c.id);
+      return {...src,tier:c.tier,desc:src.element?src.longDesc:perkDescription(c.id,c.tier)};
+    });
+    game={...input,enemies,shots,upgradeChoices:choices,
+      bossSpawned:new Set(input.bossSpawned),banned:new Set(input.banned),
+      particles:[],texts:[],stains:[],corpses:[],gibs:[],impacts:[],
+      slashBursts:[],magicFx:[],poisonBursts:[],bolts:[]};
+    if(Array.isArray(saved.achievements)){
+      for(const id of saved.achievements)if(OATHS.some(o=>o.id===id))oathUnlocks.add(id);
+      try{localStorage.setItem(OATHS_KEY,JSON.stringify([...oathUnlocks]));}catch(_){}
+    }
+    if(saved.selectedTitle&&oathUnlocks.has(saved.selectedTitle)){
+      selectedAchievementId=saved.selectedTitle;
+      try{localStorage.setItem(ACHIEVEMENT_TITLE_KEY,selectedAchievementId);}catch(_){}
+    }
+    state='playing';keys.clear();resetJoystick();shake=0;flash=0;
+    attackLastAt=-Infinity;attackVoices=[];
+    el.intro.classList.add('hidden');el.end.classList.add('hidden');
+    el.pause.classList.add('hidden');el.upgrade.classList.add('hidden');
+    el.inventory.classList.add('hidden');
+    $('ascensionOverlay').classList.add('hidden');
+    $('reliquaryOverlay').classList.add('hidden');
+    el.hud.hidden=false;el.xpStrip.hidden=false;
+    el.inventoryBtn.hidden=!game.elementChosen;
+    if(saved.state==='upgrade'){
+      state='upgrade';renderUpgrade();el.upgrade.classList.remove('hidden');
+    }else if(saved.state==='reliquary'){
+      state='reliquary';$('reliquaryOverlay').classList.remove('hidden');
+    }else if(saved.state==='ascension'){
+      if(!tryOpenAscension())openInventory(false);
+    }else if(game.elementChosen){
+      // Loading into a paused state prevents instant damage on resume.
+      openInventory(false);
+    }
+    syncMusic();updateHUD();showAchievementTitle();
+    el.status.textContent='SAVED HUNT RESTORED · '+timeText(game.time);
+    setSaveIndicator('Hunt loaded · '+timeText(game.time),'saved');
+    lastAutosaveAt=Date.now();
+    return true;
+  }
+  function downloadRunSave(){
+    const payload=createRunSave()||readLocalRunSave();
+    if(!payload){setSaveIndicator('No hunt to export.','error');return;}
+    try{
+      const data=JSON.stringify(payload,null,2);
+      if(data.length>AUTOSAVE_MAX_BYTES)throw new Error('Too large');
+      const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+      const a=document.createElement('a');
+      a.href=url;
+      a.download='crimson-ruin-save-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json';
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      setSaveIndicator('Save file download requested.','saved');
+    }catch(_){setSaveIndicator('Could not export save.','error');}
+  }
+  async function importRunSave(file){
+    if(!file)return;
+    if(file.size>AUTOSAVE_MAX_BYTES){
+      setSaveIndicator('Save file exceeds 8 MB.','error');return;
+    }
+    if(game&&state!=='intro'&&state!=='end'&&
+      !window.confirm('Replace your active hunt with this imported save?'))return;
+    try{
+      const raw=await file.text();
+      if(raw.length>AUTOSAVE_MAX_BYTES)throw new Error('File too large');
+      const saved=validateRunSave(JSON.parse(raw));
+      const backup=localStorage.getItem(RUN_SAVE_KEY);
+      localStorage.setItem(RUN_SAVE_KEY,JSON.stringify(saved));
+      try{restoreRunSave(saved);}
+      catch(e){
+        if(backup===null)localStorage.removeItem(RUN_SAVE_KEY);
+        else localStorage.setItem(RUN_SAVE_KEY,backup);
+        throw e;
+      }
+      setSaveIndicator('Save file imported successfully.','saved');
+    }catch(_){setSaveIndicator('Import failed: damaged or incompatible save.','error');}
+  }
+
   // Pointer Events support one anchored, analog touch joystick. World movement
   // remains identical to keyboard movement: no new damage, speed or difficulty.
   // A dedicated responsive control dock avoids covering the monsters in combat.
@@ -890,6 +1132,7 @@
     el.start.focus();
   }
   function startGame(easyMode=false){
+    clearRunSave();
     game = {
       time:0,totalXP:0,totalHealing:0,totalDamage:0,death:null,endingAt30:false,easyMode:Boolean(easyMode),spawnCounter:0,difficultyTier:0,
       perkRanks:Object.create(null),perkOrder:[],perkTiers:Object.create(null),
@@ -909,6 +1152,7 @@
     openUpgrade();
     if(game.easyMode)el.status.textContent='EASY MODE · CHOOSE ELEMENT';
     // Audio begins after the player chooses a school (browser gesture).
+    saveRun(true);
 
   }
 
@@ -1443,7 +1687,7 @@
       state='playing';el.upgrade.classList.add('hidden');
       el.status.textContent=`${choice.name} ATTUNED`;
       for(let i=0;i<5;i++)spawnEnemy('skeleton',rand(175,285),rand(0,TAU));
-      flashMessage(`✦ ${choice.name} ATTUNED`,2200);playSound('start');syncMusic();updateHUD();return;
+      flashMessage(`✦ ${choice.name} ATTUNED`,2200);playSound('start');syncMusic();updateHUD();saveRun(true);return;
     }
     if(BANISH_ENABLED&&game.banishMode){
       if(choice.survival){flashMessage('SURVIVAL BONUS CANNOT BE BANISHED',1800);return;}
@@ -1491,7 +1735,7 @@
       ['RELIQUARIES OPENED',game.reliquariesOpened],
       ['DESECRATIONS',game.desecrations],
       ['ASCENSION',p.ascensionName||'NONE'],
-      ['OATHS COMPLETED',game.oathsUnlockedThisRun.length]
+      ['ACHIEVEMENTS UNLOCKED',game.oathsUnlockedThisRun.length]
     ],'run-summary-tile');
     addScoreRows($('runStats'),[
       ['ELEMENT',(p.element||'NONE').toUpperCase()],
@@ -1522,6 +1766,7 @@
   }
   function die(won){
     if(state==='end')return;
+    clearRunSave();
     const survived=Boolean(won&&game.endingAt30);
     checkOaths();
     const emptyArenaComplete=survived&&!ENEMY_SPAWNING_ENABLED;
@@ -1600,10 +1845,7 @@
     }
     el.inventoryPerkCount.textContent=perkTotal+' PICKED · '+game.perkOrder.length+' TYPES'+(p.ascensionName?' · '+p.ascensionName:'');
     const shots=attackProjectileCount(p);
-    const seal=$('oathSeal');
-    const newest=OATHS.filter(o=>oathUnlocks.has(o.id)).at(-1);
-    seal.hidden=!newest;
-    if(newest){seal.textContent='✦ '+newest.title;seal.title='Hunter\'s Oath: '+newest.name;}
+    showAchievementTitle();
     const fmt=(n,d=1)=>Number(n).toFixed(d);
     const stats=[
       ...damageStatRows(p),
@@ -1626,7 +1868,7 @@
       ['BLEED CAP',p.element==='blood'?'8':'—']
     ];
     el.inventoryStats.replaceChildren();
-    stats.push(['ASCENSION',p.ascensionName||'—'],['CURSE',game.curseTime>0?Math.ceil(game.curseTime)+'s · +15% damage taken':'—'],['RELIC SIGILS',String(game.ascensionSigils)],['OATH TITLE',OATHS.filter(o=>oathUnlocks.has(o.id)).at(-1)?.title||'—']);
+    stats.push(['ASCENSION',p.ascensionName||'—'],['CURSE',game.curseTime>0?Math.ceil(game.curseTime)+'s · +15% damage taken':'—'],['RELIC SIGILS',String(game.ascensionSigils)],['ACHIEVEMENT TITLE',equippedAchievement()?.title||'—']);
     for(const [label,value] of stats){
       const tile=document.createElement('div');tile.className='inventory-stat';
       const caption=document.createElement('span');caption.textContent=label;
@@ -1644,7 +1886,7 @@
     catalog:['POWER-UP LIBRARY','inventoryCatalogTab','inventoryCatalogPage'],
     scaling:['ENEMY SCALING','inventoryScalingTab','inventoryScalingPage'],
     clarity:['COMBAT CLARITY','inventoryClarityTab','inventoryClarityPage'],
-    oaths:['HUNTER\'S OATHS','inventoryOathsTab','inventoryOathsPage']
+    oaths:['ACHIEVEMENTS','inventoryOathsTab','inventoryOathsPage']
   };
   let inventorySection='powers',lastCodexSection='bestiary',bestiaryGroup='early',catalogGroup='offense',catalogRarity='common',codexFocus=null;
   function codexElement(tag,className='',value=''){
@@ -1883,13 +2125,22 @@
   }
   function renderOaths(){
     const root=$('inventoryOathsPage');root.replaceChildren();
-    codexIntro(root,'HUNTER\'S OATHS','Eight persistent trials, with cosmetic titles only. Unlocks are stored locally in this browser, never modify combat power and do not require an account.');
-    root.append(codexElement('p','codex-info-line',oathUnlocks.size+' / '+OATHS.length+' OATHS FULFILLED · Cosmetic titles appear on your hunter sheet and HUD.'));
+    codexIntro(root,'ACHIEVEMENTS','Eight optional achievements. Earn cosmetic titles to display in the top HUD bar. Achievements survive between hunts in this browser and never change stats.');
+    root.append(codexElement('p','codex-info-line',oathUnlocks.size+' / '+OATHS.length+' ACHIEVEMENTS UNLOCKED · Select any earned title to equip it.'));
     const grid=codexElement('div','codex-grid');
     for(const oath of OATHS){
       const completed=oathUnlocks.has(oath.id),progress=game?oath.progress(game):'START A HUNT';
-      const article=codexArticle((completed?'✦ ':'◇ ')+oath.name,completed?'UNLOCKED · TITLE: '+oath.title:'LOCKED · '+progress,oath.desc,true);
-      article.content.append(codexElement('p','codex-article-detail',completed?'COSMETIC TITLE: '+oath.title:'RUN PROGRESS: '+progress));
+      const article=codexArticle((completed?'✦ ':'◇ ')+oath.name,
+        completed?'UNLOCKED · TITLE: '+oath.title:'LOCKED · '+progress,oath.desc,true);
+      article.content.append(codexElement('p','codex-article-detail',
+        completed?'TITLE: '+oath.title+(selectedAchievementId===oath.id?' · EQUIPPED':''):'RUN PROGRESS: '+progress));
+      if(completed){
+        const equip=codexElement('button','achievement-equip',
+          selectedAchievementId===oath.id?'✓ EQUIPPED ON TOP BAR':'✦ EQUIP '+oath.title);
+        equip.type='button';equip.disabled=selectedAchievementId===oath.id;
+        equip.addEventListener('click',()=>selectAchievement(oath.id));
+        article.content.append(equip);
+      }
       grid.append(article.article);
     }
     root.append(grid);
@@ -2627,9 +2878,7 @@
       :kills.toLocaleString('en-US');
     el.kills.title=kills.toLocaleString('en-US')+' kills';
     el.time.textContent=timeText(game.time);
-    const seal=$('oathSeal'),newest=OATHS.filter(o=>oathUnlocks.has(o.id)).at(-1);
-    seal.hidden=!newest;
-    if(newest){seal.textContent='✦ '+newest.title;seal.title='Hunter\'s Oath: '+newest.name;}
+    showAchievementTitle();
     const boss=game.enemies.find(e=>ENEMIES[e.type]?.boss);
     el.bossBar.hidden=!boss;
     if(boss)el.bossName.textContent=ENEMIES[boss.type].name.toUpperCase();
@@ -3352,6 +3601,7 @@
     if(state==='playing'||state==='death')animTime+=dt;
     if(state==='death')updateDeath(dt);else update(dt);
     syncMobileControls();
+    if(game&&state!=='end')saveRun();
     draw(animTime);raf=requestAnimationFrame(loop);
   }
 
@@ -3386,12 +3636,28 @@
   // NOT open the pause menu. Clear movement keys to prevent stuck walking
   // when the browser does not deliver a matching keyup event.
   window.addEventListener('blur',()=>{keys.clear();resetJoystick();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();resetJoystick();}});
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){keys.clear();resetJoystick();saveRun(true);}
+  });
+  window.addEventListener('pagehide',()=>saveRun(true));
   document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 
   $('reliquaryClaim').addEventListener('click',()=>chooseReliquary(false));
   $('reliquaryDesecrate').addEventListener('click',()=>chooseReliquary(true));
   el.reroll.addEventListener('click',rerollUpgrades);el.banish.addEventListener('click',toggleBanish);
+  $('continueRunBtn').addEventListener('click',()=>{
+    const saved=readLocalRunSave();
+    if(saved)try{restoreRunSave(saved);}catch(_){
+      setSaveIndicator('This autosave could not be restored.','error');
+    }
+  });
+  $('downloadSaveBtn').addEventListener('click',downloadRunSave);
+  $('uploadSaveBtn').addEventListener('click',()=>$('uploadSaveInput').click());
+  $('introImportBtn').addEventListener('click',()=>$('uploadSaveInput').click());
+  $('uploadSaveInput').addEventListener('change',async e=>{
+    const file=e.target.files?.[0];e.target.value='';
+    await importRunSave(file);
+  });
   el.start.addEventListener('click',()=>startGame(false));
   el.easyStart.addEventListener('click',()=>startGame(true));
   el.restart.addEventListener('click',returnToModeSelect);
@@ -3448,5 +3714,7 @@
     sfxVolume=clamp(Number(el.sfxVolume.value),0,100); updateAudioUI(); rememberAudio();
   });
 
+  updateContinueButton();
+  showAchievementTitle();
   requestAnimationFrame(loop);
 })();
