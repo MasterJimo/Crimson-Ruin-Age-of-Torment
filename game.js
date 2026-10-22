@@ -574,11 +574,31 @@
     state='ascension';keys.clear();
     const panel=$('ascensionOverlay'),cards=$('ascensionCards');cards.replaceChildren();
     for(const [i,opt] of options.entries()){
-      const button=document.createElement('button');button.className='dark-choice';
+      const button=document.createElement('button');
+      button.className='dark-choice ascension-choice '+(i===0?'ascension-utility':'ascension-offense');
       button.type='button';
+      button.title=opt.desc; // Full description remains available on hover and in the Encyclopedia.
+      const art=document.createElement('span');
+      art.className='decision-art '+(game.player.element==='fire'?
+        (i===0?'decision-art-cinder':'decision-art-ember'):'decision-art-element');
+      art.setAttribute('aria-hidden','true');
+      if(game.player.element!=='fire')art.innerHTML=powerIcon(game.player.element+'_power');
       const title=document.createElement('strong');title.textContent=opt.name;
-      const detail=document.createElement('span');detail.textContent=opt.desc;
-      button.append(title,detail);button.addEventListener('click',()=>chooseAscension(i));cards.append(button);
+      const effect=document.createElement('span');effect.className='decision-brief';
+      const brief={
+        crimson_covenant:'BLEED KILLS HEAL · +15% DAMAGE',
+        exsanguination:'+100% DAMAGE · −30% MAX HP',
+        cinder_aegis:'FLAME WARD · +15% DAMAGE',
+        ember_crown:'+100% DAMAGE · −30% MAX HP',
+        tempest_oracle:'EXTRA CHAINS · +15% DAMAGE',
+        iron_thunder:'+100% DAMAGE · −30% MAX HP',
+        verdant_vow:'POISONED FOES WEAKENED · +15% DPS',
+        plague_sovereign:'+100% DPS · −30% MAX HP'
+      };
+      effect.textContent=brief[opt.id]||opt.desc;
+      button.append(art,title,effect);
+      button.addEventListener('click',()=>chooseAscension(i));
+      cards.append(button);
     }
     panel.classList.remove('hidden');el.status.textContent='TORMENT ASCENSION · CHOOSE A PATH';
     cards.children[0]?.focus();
@@ -3530,17 +3550,18 @@
     if(e.attackState==='chargeWarn'){
       ctx.save();ctx.translate(x,y);ctx.rotate(e.chargeAngle);
       const pulse=.5+.5*Math.sin(t*12);
-      // Bright layered red glow with a sharp white-hot center, even on a dark map.
+      // Desaturated ~50%: keep the warning line bright/readable, not neon red.
+      // Telegraph duration, length, width and charge hitbox are unchanged.
       ctx.lineCap='round';
-      ctx.shadowColor='#ff1639';ctx.shadowBlur=28;
-      ctx.strokeStyle='rgba(255,20,45,'+(.67+pulse*.18)+')';
+      ctx.shadowColor='#c65670';ctx.shadowBlur=28;
+      ctx.strokeStyle='rgba(202,72,87,'+(.67+pulse*.18)+')';
       ctx.lineWidth=27+pulse*5;
       ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(GARGOYLE_WARNING_LENGTH,0);ctx.stroke();
-      ctx.shadowColor='#ff3547';ctx.shadowBlur=18;
-      ctx.strokeStyle='#ff304b';ctx.lineWidth=12+pulse*2;
+      ctx.shadowColor='#d26f7a';ctx.shadowBlur=18;
+      ctx.strokeStyle='#d36c7f';ctx.lineWidth=12+pulse*2;
       ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(GARGOYLE_WARNING_LENGTH,0);ctx.stroke();
-      ctx.shadowColor='#fff0ee';ctx.shadowBlur=9;
-      ctx.strokeStyle='#ffe2df';ctx.lineWidth=3+pulse;
+      ctx.shadowColor='#f3e7e5';ctx.shadowBlur=9;
+      ctx.strokeStyle='#f2e1df';ctx.lineWidth=3+pulse;
       ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(GARGOYLE_WARNING_LENGTH,0);ctx.stroke();
       ctx.restore();
     }

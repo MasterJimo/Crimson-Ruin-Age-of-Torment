@@ -8,7 +8,7 @@
   <meta name="description" content="Crimson Ruin: Age of Torment — a dark fantasy arena survival game with elemental powers and gothic combat.">
   <title>Crimson Ruin: Age of Torment</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2314080a'/%3E%3Cpath d='M8 52 14 18 32 7 50 18 56 52 42 59 22 59Z' fill='%23322127'/%3E%3Cpath d='M19 35h10v7H19zm16 0h10v7H35z' fill='%23ff7488'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?content=be0e24045f502155016347ac6e6a056588c9bbe4">
+  <link rel="stylesheet" href="style.css?content=7da99eb34aa760721c67e08b2344cc41c1de8517">
 </head>
 <body>
   <div class="site-shell">
@@ -146,30 +146,32 @@
 
       <section class="screen-overlay hidden dark-decision" id="reliquaryOverlay" role="dialog" aria-modal="true" aria-labelledby="reliquaryTitle">
         <div class="dark-decision-panel">
-          <span class="dark-decision-overline">THE CURSE IS YOURS TO CLAIM</span>
+          <span class="dark-decision-overline">CHOOSE WISELY</span>
           <h2 id="reliquaryTitle">CURSED RELIQUARY</h2>
-          <p>A fallen champion leaves a choice. Both paths grant a relic sigil for a future Torment Ascension.</p>
           <div class="dark-decision-options">
-            <button type="button" class="dark-choice" id="reliquaryClaim">
-              <strong>✦ CLAIM</strong>
-              <span>Take a safe Rare power-up. No curse.</span>
+            <button type="button" class="dark-choice reliquary-choice reliquary-safe" id="reliquaryClaim"
+              aria-label="Safe Choice. Rare power-up, no curse. Both choices grant a Reliquary Sigil."
+              title="Safe: Rare power-up, no curse. Element Power rewards always grant their fixed +20% bonus.">
+              <span class="decision-art decision-art-safe" aria-hidden="true"></span>
+              <strong>SAFE CHOICE</strong>
+              <span class="decision-brief">RARE POWER · NO CURSE</span>
             </button>
-            <button type="button" class="dark-choice dark-choice-danger" id="reliquaryDesecrate">
-              <strong>◆ DESECRATE</strong>
-              <span>Take a Legendary (75%) or Mythic (25%) power-up, but suffer +15% damage taken for 180 seconds. The curse refreshes, not stacks.</span>
+            <button type="button" class="dark-choice reliquary-choice dark-choice-danger reliquary-danger" id="reliquaryDesecrate"
+              aria-label="Desecrate. Legendary or Mythic power-up, but take 15% increased damage for 180 seconds. Both choices grant a Reliquary Sigil."
+              title="Risk: Legendary 75% / Mythic 25%, with +15% damage taken for 180 seconds. Element Power remains fixed +20%.">
+              <span class="decision-art decision-art-desecrate" aria-hidden="true"></span>
+              <strong>DESECRATE</strong>
+              <span class="decision-brief">GREATER POWER · A CURSE</span>
             </button>
           </div>
-          <span class="dark-decision-note">If all normal powers are exhausted, receive a Survival reward instead.</span>
         </div>
       </section>
 
       <section class="screen-overlay hidden dark-decision" id="ascensionOverlay" role="dialog" aria-modal="true" aria-labelledby="ascensionTitle">
         <div class="dark-decision-panel">
-          <span class="dark-decision-overline">ONE SOUL · TWO DESTINIES</span>
+          <span class="dark-decision-overline">CHOOSE WISELY</span>
           <h2 id="ascensionTitle">TORMENT ASCENSION</h2>
-          <p>Element Rank 4+ and one Reliquary Sigil earned. Choose your permanent evolution for this hunt.</p>
           <div class="dark-decision-options" id="ascensionCards"></div>
-          <span class="dark-decision-note">One Ascension per run. Your choice cannot be undone until your next hunt.</span>
         </div>
       </section>
 
@@ -286,6 +288,6 @@
   <script src="sprites.js" defer></script>
   <script src="monsters.js?v=0.33.7" defer></script>
   <script src="assets.js?v=0.33.7" defer></script>
-  <script src="game.js?content=76cd19d18036a7692c69f02a93961e6d3f2f438f" defer></script>
+  <script src="game.js?content=58647975399a46282948667a569a355d26866509" defer></script>
 </body>
 </html>
