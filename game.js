@@ -2682,18 +2682,129 @@
       ctx.restore();
     }
   }
+  // Approved Cursed Reliquary chest from the Canvas before/after preview.
+  // The painted chest is cached once at 2x resolution; the gold pickup light
+  // and five tiny embers animate without changing collision or reward logic.
+  const RELIC_CHEST_SCALE=1.05,RELIC_CHEST_GLOW=.82;
+  let relicChestStamp=null;
+  function relicChestPolygon(g,points,fill,stroke,width=1){
+    g.beginPath();g.moveTo(...points[0]);
+    for(let i=1;i<points.length;i++)g.lineTo(...points[i]);
+    g.closePath();
+    if(fill){g.fillStyle=fill;g.fill();}
+    if(stroke){g.lineWidth=width;g.strokeStyle=stroke;g.stroke();}
+  }
+  function relicChestLines(g,points,color,width=1){
+    g.beginPath();g.moveTo(...points[0]);
+    for(let i=1;i<points.length;i++)g.lineTo(...points[i]);
+    g.strokeStyle=color;g.lineWidth=width;g.stroke();
+  }
+  function relicChestEllipse(g,x,y,rx,ry,fill,stroke,width=1){
+    g.beginPath();g.ellipse(x,y,rx,ry,0,0,TAU);
+    if(fill){g.fillStyle=fill;g.fill();}
+    if(stroke){g.lineWidth=width;g.strokeStyle=stroke;g.stroke();}
+  }
+  function drawRelicChestShape(g){
+    const path=(points,fill,stroke,line=1)=>relicChestPolygon(g,points,fill,stroke,line);
+    const lines=(points,color,width=1)=>relicChestLines(g,points,color,width);
+    const ellipse=(x,y,rx,ry,fill,stroke,line=1)=>
+      relicChestEllipse(g,x,y,rx,ry,fill,stroke,line);
+    // Angled wooden base, dark side and warm varnished front.
+    path([[-24,-9],[17,-9],[27,-5],[27,17],[-25,17]],'#27111a','#f2b363',1.3);
+    path([[17,-8],[27,-5],[27,17],[17,19]],'#32171c','#7e3f26',1.1);
+    const front=g.createLinearGradient(0,-10,0,19);
+    front.addColorStop(0,'#a54e27');front.addColorStop(.35,'#713319');front.addColorStop(1,'#3a1b19');
+    path([[-25,-10],[17,-10],[17,19],[-25,17]],front,'#1a0a12',1.5);
+    lines([[-17,-8],[-17,16]],'rgba(26,8,13,.55)');
+    lines([[-3,-8],[-3,18]],'rgba(26,8,13,.46)');
+    lines([[10,-8],[10,18]],'rgba(26,8,13,.45)');
+    lines([[-21,7],[-7,7]],'rgba(255,180,96,.22)');
+    lines([[0,13],[13,13]],'rgba(255,180,96,.17)');
+    // Curved-looking roof, matching the accepted chest preview.
+    const lid=g.createLinearGradient(0,-34,0,-9);
+    lid.addColorStop(0,'#b56e3c');lid.addColorStop(.44,'#733526');lid.addColorStop(1,'#341520');
+    path([[-27,-12],[-23,-26],[-15,-32],[12,-32],[21,-26],[28,-12],[17,-7],[-24,-8]],lid,'#190910',2);
+    path([[-21,-24],[-14,-29],[10,-29],[18,-25],[23,-14],[-25,-14]],'#9b4b2a','#ce8049',.8);
+    path([[18,-25],[23,-14],[27,-12],[17,-8],[17,-19]],'#4e2522','#da9149');
+    for(const px of [-20,9]){
+      path([[px-3,-30],[px+3,-29],[px+8,-23],[px+11,-12],[px+5,-10],[px+2,-21]],'#c68d3d','#ffda79',.9);
+      path([[px-3,-12],[px+4,-10],[px+4,17],[px-3,17]],'#b77a2b','#f8cc73',.9);
+      lines([[px,-30],[px+5,-21],[px+8,-12]],'rgba(255,236,170,.55)');
+    }
+    path([[-26,14],[18,16],[26,14],[26,19],[17,21],[-26,19]],'#bd8233','#efc671',.8);
+    lines([[-26,-11],[18,-10],[27,-13]],'#ffe2a1',2.3);
+    for(const [x,y] of [[-21,-9],[13,-8],[-20,15],[12,16],[22,1],[22,15]]){
+      ellipse(x,y,1.65,1.65,'#ffda8c','#66371a',.75);
+    }
+    // Gold latch and a deliberately prominent ruby-red lock.
+    path([[-7,-13],[7,-13],[8,7],[-7,7]],'#c08a32','#ffe2a0',1.3);
+    g.beginPath();
+    if(typeof g.roundRect==='function')g.roundRect(-6,-7,12,14,2);
+    else g.rect(-6,-7,12,14);
+    g.fillStyle='#281217';g.fill();g.strokeStyle='#edb95c';g.lineWidth=1.2;g.stroke();
+    path([[0,-7],[5,-2],[5,4],[0,8],[-5,4],[-5,-2]],'#a6112c','#ffc28c',1.2);
+    ellipse(-1,-3,2.3,2.6,'#ffbda4');
+    ellipse(2.6,3,1.25,1.25,'#ff6c61');
+    lines([[-22,-24],[-17,-28],[9,-28]],'rgba(255,225,155,.72)',1.1);
+  }
+  function getRelicChestStamp(){
+    if(relicChestStamp)return relicChestStamp;
+    try{
+      const image=document.createElement('canvas');
+      image.width=160;image.height=160;
+      const g=image.getContext('2d');
+      if(!g)return null;
+      g.setTransform(2,0,0,2,80,80);
+      drawRelicChestShape(g);
+      relicChestStamp=image;
+    }catch(_){ /* Older browsers still render the vector chest directly. */ }
+    return relicChestStamp;
+  }
   function drawReliquaries(camX,camY,t){
     for(const relic of game.reliquaries){
       const x=relic.x-camX,y=relic.y-camY;
-      if(x<-70||x>W+70||y<-90||y>H+70)continue;
-      const shimmer=.6+.4*Math.sin(t*3+relic.phase);
-      ctx.save();ctx.translate(x,y+Math.sin(relic.phase)*3);
-      shadowAt(0,14,19,.55);
-      ctx.shadowColor='#ffba68';ctx.shadowBlur=11+8*shimmer;
-      ctx.strokeStyle='#ffc780';ctx.fillStyle='#3d1327';ctx.lineWidth=2.5;
-      ctx.beginPath();ctx.moveTo(0,-26);ctx.lineTo(21,-9);ctx.lineTo(18,17);ctx.lineTo(-18,17);ctx.lineTo(-21,-9);ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.strokeStyle='#f77792';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-21);ctx.lineTo(0,13);ctx.moveTo(-12,-7);ctx.lineTo(12,-7);ctx.stroke();
-      ctx.fillStyle='#ffe8be';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText('◆',0,-31);
+      if(x<-80||x>W+80||y<-110||y>H+80)continue;
+      const light=RELIC_CHEST_GLOW;
+      const pulse=.75+.25*Math.sin(t*3.1);
+      ctx.save();
+      ctx.translate(x,y+Math.sin(relic.phase)*2.1);
+      ctx.scale(RELIC_CHEST_SCALE,RELIC_CHEST_SCALE);
+      shadowAt(0,18,24,.64);
+      // A soft ground halo and upward glimmer, not an opaque beam.
+      const grad=ctx.createRadialGradient(0,3,2,0,3,48);
+      grad.addColorStop(0,'rgba(246,151,60,'+Math.min(.42,.28*light*pulse)+')');
+      grad.addColorStop(.7,'rgba(255,169,64,'+(.055*light)+')');
+      grad.addColorStop(1,'rgba(255,169,64,0)');
+      ctx.fillStyle=grad;ctx.beginPath();ctx.arc(0,3,48,0,TAU);ctx.fill();
+      ctx.save();
+      ctx.globalCompositeOperation='screen';
+      ctx.shadowColor='#ffb858';ctx.shadowBlur=9*light;
+      relicChestEllipse(ctx,0,19,29,8,null,
+        'rgba(255,199,96,'+Math.min(.95,.26+.24*light*pulse)+')',1.55);
+      ctx.restore();
+      const column=ctx.createLinearGradient(0,-82,0,-13);
+      column.addColorStop(0,'rgba(255,202,99,0)');
+      column.addColorStop(.35,'rgba(255,208,126,'+(.025*light)+')');
+      column.addColorStop(1,'rgba(255,191,75,'+(.20*light*pulse)+')');
+      relicChestPolygon(ctx,[[-8,-12],[-5,-78],[5,-78],[8,-12]],column);
+      // Cache the static, official-preview chest drawing rather than
+      // reconstructing all its wood/metal geometry every gameplay frame.
+      const stamp=getRelicChestStamp();
+      if(stamp){
+        ctx.imageSmoothingEnabled=true;
+        ctx.imageSmoothingQuality='high';
+        ctx.drawImage(stamp,-40,-40,80,80);
+      }else drawRelicChestShape(ctx);
+      for(let i=0;i<5;i++){
+        const a=i*2.399+t*.38;
+        const sx=Math.sin(a)*22,sy=-28-((t*11+i*18)%63);
+        ctx.save();
+        ctx.globalAlpha=Math.max(.12,.65*light)*(.45+.4*Math.sin(t*2+i));
+        ctx.fillStyle=i%2?'#fff1a8':'#ffc96a';
+        ctx.shadowColor='#ffae43';ctx.shadowBlur=5*light;
+        relicChestEllipse(ctx,sx,sy,1.2+(i%3)*.45,1.2+(i%3)*.45,ctx.fillStyle);
+        ctx.restore();
+      }
       ctx.restore();
     }
   }
