@@ -1974,3 +1974,21 @@ body.touch-game:has(#intro.hidden) .save-menu{
   #restoreHuntOverlay .restore-hunt-panel{padding:17px;max-height:90dvh}
   .restore-hunt-buttons button{min-height:54px}
 }
+
+/* Element Power is a dedicated fixed card class, never normal rarity. */
+#upgrade .upgrade-card.perk-elemental{
+  border-color:#76e3b7!important;
+  background:linear-gradient(165deg,#192c2a,#121922 60%,#19111e);
+  box-shadow:0 0 0 1px #75eec755,0 0 25px #37af9770,inset 0 0 22px #42bd8430,0 16px 42px #0009;
+}
+#upgrade .upgrade-card.perk-elemental .perk-tier{
+  color:#b1fce3;font-weight:900;letter-spacing:.085em;
+  text-shadow:0 0 10px #72ddba55;
+}
+#upgrade .upgrade-card.perk-elemental::before{
+  content:'✦';position:absolute;top:9px;right:12px;
+  color:#b1ffe2;font-size:18px;text-shadow:0 0 12px #83ffd9;
+}
+.inventory-perk.perk-elemental{
+  border-color:#80cfb4;box-shadow:inset 0 0 15px #58ad9235;
+}

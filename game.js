@@ -359,6 +359,14 @@
   const MAX_HUNTER_LEVEL=150;
   const RARITY_TIERS=['common','magic','rare','legendary','mythic'];
   const RARITY_SCALE={common:1,magic:2,rare:4,legendary:8,mythic:16};
+  // Element Power does NOT use standard rarity: all four cards always grant
+  // a fixed additive +20% damage and one element rank, regardless of source.
+  const ELEMENT_POWER_TIER='elemental';
+  const ELEMENT_POWER_BONUS=.20;
+  const ELEMENT_POWER_IDS=new Set(['blood_power','fire_power','lightning_power','poison_power']);
+  const isElementPower=id=>ELEMENT_POWER_IDS.has(id);
+  const resolvedPowerTier=(id,tier)=>isElementPower(id)?ELEMENT_POWER_TIER:tier;
+  const powerRewardLabel=(id,tier)=>isElementPower(id)?'ELEMENT POWER':tier.toUpperCase();
   function rollRarity(){
     const r=Math.random();
     return r<.54?'common':r<.79?'magic':r<.94?'rare':r<.99?'legendary':'mythic';
@@ -400,11 +408,11 @@
       }
       case 'crit':return '+'+(3*u)+'% critical chance.';
       case 'crit_damage':return '+'+(10*u)+'% critical damage multiplier.';
-      case 'blood_power':return '+'+(5*u)+'% Blood damage.';
+      case 'blood_power':return '+20% Blood damage (fixed Element Power; no rarity).';
       case 'hemorrhagic_burst':return '8-stack Blood detonation on every hit · +'+(10*(u-1))+'% detonation potency.';
-      case 'fire_power':return '+'+(5*u)+'% Fire damage.';
-      case 'lightning_power':return '+'+(5*u)+'% Lightning damage.';
-      case 'poison_power':return '+'+(5*u)+'% Poison stack DPS.';
+      case 'fire_power':return '+20% Fire damage (fixed Element Power; no rarity).';
+      case 'lightning_power':return '+20% Lightning damage (fixed Element Power; no rarity).';
+      case 'poison_power':return '+20% Poison stack DPS (fixed Element Power; no rarity).';
       case 'survival_heal':return '+4 max HP, then heal at least 24 HP or 25% of max HP.';
       case 'survival_heart':return '+12 max HP and heal 12 HP.';
       case 'survival_regen':return '+0.15 HP per second permanently and heal 10 HP.';
@@ -412,9 +420,8 @@
       default:return '';
     }
   }
-  // A single effect for every Element Power: additive % of base elemental damage.
-  // Common +5%, Magic +10%, Rare +20%, Legendary +40%, Mythic +80%.
-  // No added proc chances, extra projectiles, or separate Burn affix.
+  // A single effect for every Element Power: +20% of base elemental damage
+  // per card, additive, with no rarity scaling or additional affixes.
   const POISON_DPS=15;
   // Burn deals 100% of the basic Fire hit PER SECOND for 2 seconds
   // (base: 43.2 DPS = 86.4 total DoT). Crits and Shock do not amplify Burn.
@@ -425,9 +432,12 @@
       if(enemy.burnTime>0)enemy.burnDps=burnDps(p);
     }
   }
-  function increaseElementDamage(p,g,rarityUnits){
-    p.elementRank++;
-    p.elementDamageBonus=(p.elementDamageBonus||0)+.05*rarityUnits;
+  function increaseElementDamage(p,g){
+    p.elementRank=Math.min(5,p.elementRank+1);
+    refreshElementPowerDamage(p,g);
+  }
+  function refreshElementPowerDamage(p,g){
+    p.elementDamageBonus=ELEMENT_POWER_BONUS*p.elementRank;
     const multiplier=1+p.elementDamageBonus;
     // Permanent ascension bonuses must survive subsequent Element Power cards.
     const ascensionBoost=({crimson_covenant:1.15,exsanguination:2,
@@ -627,9 +637,10 @@
     const pool=eligiblePowers();
     if(pool.length){
       const perk=pool[Math.floor(Math.random()*pool.length)];
-      const tier=desecrate?(Math.random()<.25?'mythic':'legendary'):'rare';
+      const tier=isElementPower(perk.id)?ELEMENT_POWER_TIER:
+        desecrate?(Math.random()<.25?'mythic':'legendary'):'rare';
       grantPowerUp({...perk,tier});
-      flashMessage('◆ '+tier.toUpperCase()+' '+perk.name+(desecrate?' · CURSED':''),2500);
+      flashMessage('◆ '+powerRewardLabel(perk.id,tier)+' '+perk.name+(desecrate?' · CURSED':''),2500);
     }else{
       const boon=SURVIVAL_BOONS[Math.floor(Math.random()*SURVIVAL_BOONS.length)];
       grantPowerUp({...boon,tier:'common'});
@@ -661,11 +672,11 @@
     {id:'pierce',icon:'pierce',name:'PIERCING FANGS',can:p=>p.pierce<(p.element==='lightning'?21:4)&&(p.element!=='lightning'||lightningChainCount(p)<25),apply:(p,g,u)=>p.pierce=Math.min(p.element==='lightning'?21:4,p.pierce+shotBonus(u))},
     {id:'crit',icon:'crit',name:'DEADLY PRECISION',can:p=>p.critChance<.85,apply:(p,g,u)=>p.critChance=Math.min(.85,p.critChance+.03*u)},
     {id:'crit_damage',icon:'crit',name:'CRITICAL DAMAGE',apply:(p,g,u)=>{p.critDamage+=.10*u;}},
-    {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',can:p=>p.element==='blood'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
+    {id:'blood_power',icon:'blood_power',name:'BLOOD POWER',can:p=>p.element==='blood'&&p.elementRank<5,apply:(p,g)=>increaseElementDamage(p,g)},
     {id:'hemorrhagic_burst',icon:'blood_power',name:'HEMORRHAGIC',can:p=>p.element==='blood'&&!p.hemorrhagicBurst,apply:(p,g,u)=>{p.hemorrhagicBurst=true;p.hemorrhagicBurstBoost=1+.1*(u-1);}},
-    {id:'fire_power',icon:'fire_power',name:'FIRE POWER',can:p=>p.element==='fire'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
-    {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',can:p=>p.element==='lightning'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)},
-    {id:'poison_power',icon:'poison_power',name:'POISON POWER',can:p=>p.element==='poison'&&p.elementRank<5,apply:(p,g,u)=>increaseElementDamage(p,g,u)}
+    {id:'fire_power',icon:'fire_power',name:'FIRE POWER',can:p=>p.element==='fire'&&p.elementRank<5,apply:(p,g)=>increaseElementDamage(p,g)},
+    {id:'lightning_power',icon:'lightning_power',name:'LIGHTNING POWER',can:p=>p.element==='lightning'&&p.elementRank<5,apply:(p,g)=>increaseElementDamage(p,g)},
+    {id:'poison_power',icon:'poison_power',name:'POISON POWER',can:p=>p.element==='poison'&&p.elementRank<5,apply:(p,g)=>increaseElementDamage(p,g)}
   ];
 
   // The four starting cards are intentionally brief. Full mechanics remain
@@ -809,7 +820,7 @@
       slashBursts:[],magicFx:[],poisonBursts:[],bolts:[],
       shots:game.shots.map(s=>packShot(s,index,groups)),
       bossSpawned:[...game.bossSpawned],banned:[...game.banned],
-      upgradeChoices:game.upgradeChoices.map(c=>({id:c.id,tier:c.tier}))
+      upgradeChoices:game.upgradeChoices.map(c=>({id:c.id,tier:resolvedPowerTier(c.id,c.tier)}))
     };
     return {schema:RUN_SAVE_SCHEMA,savedAt:Date.now(),state,
       game:snapshot,achievements:[...oathUnlocks],selectedTitle:selectedAchievementId};
@@ -834,7 +845,7 @@
       throw new Error('Invalid enemy');
     const pool=[...ELEMENT_CHOICES,...POWERS,...SURVIVAL_BOONS];
     if(g.upgradeChoices.some(c=>!pool.some(p=>p.id===c.id)||
-       !['common','magic','rare','legendary','mythic'].includes(c.tier)))
+       ![...RARITY_TIERS,ELEMENT_POWER_TIER].includes(c.tier)))
       throw new Error('Invalid card');
     if(g.shots.some(b=>!Number.isFinite(b.x)||!Number.isFinite(b.y)||
        !Array.isArray(b.hitIds)||!Array.isArray(b.lastHitIds)))
@@ -946,12 +957,23 @@
     const cards=[...ELEMENT_CHOICES,...POWERS,...SURVIVAL_BOONS];
     const choices=input.upgradeChoices.map(c=>{
       const src=cards.find(item=>item.id===c.id);
-      return {...src,tier:c.tier,desc:src.element?src.desc:perkDescription(c.id,c.tier)};
+      const tier=resolvedPowerTier(c.id,c.tier);
+      return {...src,tier,desc:src.element?src.desc:perkDescription(c.id,tier)};
     });
     game={...input,enemies,shots,upgradeChoices:choices,
       bossSpawned:new Set(input.bossSpawned),banned:new Set(input.banned),
       particles:[],texts:[],stains:[],corpses:[],gibs:[],impacts:[],
       slashBursts:[],magicFx:[],poisonBursts:[],bolts:[]};
+    // Migrate previous saves with rarity-scaled Element Power: existing card
+    // counts now get the new flat +20% bonus, including current Burn/Poison.
+    if(game.elementChosen){
+      game.player.elementRank=Math.min(5,Math.max(0,game.player.elementRank||0));
+      refreshElementPowerDamage(game.player,game);
+    }
+    for(const id of ELEMENT_POWER_IDS){
+      if(Array.isArray(game.perkTiers?.[id]))
+        game.perkTiers[id]=game.perkTiers[id].map(()=>ELEMENT_POWER_TIER);
+    }
     if(Array.isArray(saved.achievements)){
       for(const id of saved.achievements)if(OATHS.some(o=>o.id===id))oathUnlocks.add(id);
       try{localStorage.setItem(OATHS_KEY,JSON.stringify([...oathUnlocks]));}catch(_){}
@@ -1347,14 +1369,15 @@
       if(dist2(p.x,p.y,shrine.x,shrine.y)>39*39)continue;
       const perk=rollPowerShrineReward();
       if(!perk)continue;
-      const tier=Math.random()<.25?'mythic':'legendary';
+      const tier=isElementPower(perk.id)?ELEMENT_POWER_TIER:
+        Math.random()<.25?'mythic':'legendary';
       g.powerShrines.splice(i,1);
       g.nextPowerShrineAt=g.time+rand(240,360);
       grantPowerUp({...perk,tier});
       addParticles(shrine.x,shrine.y,'#ffb76b',40,110,2,4);
       addImpact(shrine.x,shrine.y,65,'#ff673f');
-      floatText(p.x,p.y-45,tier.toUpperCase()+' POWER!','#ffe9b4',12);
-      flashMessage('✦ '+tier.toUpperCase()+' '+perk.name+' · POWER SHRINE',3300);
+      floatText(p.x,p.y-45,powerRewardLabel(perk.id,tier)+'!','#ffe9b4',12);
+      flashMessage('✦ '+powerRewardLabel(perk.id,tier)+' '+perk.name+' · POWER SHRINE',3300);
       playSound('level');
     }
     for(let i=g.magnetShrines.length-1;i>=0;i--){
@@ -1674,11 +1697,12 @@
   }
   // Shared bookkeeping for level-ups and instant Shrine rewards.
   function grantPowerUp(choice){
-    const magnitude=rarityScale(choice.tier);
+    const tier=resolvedPowerTier(choice.id,choice.tier);
+    const magnitude=isElementPower(choice.id)?1:rarityScale(tier);
     choice.apply(game.player,game,magnitude);
     if(!game.perkRanks[choice.id])game.perkOrder.push(choice.id);
     game.perkRanks[choice.id]=(game.perkRanks[choice.id]||0)+1;
-    (game.perkTiers[choice.id]||(game.perkTiers[choice.id]=[])).push(choice.tier);
+    (game.perkTiers[choice.id]||(game.perkTiers[choice.id]=[])).push(tier);
   }
   const DAMAGE_POWER_IDS=new Set(["brutality","rapid_fire","forward","spread","pierce","crit","crit_damage","blood_power","fire_power","lightning_power","poison_power","hemorrhagic_burst"]);
   const DEFENSE_POWER_IDS=new Set(["movement","vitality","regen","armor"]);
@@ -1686,7 +1710,7 @@
   // Legendary Blood is rolled separately at 5% per entire offering.
   function withRarity(perk){
     // Survival fallback is a fixed reward, not a random rarity modifier.
-    const tier=perk.survival?'common':rollRarity();
+    const tier=isElementPower(perk.id)?ELEMENT_POWER_TIER:perk.survival?'common':rollRarity();
     return {...perk,tier,desc:perkDescription(perk.id,tier)};
   }
   function rollChoices(previous=[]){
@@ -1719,8 +1743,9 @@
     const g=game;
     el.upgradeCards.replaceChildren();
     g.upgradeChoices.forEach((opt,index)=>{
-      const b=document.createElement('button');b.type='button';b.className='upgrade-card perk-'+opt.tier;
-      b.innerHTML=`<span class="perk-tier">${g.elementChosen?(opt.survival?'SURVIVAL · ':index===0?'ATTACK · ':index===1?'DEFENSE · ':'RANDOM · '):''}${opt.tier}</span><span class="perk-art-frame">${powerIcon(opt.id)}</span><strong>${opt.name}</strong><span class="detail">${opt.element?elementDescriptionHTML(opt):opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
+      const tier=resolvedPowerTier(opt.id,opt.tier);
+      const b=document.createElement('button');b.type='button';b.className='upgrade-card perk-'+tier;
+      b.innerHTML=`<span class="perk-tier">${isElementPower(opt.id)?'ELEMENT POWER · +20%':g.elementChosen?(opt.survival?'SURVIVAL · ':index===0?'ATTACK · ':index===1?'DEFENSE · ':'RANDOM · ')+tier:tier}</span><span class="perk-art-frame">${powerIcon(opt.id)}</span><strong>${opt.name}</strong><span class="detail">${opt.element?elementDescriptionHTML(opt):opt.desc}</span><span class="hotkey">[ ${index+1} ]</span>`;
       b.addEventListener('click',()=>chooseUpgrade(index));el.upgradeCards.appendChild(b);
     });
     const choosingElement=!g.elementChosen;
@@ -1787,7 +1812,7 @@
     grantPowerUp(choice);
     addParticles(game.player.x,game.player.y,'#ff8ba0',28,105,2,4);
     state='playing';el.upgrade.classList.add('hidden');el.status.textContent='HUNT IN PROGRESS';
-    flashMessage(`✦ ${choice.tier.toUpperCase()} ${choice.name}`,1800);
+    flashMessage(`✦ ${powerRewardLabel(choice.id,choice.tier)} ${choice.name}`,1800);
     // The magnet shrine may collect enough XP for multiple levels at once:
     // present every earned upgrade in sequence instead of losing levels.
     if(game.player.xp>=game.player.next){gainXP(0);if(state!=='playing')return;}
@@ -1908,11 +1933,12 @@
       perkTotal+=rank;
       const row=document.createElement('article');
       const tiers=game.perkTiers[id]||[];
-      const latest=tiers[tiers.length-1]||'common';
+      const latest=resolvedPowerTier(id,tiers[tiers.length-1]||'common');
+      const tierLabels=isElementPower(id)?Array(rank).fill('ELEMENTAL'):tiers.map(v=>v.toUpperCase());
       row.className='inventory-perk perk-'+latest;
       row.innerHTML=`<span class="inventory-perk-icon">${powerIcon(id)}</span>
         <div class="inventory-perk-copy"><div class="inventory-perk-heading"><strong>${perk.name}</strong><span class="inventory-rank">RANK ${rank}</span></div>
-        <p>${tiers.length>8?tiers.slice(0,4).map(v=>v.toUpperCase()).join(' · ')+' · … '+(tiers.length-6)+' MORE · '+tiers.slice(-2).map(v=>v.toUpperCase()).join(' · '):tiers.map(v=>v.toUpperCase()).join(' · ')}</p>
+        <p>${tierLabels.length>8?tierLabels.slice(0,4).join(' · ')+' · … '+(tierLabels.length-6)+' MORE · '+tierLabels.slice(-2).join(' · '):tierLabels.join(' · ')}</p>
         <p>Latest: ${perkDescription(id,latest)}</p></div>`;
       el.inventoryPerks.appendChild(row);
     }
@@ -2074,13 +2100,13 @@
     const focus=codexFocus;codexFocus=null;
     const spells=[
       ['blood','BLOOD','Blood Spear · 80 units/s · 1 attack/s',
-       'Direct hit = [21.6 × (1 + 0.05 × sum of Blood Power rarity units) × Ascension multiplier + Brutality flat damage] × crit, if any. Each hit adds 1 + Piercing Fangs Bleed stacks (8 max). One stack deals actual hit damage / 8 DPS for 8s. The spear pierces endlessly; the same enemy can be struck every 0.6s. Hemorrhagic converts each hit into immediate area damage = (8 + Piercing Fangs) × actual hit damage × Hemorrhagic rarity multiplier, with a 76-unit burst radius (plus enemy radius), without an extra on-screen label.'],
+       'Direct hit = [21.6 × (1 + 0.20 × Blood Power cards) × Ascension multiplier + Brutality flat damage] × crit, if any. Each hit adds 1 + Piercing Fangs Bleed stacks (8 max). One stack deals actual hit damage / 8 DPS for 8s. The spear pierces endlessly; the same enemy can be struck every 0.6s. Hemorrhagic converts each hit into immediate area damage = (8 + Piercing Fangs) × actual hit damage × Hemorrhagic rarity multiplier, with a 76-unit burst radius (plus enemy radius), without an extra on-screen label.'],
       ['fire','FIRE','Fireball · 290 units/s · 1 attack/s',
-       'Direct = [43.2 × (1 + 0.05 × sum of Fire Power rarity units) × Ascension multiplier + Brutality flat damage] × crit, if any. First impact deals direct damage and applies Burn within radius 55 × (1 + 0.10 × Piercing Fangs). Burn DPS = Fire base damage after Power and Ascension bonuses + flat Brutality, without crit, for 2s. Subsequent hits refresh instead of stacking Burn. Base Burn = 43.2 DPS × 2s = 86.4 total DoT. Each target can receive direct Fireball damage only once per salvo, even with multishot.'],
+       'Direct = [43.2 × (1 + 0.20 × Fire Power cards) × Ascension multiplier + Brutality flat damage] × crit, if any. First impact deals direct damage and applies Burn within radius 55 × (1 + 0.10 × Piercing Fangs). Burn DPS = Fire base damage after Power and Ascension bonuses + flat Brutality, without crit, for 2s. Subsequent hits refresh instead of stacking Burn. Base Burn = 43.2 DPS × 2s = 86.4 total DoT. Each target can receive direct Fireball damage only once per salvo, even with multishot.'],
       ['lightning','LIGHTNING','Chain Lightning · 235 units/s · 1 attack/s',
-       'Each projectile rolls integer 1–200; direct hit = [roll × (1 + 0.05 × sum of Lightning Power rarity units) × Ascension multiplier + Brutality flat damage] × crit, if any. Shock rolls 50% per hit, lasts 4s, and doubles DIRECT damage taken; damage-over-time is unaffected. Chain jumps = min(25, 4 + Piercing Fangs points + 2 × Spread Shot points + Tempest Oracle bonus). Each jump seeks a new enemy within 120 units of the last victim. Forward Shot grants up to 2 additional independently aimed chains (3 projectiles total).'],
+       'Each projectile rolls integer 1–200; direct hit = [roll × (1 + 0.20 × Lightning Power cards) × Ascension multiplier + Brutality flat damage] × crit, if any. Shock rolls 50% per hit, lasts 4s, and doubles DIRECT damage taken; damage-over-time is unaffected. Chain jumps = min(25, 4 + Piercing Fangs points + 2 × Spread Shot points + Tempest Oracle bonus). Each jump seeks a new enemy within 120 units of the last victim. Forward Shot grants up to 2 additional independently aimed chains (3 projectiles total).'],
       ['poison','POISON','Toxic Orb · 210 units/s · 2 attacks/s',
-       'No direct hit damage. First impact splashes one permanent Poison stack on each enemy within radius 55 × (1 + 0.10 × Piercing Fangs points). Poison DPS = 15 × (1 + 0.05 × sum of Poison Power rarity units) × Ascension multiplier × sum of individual stack critical weights (normal = 1, crit = Crit Damage). Poison stacks never expire and have no cap. Multiple orbs can each apply a stack. If a poisoned enemy dies with at least 5 stacks, 5 stacks spread to up to 6 enemies in the same radius, preserving average critical potency.']
+       'No direct hit damage. First impact splashes one permanent Poison stack on each enemy within radius 55 × (1 + 0.10 × Piercing Fangs points). Poison DPS = 15 × (1 + 0.20 × Poison Power cards) × Ascension multiplier × sum of individual stack critical weights (normal = 1, crit = Crit Damage). Poison stacks never expire and have no cap. Multiple orbs can each apply a stack. If a poisoned enemy dies with at least 5 stacks, 5 stacks spread to up to 6 enemies in the same radius, preserving average critical potency.']
     ];
     for(const [id,name,summary,body] of spells){
       const entry=codexArticle(name,summary,body,focus?id===focus:id===game.player.element);
@@ -2091,7 +2117,7 @@
     root.append(codexElement('h3','codex-page-title','DAMAGE MATH & ELEMENT RANKS'));
     const mathematics=codexElement('div','codex-grid');
     const mathEntries=[
-      ['ELEMENT POWER & RANKS','Element rank starts at 1. Each matching Element Power card raises the rank by exactly 1, to a maximum of 6. Rarity affects STRENGTH only: Common +5%, Magic +10%, Rare +20%, Legendary +40%, Mythic +80%; Element Power percentages add to one another. Example: Rare + Common = +25% elemental power, rank 3.'],
+      ['ELEMENT POWER & RANKS','Element rank starts at 1. Blood / Fire / Lightning / Poison Power use a special ELEMENT POWER tier (never Common, Magic, Rare, Legendary or Mythic). Each card gives fixed +20% base elemental damage (Poison: stack DPS) and +1 rank, maximum 5 pickups / rank 6. All bonuses ADD: 1 card +20%, 2 +40%, 3 +60%, 4 +80%, 5 +100%. Other perks, including Hemorrhagic, retain standard rarity.'],
       ['DAMAGE MULTIPLIERS & CRITICALS','Blood, Fire and Lightning multiply their element-scaled base damage by 1.15 for utility evolutions or 2 for offensive evolutions; Brutality flat damage is added afterward. Poison instead multiplies stack DPS by 1.15 or 2. Critical direct hits multiply by Crit Damage (base 1.6, with base crit chance 6%). Poison critical multipliers are stored per stack. Shock doubles direct damage but not Bleed, Burn or Poison damage-over-time.'],
       ['OFFENSIVE ASCENSION COST','Every offensive evolution gives +100% elemental damage (or Poison DPS) but multiplies CURRENT maximum HP by 0.70, rounded up; current HP is clamped to the new maximum. The penalty happens once on selection. Later Vitality cards can increase maximum HP. Exactly one Ascension may be selected each run.']
     ];
@@ -2103,7 +2129,7 @@
       'CURRENT ELEMENT: '+p.element.toUpperCase()+' · RANK '+(p.elementRank+1)+'/6 · SIGILS: '+game.ascensionSigils+
       (p.ascension?' · ASCENDED: '+p.ascensionName:' · Rank 4 with Sigil OR rank 6 for free.')));
     root.append(codexElement('p','codex-info-line',
-      'Rank 4 = 3 matching Element Power cards plus 1 Reliquary Sigil from a boss or Cursed Champion. This early path consumes a Sigil. Rank 6 = 5 cards and requires NO Sigil; the choice appears automatically. One evolution per run; its damage bonus survives later Element Power cards.'));
+      'Rank 4 = 3 fixed-tier Element Power cards (+60%) plus 1 Reliquary Sigil from a boss or Cursed Champion. This early path consumes a Sigil. Rank 6 = 5 fixed-tier cards (+100%) and NO Sigil; the choice appears automatically. One evolution per run; its damage multiplier survives later Element Power cards.'));
     const ascensions=codexElement('div','codex-grid');
     for(const element of ['blood','fire','lightning','poison']){
       const [unique,offense]=ASCENSIONS[element];
@@ -2129,14 +2155,14 @@
     const grid=codexElement('div','codex-grid');
     const source=[
       ['XP CRYSTALS','Guaranteed on normal enemy defeat','Each normal enemy drops its XP value as a crystal. Collect crystals to level up and select one of four upgrade cards. XP needed for the next level after reaching level L: floor(12 + 8L + 1.5L²).'],
-      ['LEVEL-UP CARDS','Rarity rolled separately per standard card','Common 54% · Magic 25% · Rare 15% · Legendary 5% · Mythic 1%. While eligible, each offer includes an offensive, defensive and two further cards. Exhausted categories or insufficient distinct perks are filled with repeatable Common Survival rewards. Individual regular power-up odds depend on eligible options, bans and caps.'],
-      ['POWER SHRINE','First at 02:00 · next 4–6 minutes after collection','Pick up a shrine for one immediate eligible upgrade without leveling up: 75% Legendary / 25% Mythic. With eligible Hemorrhagic, it has a special 40% selection roll; otherwise eligible powers use weighted random choice.'],
+      ['LEVEL-UP CARDS','Element Power is separate from rarity','Non-elemental cards: Common 54%, Magic 25%, Rare 15%, Legendary 5%, Mythic 1%. The four Element Power cards always offer their own ELEMENT POWER tier, fixed +20%, never standard rarity. While eligible, each offer includes an offensive, defensive and two random cards; Common Survival rewards fill missing slots.'],
+      ['POWER SHRINE','First at 02:00 · next 4–6 minutes after collection','Pick up a shrine for one immediate eligible upgrade without leveling up. Normal perks: 75% Legendary / 25% Mythic. Element Power: fixed +20%, no standard rarity. Eligible Hemorrhagic has a separate 40% selection roll; other eligible powers are weighted.'],
       ['LIFE SHRINE','A fountain, not an RNG item drop','Grants +1 HP/s for 30 seconds, with no instant heal. New fountains appear roughly every 42–64 seconds. Refreshes rather than stacks.'],
       ['MAGNET SHRINE','First offered at 00:45','Immediately collects all XP crystals, then automatically collects new XP globally for 15 seconds. The next shrine becomes available 90–150 seconds after pickup.'],
-      ['ABOMINATION REWARD','Guaranteed on boss defeat','One instant eligible power-up: Rare 65% · Legendary 29% · Mythic 6%. This does not use XP or increase the player level.'],
+      ['ABOMINATION REWARD','Guaranteed on boss defeat','One eligible power-up without XP cost or player level. Normal perks: Rare 65%, Legendary 29%, Mythic 6%. Element Power: always fixed +20% with no rarity.'],
       ['ENDGAME SURVIVAL','When standard perks cannot fill a four-card offer','Four repeatable Common survival rewards become available only as replacements for unavailable normal cards: Field Medic (+4 maximum HP and heal 25%/at least 24), Enduring Heart (+12 maximum HP and heal 12), Mending Vigor (+0.15 permanent HP/s and heal 10), and Phoenix Sigil (up to 2 revival charges; additional sigils give +8 maximum HP). Each revival restores 35% HP and gives 2 seconds of protection. Level 150 is the cap: further crystals still add to total XP scored without forcing more upgrade screens.'],
-      ['CURSED RELIQUARIES','Guaranteed boss drops and special Cursed Champion kills','First champions can appear after 04:00, then approximately every 100 seconds. They are tougher and marked by a golden seal. Relics expire after 150 seconds. CLAIM grants a Rare eligible perk without a curse; DESECRATE grants a Legendary (75%) or Mythic (25%) perk with +15% incoming damage for 180s. Repeated curses refresh but do not stack. Both choices grant 1 Ascension Sigil until your evolution is chosen. When all regular perks are capped, a fixed Survival reward replaces the perk.'],
-      ['TORMENT ASCENSION','Rank 4 + Reliquary Sigil OR Rank 6 free','Each matching Element Power card gives 1 rank, independent of rarity. Rank 4 (3 picks) and a Reliquary Sigil unlock the early path, consuming 1 Sigil. Rank 6 (5 picks) automatically unlocks the free path without a Sigil. Every element offers one utility and one +100% damage / -30% max HP choice; exactly one Ascension per run. Buffs persist after later Power cards.']
+      ['CURSED RELIQUARIES','Guaranteed boss drops and special Cursed Champion kills','First champions can appear after 04:00, then approximately every 100 seconds. They are tougher and marked by a golden seal. Relics expire after 150 seconds. CLAIM grants a Rare normal perk without a curse; DESECRATE grants a Legendary (75%) or Mythic (25%) normal perk with +15% incoming damage for 180s. Element Power rewards always give fixed +20%, regardless of choice. Repeated curses refresh but do not stack. Both choices grant 1 Ascension Sigil until your evolution is chosen. When all regular perks are capped, a fixed Survival reward replaces the perk.'],
+      ['TORMENT ASCENSION','Rank 4 + Reliquary Sigil OR Rank 6 free','Each matching Element Power card gives fixed +20% elemental damage and +1 rank, without normal rarity. Rank 4 (3 picks) and a Reliquary Sigil unlock the early path, consuming 1 Sigil. Rank 6 (5 picks) automatically unlocks the free path without a Sigil. Every element offers one utility and one +100% damage / -30% max HP choice; exactly one Ascension per run. Buffs persist after later Power cards.']
     ];
     for(const [name,shortText,description] of source){
       const {article,content}=codexArticle(name,shortText,description);
@@ -2148,7 +2174,7 @@
   }
   function renderPowerLibrary(){
     const root=$('inventoryCatalogPage');root.replaceChildren();
-    codexIntro(root,'UPGRADE CATALOG','Browse the 18 regular perks plus four fixed late-game Survival rewards. Regular perk effects use their roll’s rarity multiplier, while Survival rewards are repeatable and fixed.');
+    codexIntro(root,'UPGRADE CATALOG','Browse 18 regular perks and four fixed late-game Survival rewards. Blood / Fire / Lightning / Poison Power have their own fixed ELEMENT POWER tier (+20% per card); other perks, including Hemorrhagic, still use normal rarity.');
     const categories=[
       ['offense','OFFENSE'],['defense','DEFENSE'],['utility','UTILITY'],['elemental','ELEMENTAL'],['survival','SURVIVAL']
     ];
@@ -2164,8 +2190,12 @@
       if(group)catalogGroup=group;
     }
     codexFilters(root,categories,catalogGroup,v=>{catalogGroup=v;codexFocus=null;renderPowerLibrary();});
-    if(catalogGroup!=='survival')
+    if(catalogGroup!=='survival'){
+      if(catalogGroup==='elemental')
+        root.append(codexElement('p','codex-info-line',
+          'Element Power always gives fixed +20% with no rarity. The rarity filter below changes only the Hemorrhagic preview.'));
       codexFilters(root,RARITY_TIERS.map(t=>[t,t.toUpperCase()]),catalogRarity,v=>{catalogRarity=v;renderPowerLibrary();});
+    }
     else root.append(codexElement('p','codex-info-line','These four repeatable rewards have fixed effects (Common) and are offered only when normal cards cannot fill four slots.'));
     const grid=codexElement('div','codex-grid');
     for(const id of byGroup[catalogGroup]){
@@ -2175,7 +2205,7 @@
       const relatedElement=id.endsWith('_power')?id.replace('_power',''):id==='hemorrhagic_burst'?'blood':selectedElement;
       const description=perkDescription(id,perk.survival?'common':catalogRarity,relatedElement);
       const item=codexArticle(perk.name,description,'',focus);
-      item.content.append(codexElement('p','codex-article-detail',perk.survival?'Survival reward · fixed Common effect':'Rarity: '+catalogRarity.toUpperCase()+' · magnitude ×'+rarityScale(catalogRarity)));
+      item.content.append(codexElement('p','codex-article-detail',isElementPower(id)?'Tier: ELEMENT POWER · Fixed +20% every pickup · No rarity':perk.survival?'Survival reward · fixed Common effect':'Rarity: '+catalogRarity.toUpperCase()+' · magnitude ×'+rarityScale(catalogRarity)));
       if(['forward','spread','pierce'].includes(id)){
         item.content.append(codexElement('p','codex-article-detail','ELEMENT-SPECIFIC EFFECTS'));
         for(const elName of ['blood','fire','lightning','poison']){
@@ -2390,9 +2420,10 @@
       // One perk (Rare/Legendary/Mythic) granted immediately, without XP cost.
       const perk=rollPowerShrineReward();
       if(perk){
-        const roll=Math.random(),tier=roll<.65?'rare':roll<.94?'legendary':'mythic';
+        const roll=Math.random(),tier=isElementPower(perk.id)?ELEMENT_POWER_TIER:
+          roll<.65?'rare':roll<.94?'legendary':'mythic';
         grantPowerUp({...perk,tier});
-        flashMessage('✦ '+tier.toUpperCase()+' POWER · ABOMINATION DEFEATED',2800);
+        flashMessage('✦ '+powerRewardLabel(perk.id,tier)+' · ABOMINATION DEFEATED',2800);
         addParticles(e.x,e.y,'#eebd8d',44,135,2,5);
         playSound('level');
       }

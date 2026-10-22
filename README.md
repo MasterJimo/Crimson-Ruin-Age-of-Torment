@@ -70,7 +70,7 @@ other elements' combat and visuals are unchanged.
 
 ### Elemental damage formulas
 
-Let `u` be a card's rarity multiplier: **Common 1**, **Magic 2**, **Rare 4**, **Legendary 8**, **Mythic 16**. For the chosen element, `P = 0.05 × sum(u)` across all matching **Element Power** cards. These Power bonuses **add** (a Rare and a Common card give `P = 0.25`). Each card adds **exactly 1 Element Rank**, regardless of rarity: a new run begins at rank 1, and **five matching cards reach rank 6**. The Element Power cards stop appearing after five pickups.
+**Element Power is a separate fixed tier**, not Common, Magic, Rare, Legendary or Mythic. Every Blood / Fire / Lightning / Poison Power card grants exactly **+20% base elemental damage** (Poison: +20% stack DPS) and **+1 Element Rank**, regardless of how it was obtained (level-up, shrine, boss or reliquary). Let `n` be the number of matching Power cards, at most **5**, and `P = 0.20 × n`. Bonuses **add** rather than compound: 1 pickup +20%, 2 +40%, 3 +60%, 4 +80%, 5 +100%. The hunter starts at rank 1 and reaches **rank 6** at 5 cards. Other regular perks, including Hemorrhagic, keep their standard rarity multipliers.
 
 For Blood, Fire and Lightning, `A` is the Ascension damage multiplier (**1** without evolution, **1.15** for utility, **2** for offensive). For Poison, the same multiplier applies to **damage-over-time per stack**, not direct hits. Let `B` be flat damage from Brutality, and `C` the current Crit Damage multiplier (initially **1.6**; default critical chance **6%**). A critical direct hit is multiplied by `C`. Shock doubles **direct** damage received, not damage-over-time. Additional boss-damage and enemy Shock modifiers apply to the actual target where applicable.
 
@@ -105,13 +105,15 @@ You may take **only one Ascension per run**. Ascension damage multipliers persis
 
 Every level-up offers **4 different cards**: one Attack, one Defense and two random **while the relevant normal powers remain eligible**. If normal upgrades have reached their caps or been banished, any empty slots are replaced by distinct, repeatable **Survival Rewards**. This prevents late-game empty draws/crashes. Each run includes **3 Rerolls** and **3 Banishes**; survival rewards cannot be banished, and reroll is disabled when all four are the only possible choices. **Power-ups are element-specific where noted:** their effects can differ from the generic names.
 
-| Rarity | Chance per card | Multiplier `u` | Element Power |
-|---|---:|---:|---:|
-| Common | 54% | ×1 | +5% |
-| Magic | 25% | ×2 | +10% |
-| Rare | 15% | ×4 | +20% |
-| Legendary | 5% | ×8 | +40% |
-| Mythic | 1% | ×16 | +80% |
+These rarity rolls apply **only to non-Element Power cards**. Element Power has its own fixed-tier card style and always grants +20%; it never rolls in this table.
+
+| Standard rarity | Chance per eligible non-element card | Multiplier `u` |
+|---|---:|---:|
+| Common | 54% | ×1 |
+| Magic | 25% | ×2 |
+| Rare | 15% | ×4 |
+| Legendary | 5% | ×8 |
+| Mythic | 1% | ×16 |
 
 | Power-up | Effect per pickup (`u` = rarity multiplier) |
 |---|---|
@@ -128,7 +130,9 @@ Every level-up offers **4 different cards**: one Attack, one Defense and two ran
 | Piercing Fangs | Grants **1 point** (+2 Legendary, +3 Mythic). **Blood:** +1 Bleed stack per hit and +1 stack worth of Hemorrhagic damage; **Lightning:** +1 bounce per point, max **25 bounces** combined with Spread Shot; **Fire / Poison:** +10% area radius per point (including Poison Proliferate), max **4 points**. Blood Spear pierces every enemy. |
 | Deadly Precision | +`3u%` critical chance, max **85%** |
 | Critical Damage | +`10u%` critical damage multiplier, no cap |
-| Blood / Fire / Lightning / Poison Power | +`5u%` of elemental base damage, additive, max **5 picks** for the chosen element |
+| Blood / Fire / Lightning / Poison Power | **Fixed ELEMENT POWER tier:** +20% elemental base damage (Poison: stack DPS) per card; additive, maximum **5 picks**, no normal rarity |
+
+**Fire example (no critical hit, flat Brutality or Ascension):** base 43.2 damage and 43.2 Burn DPS. After 1 Fire Power pickup: `43.2 × 1.20 = 51.84`; after 3: `43.2 × 1.60 = 69.12`; after 5: `43.2 × 2.00 = 86.4`. Fire Power has no minutes-based damage increase: collecting cards drives progression, while elapsed time separately scales enemies.
 
 ## Enemies and Monster Bestiary
 
@@ -204,7 +208,7 @@ A Phoenix revival triggers before death from a direct hit or bleeding, consumes 
 |---|---|---|
 | **Life Shrine** | **2** at run start, further spawn attempts every **42–64s**, max **4** active | Restores **1 HP/s for 30s**, capped at max HP; **no instant heal**. Collecting another refreshes duration rather than stacking. |
 | **Magnet Shrine** | **Guaranteed at 00:45**. After each collection, the next spawns randomly **90–150s later**; max **1** active. | Instantly collects **all unclaimed map XP** and grants **15s of global XP collection** for new drops. |
-| **Power Shrine** | **Guaranteed at 02:00**, then randomly **4–6 minutes after the previous pickup**; maximum **1** active. | Grants **1 Legendary (75%) or Mythic (25%) perk immediately**, without consuming XP or a level. **Hemorrhagic has a 40% roll for Blood** until acquired; otherwise Element Power weighs **×5**, Critical Damage **×3**, and Forward Shot / Spread Shot / Piercing Fangs / Deadly Precision / Rapid Fire **×2**. Banned and capped perks cannot roll. |
+| **Power Shrine** | **Guaranteed at 02:00**, then randomly **4–6 minutes after the previous pickup**; maximum **1** active. | Grants **1 perk immediately**, without XP or a level. Normal perks: Legendary 75% or Mythic 25%; an Element Power reward is always fixed +20% (no normal rarity). **Hemorrhagic has a 40% roll for Blood** until acquired; otherwise Element Power weighs **×5**, Critical Damage **×3**, and Forward Shot / Spread Shot / Piercing Fangs / Deadly Precision / Rapid Fire **×2**. Banned and capped perks cannot roll. |
 
 ## Assets and Credits
 
