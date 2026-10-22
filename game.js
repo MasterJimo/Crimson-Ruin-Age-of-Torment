@@ -2897,11 +2897,89 @@
     }
     for(let i=0;i<3;i++){ const a=t*1.8+i*TAU/3; ctx.fillStyle=i===0?'#ffc7d2':'#f1607f'; ctx.fillRect(Math.round(x+Math.cos(a)*20),Math.round(y-8+Math.sin(a)*11),2,2); }
   }
+  // Approved Cursed Champion artwork pass: subtle frame sharpening and a
+  // restrained gold sigil. Only champion frames are preprocessed and cached;
+  // ordinary monsters, status-effect palettes and combat remain untouched.
+  const CHAMPION_AURA_STRENGTH=1.65;
+  const CHAMPION_SHARPEN_AMOUNT=.15;
+  const championFrameCache=new Map();
+  const CHAMPION_FRAME_CACHE_LIMIT=48;
+  function championSpriteFrame(image,sx,sy,tile,key,width,height){
+    if(championFrameCache.has(key))return championFrameCache.get(key);
+    let result=null;
+    try{
+      const cw=Math.max(4,Math.round(width*2.1));
+      const ch=Math.max(4,Math.round(height*2.1));
+      const canvas=document.createElement('canvas');
+      canvas.width=cw;canvas.height=ch;
+      const off=canvas.getContext('2d',{willReadFrequently:true});
+      if(off){
+        off.imageSmoothingEnabled=true;off.imageSmoothingQuality='high';
+        off.drawImage(image,sx,sy,tile,tile,0,0,cw,ch);
+        const pixels=off.getImageData(0,0,cw,ch);
+        const data=pixels.data,original=new Uint8ClampedArray(data);
+        for(let y=1;y<ch-1;y++){
+          for(let x=1;x<cw-1;x++){
+            const i=(y*cw+x)*4;
+            if(original[i+3]<25)continue; // Preserve the transparent silhouette.
+            for(let c=0;c<3;c++){
+              const value=original[i+c];
+              const edge=4*value-original[i-4+c]-original[i+4+c]-
+                original[i-cw*4+c]-original[i+cw*4+c];
+              data[i+c]=Math.min(255,Math.max(0,value+CHAMPION_SHARPEN_AMOUNT*edge));
+            }
+          }
+        }
+        off.putImageData(pixels,0,0);
+        result=canvas;
+      }
+    }catch(_){ /* Offscreen/bitmap read unavailable; use the original frame. */ }
+    if(championFrameCache.size>=CHAMPION_FRAME_CACHE_LIMIT)
+      championFrameCache.delete(championFrameCache.keys().next().value);
+    championFrameCache.set(key,result);
+    return result;
+  }
+  function drawCursedChampionSigil(x,y,r,t){
+    const strength=CHAMPION_AURA_STRENGTH;
+    const pulse=.7+.3*Math.sin(t*4);
+    const radius=Math.max(22,r+11);
+    ctx.save();ctx.translate(x,y+9);
+    ctx.globalCompositeOperation='screen';
+    ctx.shadowColor='#ffae45';ctx.shadowBlur=11+9*strength;
+    ctx.strokeStyle='rgba(255,191,77,'+Math.min(.88,.28+.25*strength+.16*pulse)+')';
+    ctx.lineWidth=2+.8*strength;
+    ctx.beginPath();ctx.ellipse(0,0,radius*1.23,12.5,0,0,TAU);ctx.stroke();
+    ctx.shadowBlur=5;ctx.strokeStyle='rgba(255,240,174,.8)';ctx.lineWidth=1.3;
+    ctx.beginPath();ctx.ellipse(0,0,radius*1.02,9,0,0,TAU);ctx.stroke();
+    for(let i=0;i<8;i++){
+      const a=i*TAU/8+t*.43;
+      ctx.fillStyle=i%2?'#ffbb62':'#ffe7af';
+      ctx.beginPath();
+      ctx.arc(Math.cos(a)*radius*1.26,Math.sin(a)*12.5,1+.6*pulse,0,TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  function drawCursedChampionMarker(x,y,r,t){
+    const centerY=y-(r+45);
+    ctx.save();ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    ctx.shadowColor='#ffd37d';ctx.shadowBlur=11+CHAMPION_AURA_STRENGTH*5;
+    ctx.fillStyle='#fff1cb';ctx.font='bold 14.5px serif';
+    ctx.fillText('✦',x,centerY);ctx.shadowBlur=0;
+    for(let i=0;i<3;i++){
+      const angle=t*1.2+i*TAU/3;
+      ctx.globalAlpha=.58;ctx.fillStyle='#eec579';ctx.beginPath();
+      ctx.arc(x+Math.cos(angle)*11,centerY-5+Math.sin(angle)*6,1.1,0,TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
   const GARGOYLE_WARNING_LENGTH=570*4; // 4× warning-line length; charge movement stays at the balanced 570 units.
   function drawEnemy(e,camX,camY,t){
     const def=ENEMIES[e.type];if(!def)return;
     const x=Math.round(e.x-camX),y=Math.round(e.y-camY);
     shadowAt(x,y+8,e.r*(def.boss?1.28:1),def.boss?.48:.34);
+    if(e.elite)drawCursedChampionSigil(x,y,e.r,t);
     const poisoned=e.poisonDps>0;
     const burning=e.burnTime>0,shocked=e.shockTime>0;
     // Keep Poison priority on mixed statuses; the other effects still animate.
@@ -2914,6 +2992,7 @@
     ctx.scale(wobble,1/wobble);
     if(e.hit>0){ctx.globalAlpha=.68;ctx.shadowColor='#fff0e9';ctx.shadowBlur=10;}
     else if(def.boss){ctx.shadowColor='#b74155';ctx.shadowBlur=7;}
+    else if(e.elite){ctx.shadowColor='rgba(255,188,97,.42)';ctx.shadowBlur=8;ctx.filter='contrast(1.055) saturate(1.06)';}
     const width=def.boss?e.type==='boss3'?111:99:e.type==='plague_rat'?66:e.type==='hellhound'?74:61;
     const height=def.boss?e.type==='boss3'?113:104:e.type==='plague_rat'?46:e.type==='blood_slime'?55:72;
     const idx=MONSTER_ART_INDEX[e.type]??-1;
@@ -2935,9 +3014,15 @@
       // Poison keeps its original replacement tint. For Fire and Lightning
       // match the demo exactly: original sprite THEN a tinted screen overlay.
       if(status==='poison'&&tinted){
-        ctx.drawImage(tinted,-width/2,-height+13,width,height);
+        const crisp=e.elite?championSpriteFrame(tinted,0,0,MONSTER_HD_TILE,
+          'poison:'+idx+':'+frame,width,height):null;
+        ctx.drawImage(crisp||tinted,-width/2,-height+13,width,height);
       }else{
-        ctx.drawImage(monsterHDAtlas,frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,
+        const crisp=e.elite?championSpriteFrame(monsterHDAtlas,
+          frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,MONSTER_HD_TILE,
+          'normal:'+idx+':'+frame,width,height):null;
+        if(crisp)ctx.drawImage(crisp,-width/2,-height+13,width,height);
+        else ctx.drawImage(monsterHDAtlas,frame*MONSTER_HD_TILE,idx*MONSTER_HD_TILE,
           MONSTER_HD_TILE,MONSTER_HD_TILE,-width/2,-height+13,width,height);
         if(tinted){
           ctx.save();ctx.globalCompositeOperation='screen';
@@ -2967,14 +3052,7 @@
     if(burning&&onScreen)drawFireAura(width,height,e,t,true);
     if(shocked&&onScreen)drawShockArcs(width,height,e,t);
     ctx.restore();
-    if(e.elite){
-      const pulse=.6+.4*Math.sin(t*4);
-      ctx.save();ctx.strokeStyle='rgba(255,206,103,'+(.58+pulse*.38)+')';
-      ctx.shadowColor='#ffc46a';ctx.shadowBlur=7;ctx.lineWidth=2;
-      ctx.beginPath();ctx.ellipse(x,y+9,Math.max(22,e.r+11),9,0,0,TAU);ctx.stroke();
-      ctx.fillStyle='#ffe6b0';ctx.textAlign='center';ctx.font='bold 13px serif';
-      ctx.fillText('✦',x,y-(e.r+45));ctx.restore();
-    }
+    if(e.elite)drawCursedChampionMarker(x,y,e.r,t);
     if(e.attackState==='chargeWarn'){
       ctx.save();ctx.translate(x,y);ctx.rotate(e.chargeAngle);
       const pulse=.5+.5*Math.sin(t*12);
