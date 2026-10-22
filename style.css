@@ -2093,3 +2093,43 @@ body.touch-game:has(#intro.hidden) .save-menu{
   #reliquaryOverlay .dark-choice strong,
   #ascensionOverlay .dark-choice strong{font-size:17px}
 }
+
+/* All four Ascension schools must show artwork, not empty cards.
+   Lightning follows the approved Tempest / Iron illustration concept.
+   Blood and Poison use the actual in-game skill icon atlas as a fallback. */
+#ascensionOverlay .decision-art-tempest,
+#ascensionOverlay .decision-art-iron{
+  display:block!important;
+  background-image:url('assets/ui/ascension-lightning.svg')!important;
+  background-size:200% 100%!important;
+  background-repeat:no-repeat!important;
+  background-color:#121522;
+  filter:drop-shadow(0 4px 12px rgba(32,89,161,.35));
+  border-radius:7px;
+}
+#ascensionOverlay .decision-art-tempest{background-position:left center!important}
+#ascensionOverlay .decision-art-iron{background-position:right center!important}
+#ascensionOverlay .decision-art-element .skill-icon-v023{
+  display:block!important;
+  width:112px;height:112px;min-width:112px;
+  background-image:url('assets/skill-icons-v0231.webp')!important;
+  background-size:500% 500%!important;
+  background-repeat:no-repeat!important;
+  image-rendering:auto;
+}
+#ascensionOverlay .decision-art-blood{
+  background:radial-gradient(circle at center,rgba(167,49,69,.34),transparent 70%)!important;
+}
+#ascensionOverlay .decision-art-poison{
+  background:radial-gradient(circle at center,rgba(49,132,70,.34),transparent 70%)!important;
+}
+@media(max-width:740px){
+  #ascensionOverlay .decision-art-element .skill-icon-v023{
+    width:74px;height:74px;min-width:74px;
+  }
+}
+@media(max-width:420px){
+  #ascensionOverlay .decision-art-element .skill-icon-v023{
+    width:64px;height:64px;min-width:64px;
+  }
+}

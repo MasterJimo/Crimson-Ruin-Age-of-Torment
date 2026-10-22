@@ -580,9 +580,13 @@
       button.title=opt.desc; // Full description remains available on hover and in the Encyclopedia.
       const art=document.createElement('span');
       art.className='decision-art '+(game.player.element==='fire'?
-        (i===0?'decision-art-cinder':'decision-art-ember'):'decision-art-element');
+        (i===0?'decision-art-cinder':'decision-art-ember'):
+        game.player.element==='lightning'?
+        (i===0?'decision-art-tempest':'decision-art-iron'):
+        'decision-art-element decision-art-'+game.player.element);
       art.setAttribute('aria-hidden','true');
-      if(game.player.element!=='fire')art.innerHTML=powerIcon(game.player.element+'_power');
+      if(!['fire','lightning'].includes(game.player.element))
+        art.innerHTML=powerIcon(game.player.element+'_power');
       const title=document.createElement('strong');title.textContent=opt.name;
       const effect=document.createElement('span');effect.className='decision-brief';
       const brief={
@@ -3550,18 +3554,17 @@
     if(e.attackState==='chargeWarn'){
       ctx.save();ctx.translate(x,y);ctx.rotate(e.chargeAngle);
       const pulse=.5+.5*Math.sin(t*12);
-      // Desaturated ~50%: keep the warning line bright/readable, not neon red.
-      // Telegraph duration, length, width and charge hitbox are unchanged.
-      ctx.lineCap='round';
-      ctx.shadowColor='#c65670';ctx.shadowBlur=28;
-      ctx.strokeStyle='rgba(202,72,87,'+(.67+pulse*.18)+')';
-      ctx.lineWidth=27+pulse*5;
+      // Subtle ~25%-intensity warning, instead of the former glowing
+      // red beam. Charge length, timing and damage remain unchanged.
+      ctx.lineCap='round';ctx.globalAlpha=.28+.025*pulse;
+      ctx.shadowColor='rgba(142,72,78,.22)';ctx.shadowBlur=5;
+      ctx.strokeStyle='rgba(155,87,92,.33)';ctx.lineWidth=25+pulse*2;
       ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(GARGOYLE_WARNING_LENGTH,0);ctx.stroke();
-      ctx.shadowColor='#d26f7a';ctx.shadowBlur=18;
-      ctx.strokeStyle='#d36c7f';ctx.lineWidth=12+pulse*2;
+      ctx.shadowBlur=1;ctx.strokeStyle='rgba(169,107,110,.62)';
+      ctx.lineWidth=9+pulse;
       ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(GARGOYLE_WARNING_LENGTH,0);ctx.stroke();
-      ctx.shadowColor='#f3e7e5';ctx.shadowBlur=9;
-      ctx.strokeStyle='#f2e1df';ctx.lineWidth=3+pulse;
+      ctx.shadowBlur=0;ctx.strokeStyle='rgba(215,176,168,.70)';
+      ctx.lineWidth=2;
       ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(GARGOYLE_WARNING_LENGTH,0);ctx.stroke();
       ctx.restore();
     }
